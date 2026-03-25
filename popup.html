@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tab Saver</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 1rem;
+      width: 300px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.light-mode {
+      background-color: #f8f9fa;
+      color: #343a40;
+    }
+
+    body.dark-mode {
+      background-color: #121212;
+      color: #f1f1f1;
+    }
+
+    h1, h2 {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    #settings-icon {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    button {
+      background-color: var(--accent-color, #007bff);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-bottom: 1rem;
+      width: 100%;
+    }
+
+    .session-entry {
+      background-color: #e9ecef;
+      margin: 0.25rem 0;
+      padding: 0.75rem;
+      border-radius: 6px;
+      position: relative;
+    }
+
+    body.dark-mode .session-entry {
+      background-color: #2c2c2c;
+    }
+
+    .session-label {
+      display: block;
+      line-height: 1.4;
+      padding-right: 2.5rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .menu-button {
+      position: absolute;
+      top: 0.75rem;
+      left: 8rem;
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: inherit;
+      outline: none;
+    }
+
+    .menu-content {
+        display: none;
+        position: absolute;
+        top: 2.2rem;
+        right: 0.5rem;
+        background-color: #ffffff;
+        border: 1px solid #ffffff;
+        border-radius: 12px; /* meno stondato */
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); /* ombra più leggera */
+        z-index: 10;
+        min-width: 120px; /* più stretto */
+        padding: 0.2rem 0; /* meno spazio interno */
+      }
+
+    body.dark-mode .menu-content {
+      background-color: #1e1e1e;
+      border-color: #333;
+    }
+
+    .menu-content button {
+        background: none;
+        border: none;
+        width: 100%;
+        padding: 0.35rem 0.75rem; /* più compatto */
+        text-align: left;
+        font-size: 0.8rem; /* leggermente più piccolo */
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem; /* meno spazio tra icona e testo */
+        color: #212529;
+    }
+
+    body.dark-mode .menu-content button {
+        color: #f1f1f1;
+      }  
+
+    .preview-list {
+      display: none;
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .preview-list a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    #settings-section {
+      display: none;
+    }
+
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .setting-group {
+      margin-top: 1rem;
+    }
+
+    select, input[type="number"] {
+      width: 100%;
+      padding: 0.4rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+  </style>
+  <script src="popup.js" defer></script>
+</head>
+
+<body class="light-mode">
+  <div id="settings-icon">⚙️</div>
+  <h1>Tab Saver</h1>
+  <div id="main-section">
+    <button id="save">💾 Save tabs</button>
+    <div id="sessions"></div>
+  </div>
+  <div id="settings-section">
+    <h2>Settings</h2>
+    <div class="toggle-container">
+      <label for="darkMode">Dark Mode</label>
+      <input type="checkbox" id="darkMode">
+    </div>
+    <div class="setting-group">
+      <label for="accentColor">Main color:</label>
+      <select id="accentColor">
+        <option value="#007bff">Blue</option>
+        <option value="#28a745">Green</option>
+        <option value="#ffc107">Yellow</option>
+        <option value="#dc3545">Red</option>
+        <option value="#6f42c1">Purple</option>
+      </select>
+    </div>
+    <div class="setting-group">
+      <label for="maxSessions">Saved sessions limit</label>
+      <input type="number" id="maxSessions" value="10" min="1">
+    </div>
+  </div>
+</body>
+</html>

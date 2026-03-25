@@ -1,0 +1,19 @@
+{
+    "manifest_version": 3,
+    "name": "Tabs Session Saver",
+    "version": "1.0",
+    "description": "Save and restore your tabs sessions easily",
+    "permissions": ["tabs", "storage"],
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "img-1616.png",
+        "32": "img-3232.png",
+        "48": "img-4848.png",
+        "128": "img-128128.png"
+      }
+    },
+    "background": {
+      "service_worker": "background.js"
+    }
+  }
