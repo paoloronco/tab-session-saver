@@ -2,6 +2,9 @@
 chrome.runtime.onInstalled.addListener(details => {
   if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
     chrome.runtime.setUninstallURL('https://forms.gle/sbMUP5JrwYubSA2m6');
+    // Open the welcome/landing page in a new tab after install
+    const url = chrome.runtime.getURL('welcome.html');
+    chrome.tabs.create({ url });
   }
 });
 
