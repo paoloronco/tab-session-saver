@@ -40,6 +40,8 @@ const translations = {
     tab_count_other: "{count} tabs",
     window_count_one: "1 window",
     window_count_other: "{count} windows",
+    group_count_one: "1 group",
+    group_count_other: "{count} groups",
     desktop_scope_workspace: "Current desktop"
   },
   es: {
@@ -80,6 +82,8 @@ const translations = {
     tab_count_other: "{count} pesta\u00F1as",
     window_count_one: "1 ventana",
     window_count_other: "{count} ventanas",
+    group_count_one: "1 grupo",
+    group_count_other: "{count} grupos",
     desktop_scope_workspace: "Escritorio actual"
   },
   it: {
@@ -120,6 +124,8 @@ const translations = {
     tab_count_other: "{count} schede",
     window_count_one: "1 finestra",
     window_count_other: "{count} finestre",
+    group_count_one: "1 gruppo",
+    group_count_other: "{count} gruppi",
     desktop_scope_workspace: "Desktop attuale"
   },
   fr: {
@@ -160,6 +166,8 @@ const translations = {
     tab_count_other: "{count} onglets",
     window_count_one: "1 fen\u00EAtre",
     window_count_other: "{count} fen\u00EAtres",
+    group_count_one: "1 groupe",
+    group_count_other: "{count} groupes",
     desktop_scope_workspace: "Bureau actuel"
   },
   de: {
@@ -200,9 +208,13 @@ const translations = {
     tab_count_other: "{count} Tabs",
     window_count_one: "1 Fenster",
     window_count_other: "{count} Fenster",
+    group_count_one: "1 Gruppe",
+    group_count_other: "{count} Gruppen",
     desktop_scope_workspace: "Aktueller Desktop"
   }
 };
+
+const TAB_GROUP_COLORS = new Set(['grey', 'blue', 'red', 'yellow', 'green', 'cyan', 'orange', 'pink', 'purple']);
 
 const localeMap = {
   en: 'en-US',
@@ -276,12 +288,46 @@ function sanitizeTabForClient(tab) {
     muted: typeof tab.muted === 'boolean' ? tab.muted : Boolean(tab.mutedInfo?.muted),
     favIconUrl: typeof tab.favIconUrl === 'string' ? tab.favIconUrl : null,
     audible: Boolean(tab.audible),
-    discarded: Boolean(tab.discarded)
+    discarded: Boolean(tab.discarded),
+    groupId: Number.isInteger(tab.groupId) ? tab.groupId : -1
+  };
+}
+
+function sanitizeGroupForClient(group) {
+  if (!group || typeof group !== 'object') return null;
+
+  const candidateIds = [group.id, group.groupId];
+  let normalizedId = null;
+  for (const value of candidateIds) {
+    if (Number.isInteger(value)) {
+      normalizedId = value;
+      break;
+    }
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsed = Number.parseInt(value, 10);
+      if (Number.isInteger(parsed)) {
+        normalizedId = parsed;
+        break;
+      }
+    }
+  }
+
+  if (normalizedId === null) return null;
+
+  const color = typeof group.color === 'string' ? group.color.toLowerCase() : 'grey';
+
+  return {
+    id: normalizedId,
+    title: typeof group.title === 'string' ? group.title : '',
+    color: TAB_GROUP_COLORS.has(color) ? color : 'grey',
+    collapsed: Boolean(group.collapsed)
   };
 }
 
 function sanitizeWindowForClient(win) {
   const tabs = Array.isArray(win?.tabs) ? win.tabs : [];
+  const groups = Array.isArray(win?.groups) ? win.groups : [];
+  const sanitizedGroups = groups.map((group) => sanitizeGroupForClient(group)).filter(Boolean);
   return {
     state: win?.state || 'normal',
     focused: Boolean(win?.focused),
@@ -291,12 +337,238 @@ function sanitizeWindowForClient(win) {
     height: Number.isFinite(win?.height) ? win.height : null,
     incognito: Boolean(win?.incognito),
     alwaysOnTop: Boolean(win?.alwaysOnTop),
-    tabs: tabs.map((tab) => sanitizeTabForClient(tab)).filter(Boolean)
+    tabs: tabs.map((tab) => sanitizeTabForClient(tab)).filter(Boolean),
+    groups: sanitizedGroups
   };
 }
 
+function createPreviewItem(tab, displayIndex, originalIndex, wIndex, winSnapshot, sessionPayload, index, label, previewHeader, windowBlock, items) {
+  const item = document.createElement('div');
+  item.className = 'preview-item';
+
+  const indexBadge = document.createElement('span');
+  indexBadge.className = 'preview-index';
+  indexBadge.textContent = String(displayIndex + 1);
+
+  const iconWrapper = document.createElement('span');
+  iconWrapper.className = 'preview-favicon';
+  if (tab.favIconUrl) {
+    const iconImg = document.createElement('img');
+    iconImg.src = tab.favIconUrl;
+    iconImg.alt = '';
+    iconWrapper.appendChild(iconImg);
+  } else {
+    iconWrapper.classList.add('is-placeholder');
+    iconWrapper.innerHTML = '&bull;';
+  }
+
+  const content = document.createElement('div');
+  content.className = 'preview-content';
+
+  const rawTitle = (tab.title || tab.url || '').trim();
+  const displayTitle = rawTitle.length > 0 ? rawTitle : (tab.url || '');
+  const truncatedTitle =
+    displayTitle.length > 70 ? `${displayTitle.slice(0, 67)}...` : displayTitle;
+
+  const titleEl = document.createElement('span');
+  titleEl.className = 'preview-title';
+  titleEl.textContent = truncatedTitle;
+
+  const domain = extractHostname(tab.url);
+  if (domain) {
+    const domainEl = document.createElement('span');
+    domainEl.className = 'preview-domain';
+    domainEl.textContent = domain;
+    content.appendChild(domainEl);
+  }
+
+  content.insertBefore(titleEl, content.firstChild);
+  // Remove button for this tab in preview
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'preview-remove-btn';
+  removeBtn.type = 'button';
+  removeBtn.setAttribute('aria-label', 'Remove tab from session');
+  removeBtn.textContent = '✕';
+
+  // Handler to remove this tab from session data and UI
+  removeBtn.addEventListener('click', (ev) => {
+    try {
+      ev.stopPropagation();
+      const confirmed = confirm('Remove this tab from the saved session?');
+      if (!confirmed) return;
+
+      // Mutate the underlying sessionPayload data
+      const windowTabsArr = Array.isArray(winSnapshot.tabs) ? winSnapshot.tabs : [];
+      // Get the removed tab before splicing
+      const removedTab = windowTabsArr[originalIndex];
+      // Remove tab from data
+      windowTabsArr.splice(originalIndex, 1);
+
+      // Check if the removed tab was in a group, and if group is now empty, remove group
+      if (removedTab && removedTab.groupId !== -1) {
+        const windowGroupsArr = Array.isArray(winSnapshot.groups) ? winSnapshot.groups : [];
+        const groupIndex = windowGroupsArr.findIndex(g => g.id === removedTab.groupId);
+        if (groupIndex !== -1) {
+          const remainingTabsInGroup = windowTabsArr.filter(t => t.groupId === removedTab.groupId);
+          if (remainingTabsInGroup.length === 0) {
+            // Remove empty group
+            windowGroupsArr.splice(groupIndex, 1);
+          }
+        }
+      }
+
+      // If window became empty, remove it
+      if (windowTabsArr.length === 0) {
+        sessionPayload.windows.splice(wIndex, 1);
+        // Remove window block from DOM
+        if (windowBlock && windowBlock.parentNode) windowBlock.parentNode.removeChild(windowBlock);
+      } else {
+        // Remove the item element from DOM
+        if (item && item.parentNode) item.parentNode.removeChild(item);
+        // Re-number remaining preview-index badges in this window
+        const remaining = items.querySelectorAll('.preview-item .preview-index');
+        remaining.forEach((badge, i) => (badge.textContent = String(i + 1)));
+      }
+
+      // Recompute counts and update header/meta
+      const countInfo = describeSessionCounts(sessionPayload);
+
+      // Update preview header count
+      const previewCountEl = previewHeader.querySelector('.preview-count');
+      if (previewCountEl) {
+        previewCountEl.textContent = formatCountSummary(countInfo);
+      }
+
+      // Update session label meta
+      const { date: d, time: t } = formatTimestamp(sessionPayload.timestamp);
+      const strategy = sessionPayload.desktopStrategy || sessionPayload.metadata?.desktopStrategy;
+      const metaSegments = [d, t, countInfo.windowsLabel, countInfo.tabsLabel];
+      if (countInfo.groupsLabel) metaSegments.splice(3, 0, countInfo.groupsLabel);
+      if (strategy === 'workspace') metaSegments.push(getTranslation('desktop_scope_workspace'));
+      const metaEl = label.querySelector('.session-meta');
+      if (metaEl) metaEl.innerHTML = metaSegments.map(segment => `<span>${segment}</span>`).join('');
+
+      // Persist changes: if no tabs left, delete session; else update session
+      if (countInfo.tabsCount === 0) {
+        chrome.runtime.sendMessage({ action: 'delete_session', index }, (res) => {
+          if (res && res.success) loadSessions();
+        });
+      } else {
+        chrome.runtime.sendMessage({ action: 'update_session', index, session: sessionPayload }, (res) => {
+          if (!res || !res.success) console.error('Failed to update session after tab removal', res && res.error);
+        });
+      }
+    } catch (e) {
+      console.error('Error in removeBtn click', e);
+    }
+  });
+
+  item.appendChild(indexBadge);
+  item.appendChild(iconWrapper);
+  item.appendChild(content);
+  item.appendChild(removeBtn);
+
+  return item;
+}
+
+function renderPreview(sessionPayload, previewContainer, index, label) {
+  previewContainer.innerHTML = '';
+  const countInfo = describeSessionCounts(sessionPayload);
+
+  const previewHeader = document.createElement('div');
+  previewHeader.className = 'preview-header';
+  previewHeader.innerHTML = `<span>${getTranslation('preview_title')}</span><span class="preview-count">${formatCountSummary(countInfo)}</span>`;
+  previewContainer.appendChild(previewHeader);
+
+  const previewWindowsWrapper = document.createElement('div');
+  previewWindowsWrapper.className = 'preview-windows';
+  previewContainer.appendChild(previewWindowsWrapper);
+
+  if (!sessionPayload.windows.length) {
+    const emptyPreview = document.createElement('div');
+    emptyPreview.className = 'preview-empty';
+    emptyPreview.textContent = getTranslation('preview_empty');
+    previewWindowsWrapper.appendChild(emptyPreview);
+    previewContainer.dataset.rendered = 'true';
+    return;
+  }
+
+  sessionPayload.windows.forEach((winSnapshot, wIndex) => {
+    const windowBlock = document.createElement('div');
+    windowBlock.className = 'preview-window';
+
+    const windowHeader = document.createElement('div');
+    windowHeader.className = 'preview-window-header';
+
+    const windowTabs = Array.isArray(winSnapshot.tabs) ? winSnapshot.tabs : [];
+    const windowGroups = Array.isArray(winSnapshot.groups) ? winSnapshot.groups : [];
+    const windowTabsLabel =
+      windowTabs.length === 1
+        ? getTranslation('tab_count_one')
+        : getTranslation('tab_count_other').replace('{count}', windowTabs.length);
+
+    windowHeader.innerHTML = `<span>${getTranslation('preview_window_label').replace('{index}', wIndex + 1)}</span><span class="preview-count">${windowTabsLabel}</span>`;
+
+    const items = document.createElement('div');
+    items.className = 'preview-items';
+
+    if (!windowTabs.length) {
+      const emptyTab = document.createElement('div');
+      emptyTab.className = 'preview-empty';
+      emptyTab.textContent = getTranslation('preview_empty');
+      items.appendChild(emptyTab);
+    } else {
+      const groupedTabs = new Map();
+      const ungroupedTabs = [];
+      windowTabs.forEach((tab, tabIndex) => {
+        if (tab.groupId !== -1 && windowGroups.some(g => g && g.id === tab.groupId)) {
+          if (!groupedTabs.has(tab.groupId)) {
+            groupedTabs.set(tab.groupId, []);
+          }
+          groupedTabs.get(tab.groupId).push({ tab, originalIndex: tabIndex });
+        } else {
+          ungroupedTabs.push({ tab, originalIndex: tabIndex });
+        }
+      });
+
+      let globalTabIndex = 0;
+
+      ungroupedTabs.forEach(({ tab, originalIndex }) => {
+        const item = createPreviewItem(tab, globalTabIndex, originalIndex, wIndex, winSnapshot, sessionPayload, index, label, previewHeader, windowBlock, items);
+        items.appendChild(item);
+        globalTabIndex++;
+      });
+
+      windowGroups.forEach(group => {
+        const groupTabs = groupedTabs.get(group.id) || [];
+        if (groupTabs.length > 0) {
+          const groupHeader = document.createElement('div');
+          groupHeader.className = 'preview-group-header';
+          groupHeader.innerHTML = `<span class="group-title">${group.title || 'Group'}</span><span class="group-color" style="background-color: ${group.color}"></span>`;
+          items.appendChild(groupHeader);
+
+          const groupContainer = document.createElement('div');
+          groupContainer.className = 'preview-group';
+          groupTabs.forEach(({ tab, originalIndex }) => {
+            const item = createPreviewItem(tab, globalTabIndex, originalIndex, wIndex, winSnapshot, sessionPayload, index, label, previewHeader, windowBlock, items);
+            groupContainer.appendChild(item);
+            globalTabIndex++;
+          });
+          items.appendChild(groupContainer);
+        }
+      });
+    }
+
+    windowBlock.appendChild(windowHeader);
+    windowBlock.appendChild(items);
+    previewWindowsWrapper.appendChild(windowBlock);
+  });
+
+  previewContainer.dataset.rendered = 'true';
+}
+
 function normalizeSessionSnapshot(raw) {
-  const base = raw && typeof raw === 'object' ? { ...raw } : {};
+  const base = raw && typeof raw === 'object' ? raw : {};
   const windowsSource = Array.isArray(base.windows)
     ? base.windows
     : Array.isArray(base.session)
@@ -308,33 +580,57 @@ function normalizeSessionSnapshot(raw) {
   const sanitizedWindows = windowsSource.map((win) => sanitizeWindowForClient(win));
   const metadata =
     base.metadata && typeof base.metadata === 'object' ? { ...base.metadata } : {};
-  let desktopStrategy = base.desktopStrategy || metadata.desktopStrategy || null;
+  let desktopStrategy = base.desktopStrategy ?? metadata.desktopStrategy ?? null;
   if (desktopStrategy === 'unknown' || desktopStrategy === 'best-effort' || desktopStrategy === 'global') {
     desktopStrategy = null;
   }
   if (metadata.desktopStrategy === 'unknown' || metadata.desktopStrategy === 'best-effort' || metadata.desktopStrategy === 'global') {
     delete metadata.desktopStrategy;
   }
-  const desktopKey = base.desktopKey || metadata.desktopKey || null;
+  const desktopKey = base.desktopKey ?? metadata.desktopKey ?? null;
+  const platform =
+    typeof base.platform === 'string' && base.platform.trim()
+      ? base.platform
+      : typeof metadata.platform === 'string' && metadata.platform.trim()
+      ? metadata.platform.trim()
+      : null;
 
-  const metadataForClient = { ...metadata, desktopKey };
+  const metadataForClient = { ...metadata };
+  if (typeof desktopKey !== 'undefined') {
+    metadataForClient.desktopKey = desktopKey;
+  }
+  if (platform) {
+    metadataForClient.platform = platform;
+  } else {
+    delete metadataForClient.platform;
+  }
   if (desktopStrategy) {
     metadataForClient.desktopStrategy = desktopStrategy;
   } else {
     delete metadataForClient.desktopStrategy;
   }
 
-  return {
-    ...base,
-    timestamp:
-      typeof base.timestamp === 'string' && base.timestamp
-        ? base.timestamp
-        : new Date().toISOString(),
+  const timestamp =
+    typeof base.timestamp === 'string' && base.timestamp
+      ? base.timestamp
+      : new Date().toISOString();
+  const name =
+    typeof base.name === 'string' && base.name.trim() ? base.name.trim() : '';
+
+  const normalized = {
+    name,
+    timestamp,
     windows: sanitizedWindows,
     metadata: metadataForClient,
     desktopKey,
-    ...(desktopStrategy ? { desktopStrategy } : {})
+    platform
   };
+
+  if (desktopStrategy) {
+    normalized.desktopStrategy = desktopStrategy;
+  }
+
+  return normalized;
 
 }
 
@@ -345,7 +641,36 @@ function computeSessionCounts(session) {
     const tabTotal = Array.isArray(win.tabs) ? win.tabs.length : 0;
     return total + tabTotal;
   }, 0);
-  return { windowsCount, tabsCount };
+  const groupsCount = windows.reduce((total, win) => {
+    const groupTotal = Array.isArray(win.groups) ? win.groups.length : 0;
+    return total + groupTotal;
+  }, 0);
+  return { windowsCount, tabsCount, groupsCount };
+}
+
+function describeSessionCounts(session) {
+  const { windowsCount, tabsCount, groupsCount } = computeSessionCounts(session);
+  const tabsLabel =
+    tabsCount === 1
+      ? getTranslation('tab_count_one')
+      : getTranslation('tab_count_other').replace('{count}', tabsCount);
+  const windowsLabel =
+    windowsCount === 1
+      ? getTranslation('window_count_one')
+      : getTranslation('window_count_other').replace('{count}', windowsCount);
+  const groupsLabel =
+    groupsCount > 0
+      ? groupsCount === 1
+        ? getTranslation('group_count_one')
+        : getTranslation('group_count_other').replace('{count}', groupsCount)
+      : null;
+  return { windowsCount, tabsCount, groupsCount, tabsLabel, windowsLabel, groupsLabel };
+}
+
+function formatCountSummary(countInfo) {
+  let summary = `${countInfo.tabsLabel} \u2022 ${countInfo.windowsLabel}`;
+  if (countInfo.groupsLabel) summary += ` \u2022 ${countInfo.groupsLabel}`;
+  return summary;
 }
 
 function resetPreviewStates() {
@@ -449,60 +774,72 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     importInput.addEventListener('change', (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        try {
-          const parsed = JSON.parse(ev.target.result);
-          if (!Array.isArray(parsed)) throw new Error('Invalid format: expected an array');
+      try {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const parsed = JSON.parse(ev.target.result);
+            if (!Array.isArray(parsed)) throw new Error('Invalid format: expected an array');
 
-          const valid = parsed.every(item =>
-            item &&
-            typeof item === 'object' &&
-            typeof item.timestamp === 'string' &&
-            (Array.isArray(item.windows) || Array.isArray(item.session) || Array.isArray(item.tabs))
-          );
-          if (!valid) throw new Error('Invalid session objects');
+            const valid = parsed.every(item =>
+              item &&
+              typeof item === 'object' &&
+              typeof item.timestamp === 'string' &&
+              (Array.isArray(item.windows) || Array.isArray(item.session) || Array.isArray(item.tabs))
+            );
+            if (!valid) throw new Error('Invalid session objects');
 
-          const replace = confirm('Replace existing sessions with imported ones? Click OK to replace, Cancel to merge.');
+            const replace = confirm('Replace existing sessions with imported ones? Click OK to replace, Cancel to merge.');
 
-          chrome.runtime.sendMessage({ action: 'get_sessions' }, (existingRaw) => {
-            const existing = Array.isArray(existingRaw) ? existingRaw : [];
-            let resultSessions = replace ? [] : existing.slice();
-            const baseCount = resultSessions.length;
+            chrome.runtime.sendMessage({ action: 'get_sessions' }, (existingRaw) => {
+              try {
+                const existing = Array.isArray(existingRaw) ? existingRaw : [];
+                let resultSessions = replace ? [] : existing.slice();
+                const baseCount = resultSessions.length;
 
-            const importedSessions = parsed.map((item, idx) => {
-              const normalized = normalizeSessionSnapshot(item);
-              if (!normalized.name || !normalized.name.trim()) {
-                normalized.name = `${getTranslation('session_default_name')} ${baseCount + idx + 1}`;
+                const importedSessions = parsed.map((item, idx) => {
+                  const normalized = normalizeSessionSnapshot(item);
+                  if (!normalized.name || !normalized.name.trim()) {
+                    normalized.name = `${getTranslation('session_default_name')} ${baseCount + idx + 1}`;
+                  }
+                  return normalized;
+                });
+
+                resultSessions = replace ? importedSessions : resultSessions.concat(importedSessions);
+
+                const max = parseInt(localStorage.getItem('maxSessions') || '10', 10);
+                if (resultSessions.length > max) {
+                  resultSessions = resultSessions.slice(-max);
+                }
+
+                chrome.storage.local.set({ sessions: resultSessions }, () => {
+                  try {
+                    if (chrome.runtime.lastError) {
+                      console.error('Import persist error', chrome.runtime.lastError);
+                      alert('Failed to import sessions: ' + chrome.runtime.lastError.message);
+                      return;
+                    }
+                    loadSessions();
+                    alert('Import successful');
+                  } catch (e) {
+                    console.error('Error in import set callback', e);
+                  }
+                });
+              } catch (e) {
+                console.error('Error in import get_sessions callback', e);
               }
-              return normalized;
             });
-
-            resultSessions = replace ? importedSessions : resultSessions.concat(importedSessions);
-
-            const max = parseInt(localStorage.getItem('maxSessions') || '10', 10);
-            if (resultSessions.length > max) {
-              resultSessions = resultSessions.slice(-max);
-            }
-
-            chrome.storage.local.set({ sessions: resultSessions }, () => {
-              if (chrome.runtime.lastError) {
-                console.error('Import persist error', chrome.runtime.lastError);
-                alert('Failed to import sessions: ' + chrome.runtime.lastError.message);
-                return;
-              }
-              loadSessions();
-              alert('Import successful');
-            });
-          });
-        } catch (err) {
-          console.error('Import error', err);
-          alert('Failed to import sessions: ' + (err.message || err));
-        }
-      };
-      reader.readAsText(file);
+          } catch (err) {
+            console.error('Import error', err);
+            alert('Failed to import sessions: ' + (err.message || err));
+          }
+        };
+        reader.readAsText(file);
+      } catch (e) {
+        console.error('Error in import change', e);
+      }
     });
   }
 
@@ -525,71 +862,89 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveButtonEl = document.getElementById('save');
   if (saveButtonEl) {
     saveButtonEl.addEventListener('click', () => {
-      if (saveButtonEl.disabled) return;
-      saveButtonEl.disabled = true;
+      try {
+        if (saveButtonEl.disabled) return;
+        saveButtonEl.disabled = true;
 
-      chrome.runtime.sendMessage({ action: 'get_sessions' }, (existingRaw) => {
-        if (chrome.runtime.lastError) {
-          console.error('Load sessions error', chrome.runtime.lastError);
-          alert('Unable to load existing sessions. Please try again.');
-          saveButtonEl.disabled = false;
-          return;
-        }
-        const existing = Array.isArray(existingRaw) ? existingRaw : [];
-
-        chrome.runtime.sendMessage({ action: 'capture_current_desktop' }, (snapshot) => {
-          if (chrome.runtime.lastError) {
-            console.error('Capture message error', chrome.runtime.lastError);
-            alert('Unable to capture the current session. Please try again.');
-            saveButtonEl.disabled = false;
-            return;
-          }
-          if (!snapshot || !snapshot.success) {
-            console.error('Capture error', snapshot?.error);
-            alert('Unable to capture the current session. Please try again.');
-            saveButtonEl.disabled = false;
-            return;
-          }
-
-          const timestamp = new Date().toISOString();
-          const defaultName = `${getTranslation('session_default_name')} ${existing.length + 1}`;
-
-          const sessionObject = normalizeSessionSnapshot({
-            name: defaultName,
-            timestamp,
-            windows: snapshot.windows,
-            metadata: {
-              desktopKey: snapshot.desktopKey ?? null,
-              ...(snapshot.desktopStrategy ? { desktopStrategy: snapshot.desktopStrategy } : {}),
-              ...(snapshot.platform ? { platform: snapshot.platform } : {}),
-              ...(snapshot.heuristics ? { heuristics: snapshot.heuristics } : {})
-            },
-            desktopKey: snapshot.desktopKey ?? null,
-            ...(snapshot.desktopStrategy ? { desktopStrategy: snapshot.desktopStrategy } : {}),
-            platform: snapshot.platform ?? null
-          });
-
-          if (!sessionObject.windows.length) {
-            alert('No browser windows were detected to save on this desktop.');
-            saveButtonEl.disabled = false;
-            return;
-          }
-
-          const max = parseInt(localStorage.getItem('maxSessions') || '10', 10);
-          const merged = existing.concat(sessionObject);
-          const trimmed = merged.slice(-max);
-
-          chrome.storage.local.set({ sessions: trimmed }, () => {
-            saveButtonEl.disabled = false;
+        chrome.runtime.sendMessage({ action: 'get_sessions' }, (existingRaw) => {
+          try {
             if (chrome.runtime.lastError) {
-              console.error('Session save error', chrome.runtime.lastError);
-              alert('Unable to save this session. Please try again.');
+              console.error('Load sessions error', chrome.runtime.lastError);
+              alert('Unable to load existing sessions. Please try again.');
+              saveButtonEl.disabled = false;
               return;
             }
-            loadSessions();
-          });
+            const existing = Array.isArray(existingRaw) ? existingRaw : [];
+
+            chrome.runtime.sendMessage({ action: 'capture_current_desktop' }, (snapshot) => {
+              try {
+                if (chrome.runtime.lastError) {
+                  console.error('Capture message error', chrome.runtime.lastError);
+                  alert('Unable to capture the current session. Please try again.');
+                  saveButtonEl.disabled = false;
+                  return;
+                }
+                if (!snapshot || !snapshot.success) {
+                  console.error('Capture error', snapshot?.error);
+                  alert('Unable to capture the current session. Please try again.');
+                  saveButtonEl.disabled = false;
+                  return;
+                }
+
+                const timestamp = new Date().toISOString();
+                const defaultName = `${getTranslation('session_default_name')} ${existing.length + 1}`;
+
+                const metadata = {
+                  desktopKey: snapshot.desktopKey ?? null,
+                  ...(snapshot.desktopStrategy ? { desktopStrategy: snapshot.desktopStrategy } : {}),
+                  ...(snapshot.heuristics ? { heuristics: snapshot.heuristics } : {})
+                };
+                const sessionObject = normalizeSessionSnapshot({
+                  name: defaultName,
+                  timestamp,
+                  windows: snapshot.windows,
+                  metadata,
+                  platform: snapshot.platform ?? null
+                });
+
+                if (!sessionObject.windows.length) {
+                  alert('No browser windows were detected to save on this desktop.');
+                  saveButtonEl.disabled = false;
+                  return;
+                }
+
+                const max = parseInt(localStorage.getItem('maxSessions') || '10', 10);
+                const merged = existing.concat(sessionObject);
+                const trimmed = merged.slice(-max);
+
+                chrome.storage.local.set({ sessions: trimmed }, () => {
+                  try {
+                    saveButtonEl.disabled = false;
+                    if (chrome.runtime.lastError) {
+                      console.error('Session save error', chrome.runtime.lastError);
+                      alert('Unable to save this session. Please try again.');
+                      return;
+                    }
+                    loadSessions();
+                  } catch (e) {
+                    console.error('Error in save set callback', e);
+                    saveButtonEl.disabled = false;
+                  }
+                });
+              } catch (e) {
+                console.error('Error in capture callback', e);
+                saveButtonEl.disabled = false;
+              }
+            });
+          } catch (e) {
+            console.error('Error in get_sessions callback', e);
+            saveButtonEl.disabled = false;
+          }
         });
-      });
+      } catch (e) {
+        console.error('Error in save click', e);
+        saveButtonEl.disabled = false;
+      }
     });
   }
 
@@ -663,17 +1018,11 @@ document.addEventListener('DOMContentLoaded', () => {
             : `${getTranslation('session_default_name')} ${index + 1}`;
 
         const { date, time } = formatTimestamp(normalized.timestamp);
-        const { windowsCount, tabsCount } = computeSessionCounts(normalized);
-        const tabsLabel =
-          tabsCount === 1
-            ? getTranslation('tab_count_one')
-            : getTranslation('tab_count_other').replace('{count}', tabsCount);
-        const windowsLabel =
-          windowsCount === 1
-            ? getTranslation('window_count_one')
-            : getTranslation('window_count_other').replace('{count}', windowsCount);
+        const countInfo = describeSessionCounts(normalized);
+        if (countInfo.tabsCount === 0) return;
         const strategy = normalized.desktopStrategy || normalized.metadata?.desktopStrategy;
-        const metaSegments = [date, time, windowsLabel, tabsLabel];
+        const metaSegments = [date, time, countInfo.windowsLabel, countInfo.tabsLabel];
+        if (countInfo.groupsLabel) metaSegments.splice(3, 0, countInfo.groupsLabel);
         if (strategy === 'workspace') {
           metaSegments.push(getTranslation('desktop_scope_workspace'));
         }
@@ -756,185 +1105,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const previewContainer = document.createElement('div');
         previewContainer.className = 'preview-container';
         previewContainer.style.display = 'none';
-
-        const previewHeader = document.createElement('div');
-        previewHeader.className = 'preview-header';
-        previewHeader.innerHTML = `<span>${getTranslation('preview_title')}</span><span class="preview-count">${tabsLabel} &bull; ${windowsLabel}</span>`;
-
-        const previewWindowsWrapper = document.createElement('div');
-        previewWindowsWrapper.className = 'preview-windows';
-
-        if (!normalized.windows.length) {
-          const emptyPreview = document.createElement('div');
-          emptyPreview.className = 'preview-empty';
-          emptyPreview.textContent = getTranslation('preview_empty');
-          previewWindowsWrapper.appendChild(emptyPreview);
-        } else {
-          normalized.windows.forEach((winSnapshot, wIndex) => {
-            const windowBlock = document.createElement('div');
-            windowBlock.className = 'preview-window';
-
-            const windowHeader = document.createElement('div');
-            windowHeader.className = 'preview-window-header';
-
-            const windowTabs = Array.isArray(winSnapshot.tabs) ? winSnapshot.tabs : [];
-            const windowTabsLabel =
-              windowTabs.length === 1
-                ? getTranslation('tab_count_one')
-                : getTranslation('tab_count_other').replace('{count}', windowTabs.length);
-
-            windowHeader.innerHTML = `<span>${getTranslation('preview_window_label').replace('{index}', wIndex + 1)}</span><span class="preview-count">${windowTabsLabel}</span>`;
-
-            const items = document.createElement('div');
-            items.className = 'preview-items';
-
-            if (!windowTabs.length) {
-              const emptyTab = document.createElement('div');
-              emptyTab.className = 'preview-empty';
-              emptyTab.textContent = getTranslation('preview_empty');
-              items.appendChild(emptyTab);
-            } else {
-              windowTabs.forEach((tab, tabIndex) => {
-                const item = document.createElement('div');
-                item.className = 'preview-item';
-
-                const indexBadge = document.createElement('span');
-                indexBadge.className = 'preview-index';
-                indexBadge.textContent = String(tabIndex + 1);
-
-                const iconWrapper = document.createElement('span');
-                iconWrapper.className = 'preview-favicon';
-                if (tab.favIconUrl) {
-                  const iconImg = document.createElement('img');
-                  iconImg.src = tab.favIconUrl;
-                  iconImg.alt = '';
-                  iconWrapper.appendChild(iconImg);
-                } else {
-                  iconWrapper.classList.add('is-placeholder');
-                  iconWrapper.innerHTML = '&bull;';
-                }
-
-                const content = document.createElement('div');
-                content.className = 'preview-content';
-
-                const rawTitle = (tab.title || tab.url || '').trim();
-                const displayTitle = rawTitle.length > 0 ? rawTitle : (tab.url || '');
-                const truncatedTitle =
-                  displayTitle.length > 70 ? `${displayTitle.slice(0, 67)}...` : displayTitle;
-
-                const titleEl = document.createElement('span');
-                titleEl.className = 'preview-title';
-                titleEl.textContent = truncatedTitle;
-
-                const domain = extractHostname(tab.url);
-                if (domain) {
-                  const domainEl = document.createElement('span');
-                  domainEl.className = 'preview-domain';
-                  domainEl.textContent = domain;
-                  content.appendChild(domainEl);
-                }
-
-                content.insertBefore(titleEl, content.firstChild);
-                // Remove button for this tab in preview
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'preview-remove-btn';
-                removeBtn.type = 'button';
-                removeBtn.setAttribute('aria-label', 'Remove tab from session');
-                removeBtn.textContent = '✕';
-
-                // Handler to remove this tab from session data and UI
-                removeBtn.addEventListener('click', (ev) => {
-                  ev.stopPropagation();
-                  const confirmed = confirm('Remove this tab from the saved session?');
-                  if (!confirmed) return;
-
-                  // Mutate the underlying sessionPayload data
-                  const windowTabsArr = Array.isArray(winSnapshot.tabs) ? winSnapshot.tabs : [];
-                  // Remove tab from data
-                  windowTabsArr.splice(tabIndex, 1);
-
-                  // If window became empty, remove it
-                  if (windowTabsArr.length === 0) {
-                    sessionPayload.windows.splice(wIndex, 1);
-                    // Remove window block from DOM
-                    if (windowBlock && windowBlock.parentNode) windowBlock.parentNode.removeChild(windowBlock);
-                  } else {
-                    // Remove the item element from DOM
-                    if (item && item.parentNode) item.parentNode.removeChild(item);
-                    // Re-number remaining preview-index badges in this window
-                    const remaining = items.querySelectorAll('.preview-item .preview-index');
-                    remaining.forEach((badge, i) => (badge.textContent = String(i + 1)));
-                  }
-
-                  // Recompute counts and update header/meta
-                  const { windowsCount: newWindowsCount, tabsCount: newTabsCount } = computeSessionCounts(sessionPayload);
-                  const newTabsLabel =
-                    newTabsCount === 1
-                      ? getTranslation('tab_count_one')
-                      : getTranslation('tab_count_other').replace('{count}', newTabsCount);
-                  const newWindowsLabel =
-                    newWindowsCount === 1
-                      ? getTranslation('window_count_one')
-                      : getTranslation('window_count_other').replace('{count}', newWindowsCount);
-
-                  // Update preview header count
-                  const previewCountEl = previewHeader.querySelector('.preview-count');
-                  if (previewCountEl) previewCountEl.textContent = `${newTabsLabel} • ${newWindowsLabel}`;
-
-                  // Update session label meta
-                  const { date: d, time: t } = formatTimestamp(sessionPayload.timestamp);
-                  const strategy = sessionPayload.desktopStrategy || sessionPayload.metadata?.desktopStrategy;
-                  const metaSegments = [d, t, newWindowsLabel, newTabsLabel];
-                  if (strategy === 'workspace') metaSegments.push(getTranslation('desktop_scope_workspace'));
-                  const metaEl = label.querySelector('.session-meta');
-                  if (metaEl) metaEl.innerHTML = metaSegments.map(segment => `<span>${segment}</span>`).join('');
-
-                  // Persist changes: if no tabs left, delete session; else update session
-                  if (newTabsCount === 0) {
-                    chrome.runtime.sendMessage({ action: 'delete_session', index }, (res) => {
-                      if (res && res.success) loadSessions();
-                    });
-                  } else {
-                    chrome.runtime.sendMessage({ action: 'update_session', index, session: sessionPayload }, (res) => {
-                      if (!res || !res.success) console.error('Failed to update session after tab removal', res && res.error);
-                    });
-                  }
-                });
-
-                item.appendChild(indexBadge);
-                item.appendChild(iconWrapper);
-                item.appendChild(content);
-                item.appendChild(removeBtn);
-                items.appendChild(item);
-              });
-            }
-
-            windowBlock.appendChild(windowHeader);
-            windowBlock.appendChild(items);
-            previewWindowsWrapper.appendChild(windowBlock);
-          });
-        }
-
-        previewContainer.appendChild(previewHeader);
-        previewContainer.appendChild(previewWindowsWrapper);
+        previewContainer.dataset.rendered = 'false';
         previewContainer.addEventListener('click', (event) => event.stopPropagation());
 
         const triggerRestore = () => {
           closeAllMenus();
+          if (!sessionPayload.windows || sessionPayload.windows.length === 0) {
+            alert('This session has no windows to restore.');
+            return;
+          }
           chrome.runtime.sendMessage(
             { action: 'open_session', session: sessionPayload },
             (res) => {
-              if (chrome.runtime.lastError) {
-                console.error('Restore error', chrome.runtime.lastError);
-                alert('Unable to restore this session: ' + chrome.runtime.lastError.message);
-                return;
+              try {
+                if (chrome.runtime.lastError) {
+                  console.error('Restore error', chrome.runtime.lastError);
+                  alert('Unable to restore this session: ' + String(chrome.runtime.lastError.message));
+                  return;
+                }
+                if (!res || !res.success) {
+                  console.error('Restore failed', res && res.error);
+                  alert('Unable to restore this session: ' + (res && res.error ? String(res.error) : 'Unknown error'));
+                  window.close();
+                  return;
+                }
+                window.close();
+              } catch (e) {
+                console.error('Error in restore callback', e);
               }
-              if (!res || !res.success) {
-                console.error('Restore failed', res && res.error);
-                alert('Unable to restore this session: ' + (res && res.error ? res.error : 'Unknown error'));
-                return;
-              }
-              window.close();
             }
           );
         };
@@ -955,55 +1153,65 @@ document.addEventListener('DOMContentLoaded', () => {
         menu.addEventListener('click', (event) => event.stopPropagation());
 
         menuBtn.addEventListener('click', (event) => {
-          event.stopPropagation();
-          const wasOpen = menu.style.display === 'block';
-          closeAllMenus();
-          if (!wasOpen) {
-            // Position menu as fixed overlay using viewport coordinates
-            const btnRect = menuBtn.getBoundingClientRect();
-            const menuHeight = 120; // Estimated height for flipping logic
-            const popupRect = document.querySelector('body').getBoundingClientRect();
-            
-            // Position menu below button
-            let top = btnRect.bottom + 6;
-            let left = btnRect.right - 160; // Align right edge, accounting for min-width: 150px
-            
-            // Flip menu above button if insufficient space below
-            // (account for viewport height - typically 600-800px for Chrome popup)
-            if (top + menuHeight > window.innerHeight - 10) {
-              top = btnRect.top - menuHeight - 6;
+          try {
+            event.stopPropagation();
+            const wasOpen = menu.style.display === 'block';
+            closeAllMenus();
+            if (!wasOpen) {
+              // Position menu as fixed overlay using viewport coordinates
+              const btnRect = menuBtn.getBoundingClientRect();
+              const menuHeight = 120; // Estimated height for flipping logic
+              
+              // Position menu below button
+              let top = btnRect.bottom + 6;
+              let left = btnRect.right - 160; // Align right edge, accounting for min-width: 150px
+              
+              // Flip menu above button if insufficient space below
+              // (account for viewport height - typically 600-800px for Chrome popup)
+              if (top + menuHeight > window.innerHeight - 10) {
+                top = btnRect.top - menuHeight - 6;
+              }
+              
+              // Clamp left within viewport with padding
+              const minLeft = 8;
+              const maxLeft = window.innerWidth - 160 - 8;
+              left = Math.max(minLeft, Math.min(left, maxLeft));
+              
+              menu.style.display = 'block';
+              menu.style.top = `${Math.max(0, top)}px`;
+              menu.style.left = `${left}px`;
+              // Move menu to body to escape popup's scroll container
+              if (menu.parentNode !== document.body) {
+                document.body.appendChild(menu);
+              }
+              entry.classList.add('menu-open');
+              menuBtn.setAttribute('aria-expanded', 'true');
             }
-            
-            // Clamp left within viewport with padding
-            const minLeft = 8;
-            const maxLeft = window.innerWidth - 160 - 8;
-            left = Math.max(minLeft, Math.min(left, maxLeft));
-            
-            menu.style.display = 'block';
-            menu.style.top = `${Math.max(0, top)}px`;
-            menu.style.left = `${left}px`;
-            // Move menu to body to escape popup's scroll container
-            if (menu.parentNode !== document.body) {
-              document.body.appendChild(menu);
-            }
-            entry.classList.add('menu-open');
-            menuBtn.setAttribute('aria-expanded', 'true');
+          } catch (e) {
+            console.error('Error in menuBtn click', e);
           }
         });
 
         previewBtn.addEventListener('click', (event) => {
-          event.stopPropagation();
-          const isOpen = previewContainer.classList.contains('is-open');
-          closeAllMenus({ preservePreviews: true });
-          if (isOpen) {
-            previewContainer.classList.remove('is-open');
-            previewContainer.style.display = 'none';
-            previewBtn.textContent = getTranslation('preview_button');
-          } else {
-            resetPreviewStates();
-            previewContainer.classList.add('is-open');
-            previewContainer.style.display = 'block';
-            previewBtn.textContent = getTranslation('preview_hide_button');
+          try {
+            event.stopPropagation();
+            const isOpen = previewContainer.classList.contains('is-open');
+            closeAllMenus({ preservePreviews: true });
+            if (isOpen) {
+              previewContainer.classList.remove('is-open');
+              previewContainer.style.display = 'none';
+              previewBtn.textContent = getTranslation('preview_button');
+            } else {
+              resetPreviewStates();
+              if (previewContainer.dataset.rendered !== 'true') {
+                renderPreview(sessionPayload, previewContainer, index, label);
+              }
+              previewContainer.classList.add('is-open');
+              previewContainer.style.display = 'block';
+              previewBtn.textContent = getTranslation('preview_hide_button');
+            }
+          } catch (e) {
+            console.error('Error in previewBtn click', e);
           }
         });
 
@@ -1061,5 +1269,3 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Note: loadSessions is now called inside DOMContentLoaded handler above
-
-

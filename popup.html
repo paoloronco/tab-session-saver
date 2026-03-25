@@ -16,15 +16,21 @@
       --shadow: 0 12px 24px rgba(28, 35, 51, 0.08);
     }
 
+    html {
+      width: 420px;
+      overflow: hidden;
+    }
+
     body {
       font-family: 'Inter', sans-serif;
       margin: 0;
       padding: 0;
-      width: 420px;
+      width: 100%;
       min-height: 0;
       background: linear-gradient(180deg, #f7f9ff 0%, #eef1f9 100%);
       color: var(--text-primary);
       transition: background-color 0.3s ease, color 0.3s ease;
+      overflow: hidden;
     }
 
     body.light-mode {
@@ -412,11 +418,34 @@
       background: rgba(255, 255, 255, 0.08);
     }
 
-    .preview-empty {
-      padding: 0.6rem 0.35rem;
-      text-align: center;
+    .preview-group-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.6rem;
+      margin: 0.5rem 0 0.25rem;
       font-size: 0.8rem;
+      font-weight: 600;
       color: var(--text-secondary);
+      border-radius: 8px;
+      background: var(--surface-alt);
+    }
+
+    .group-title {
+      flex: 1;
+    }
+
+    .group-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+    }
+
+    .preview-group {
+      border-left: 2px solid var(--accent-color);
+      margin-left: 0.5rem;
+      padding-left: 0.5rem;
     }
 
     .preview-item {
@@ -737,7 +766,7 @@
           <a href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" data-translate="privacy_policy_link">Privacy Policy</a>
         </div>
         <div class="footer-info">
-          <span data-translate="version_label">Version:</span> 5.0<br>
+          <span data-translate="version_label">Version:</span> 7.0<br>
           &copy; 2025 Paolo Ronco<br>
           <span data-translate="rights_reserved">All rights reserved</span>
         </div>

@@ -1,5 +1,6 @@
 
 const DEFAULT_SESSION_NAME = 'Session';
+const TAB_GROUP_COLORS = new Set(['grey', 'blue', 'red', 'yellow', 'green', 'cyan', 'orange', 'pink', 'purple']);
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
@@ -21,22 +22,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         case 'get_sessions': {
           const sessions = await loadSessionsFromStorage();
           sendResponse(sessions);
-          break;
-        }
-        case 'save_tabs': {
-          const snapshot = await captureCurrentDesktopSnapshot();
-          await appendSessionToStorage(
-            normalizeSessionForStorage({
-              name: DEFAULT_SESSION_NAME,
-              timestamp: new Date().toISOString(),
-              windows: snapshot.windows,
-              metadata: buildMetadataFromSnapshot(snapshot),
-              desktopKey: snapshot.desktopKey,
-              desktopStrategy: snapshot.desktopStrategy,
-              platform: snapshot.platform
-            })
-          );
-          sendResponse({ success: true });
           break;
         }
         case 'open_session': {
@@ -86,9 +71,9 @@ async function captureCurrentDesktopSnapshot() {
     const desktopStrategy = desktopKey ? 'workspace' : null;
     const filteredWindows = filterWindowsForCurrentDesktop(allWindows, enrichedCurrent, desktopKey);
 
-    const snapshots = filteredWindows.map((win) =>
+    const snapshots = await Promise.all(filteredWindows.map(async (win) =>
       buildWindowSnapshot(win, { focusedWindowId: enrichedCurrent?.id })
-    );
+    ));
 
     const platform =
       (globalThis.navigator &&
@@ -108,40 +93,23 @@ async function captureCurrentDesktopSnapshot() {
   }
 }
 
-function buildMetadataFromSnapshot(snapshot) {
-  const meta = {};
-  if (Object.prototype.hasOwnProperty.call(snapshot, 'desktopKey')) {
-    meta.desktopKey = snapshot.desktopKey ?? null;
-  }
-  if (snapshot.desktopStrategy) {
-    meta.desktopStrategy = snapshot.desktopStrategy;
-  }
-  if (snapshot.platform) {
-    meta.platform = snapshot.platform;
-  }
-  if (snapshot.heuristics) {
-    meta.heuristics = snapshot.heuristics;
-  }
-  return meta;
-}
 async function captureFallbackSnapshot(reason) {
   const allWindows = await chrome.windows.getAll({ populate: true, windowTypes: ['normal'] });
-  let snapshots = allWindows.map((win) => buildWindowSnapshot(win, {}));
+  let snapshots = await Promise.all(allWindows.map((win) => buildWindowSnapshot(win, {})));
 
   const hasTabs = snapshots.some((win) => Array.isArray(win.tabs) && win.tabs.length > 0);
   if (!hasTabs) {
     const tabs = await chrome.tabs.query({});
     if (tabs.length > 0) {
-      snapshots = [
-        buildWindowSnapshot(
-          {
-            state: 'normal',
-            focused: true,
-            tabs
-          },
-          {}
-        )
-      ];
+      const fallbackWindow = await buildWindowSnapshot(
+        {
+          state: 'normal',
+          focused: true,
+          tabs
+        },
+        {}
+      );
+      snapshots = [fallbackWindow];
     }
   }
 
@@ -192,28 +160,129 @@ function filterWindowsForCurrentDesktop(allWindows, currentWindow, desktopKey) {
   });
 }
 
-function buildWindowSnapshot(windowLike, options = {}) {
-  const { focusedWindowId = null } = options;
-  const tabs = Array.isArray(windowLike.tabs) ? windowLike.tabs : [];
+function sanitizeGroupSnapshot(group) {
+  if (!group || typeof group !== 'object') return null;
 
-  const sanitizedTabs = tabs
-    .map((tab) => sanitizeTabSnapshot(tab))
-    .filter((tab) => tab !== null);
+  const candidateIds = [group.id, group.groupId];
+  let normalizedId = null;
+  for (const value of candidateIds) {
+    if (Number.isInteger(value)) {
+      normalizedId = value;
+      break;
+    }
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsed = Number.parseInt(value, 10);
+      if (Number.isInteger(parsed)) {
+        normalizedId = parsed;
+        break;
+      }
+    }
+  }
+
+  if (normalizedId === null) {
+    return null;
+  }
+
+  const color = typeof group.color === 'string' ? group.color.toLowerCase() : 'grey';
 
   return {
-    state: windowLike.state || 'normal',
-    focused:
-      typeof focusedWindowId === 'number'
-        ? windowLike.id === focusedWindowId
-        : Boolean(windowLike.focused),
+    id: normalizedId,
+    title: typeof group.title === 'string' ? group.title : '',
+    color: TAB_GROUP_COLORS.has(color) ? color : 'grey',
+    collapsed: Boolean(group.collapsed)
+  };
+}
+
+function constructWindowSnapshot(windowLike = {}, options = {}) {
+  const {
+    focusedWindowId = null,
+    ensureTabs = false,
+    groupsOverride = null
+  } = options;
+
+  const tabs = Array.isArray(windowLike.tabs) ? windowLike.tabs : [];
+  let sanitizedTabs = tabs.map((tab) => sanitizeTabSnapshot(tab)).filter((tab) => tab !== null);
+
+  if (ensureTabs && sanitizedTabs.length === 0) {
+    sanitizedTabs = [
+      {
+        title: 'New Tab',
+        url: 'chrome://newtab/',
+        pinned: false,
+        active: true,
+        muted: false,
+        audible: false,
+        discarded: false,
+        favIconUrl: null,
+        index: 0,
+        groupId: -1
+      }
+    ];
+  }
+
+  const groupSource = Array.isArray(groupsOverride)
+    ? groupsOverride
+    : Array.isArray(windowLike.groups)
+    ? windowLike.groups
+    : Array.isArray(windowLike.tabGroups)
+    ? windowLike.tabGroups
+    : [];
+
+  const sanitizedGroups = groupSource.map((group) => sanitizeGroupSnapshot(group)).filter((group) => group !== null);
+
+  const focusedValue =
+    typeof focusedWindowId === 'number'
+      ? windowLike.id === focusedWindowId
+      : typeof windowLike.focused === 'boolean'
+      ? windowLike.focused
+      : sanitizedTabs.some((tab) => tab.active);
+
+  return {
+    state: typeof windowLike.state === 'string' ? windowLike.state : 'normal',
+    focused: Boolean(focusedValue),
     left: Number.isFinite(windowLike.left) ? windowLike.left : null,
     top: Number.isFinite(windowLike.top) ? windowLike.top : null,
     width: Number.isFinite(windowLike.width) ? windowLike.width : null,
     height: Number.isFinite(windowLike.height) ? windowLike.height : null,
     incognito: Boolean(windowLike.incognito),
     alwaysOnTop: Boolean(windowLike.alwaysOnTop),
-    tabs: sanitizedTabs
+    tabs: sanitizedTabs,
+    groups: sanitizedGroups
   };
+}
+
+function buildTabGroupUpdatePayload(group) {
+  if (!group || typeof group !== 'object') return {};
+  const payload = {
+    title: typeof group.title === 'string' ? group.title : ''
+  };
+  const color = typeof group.color === 'string' ? group.color.toLowerCase() : null;
+  if (color && TAB_GROUP_COLORS.has(color)) {
+    payload.color = color;
+  }
+  if (typeof group.collapsed === 'boolean') {
+    payload.collapsed = group.collapsed;
+  }
+  return payload;
+}
+
+async function buildWindowSnapshot(windowLike, options = {}) {
+  let groupsOverride = null;
+  if (windowLike && typeof windowLike.id === 'number' && chrome.tabGroups) {
+    try {
+      const windowGroups = await chrome.tabGroups.query({ windowId: windowLike.id });
+      groupsOverride = windowGroups;
+    } catch (e) {
+      // Tab groups unsupported or query failed; fall back to provided data.
+      groupsOverride = null;
+    }
+  }
+
+  return constructWindowSnapshot(windowLike, {
+    ...options,
+    ensureTabs: true,
+    groupsOverride
+  });
 }
 
 function sanitizeTabSnapshot(tab) {
@@ -228,7 +297,8 @@ function sanitizeTabSnapshot(tab) {
     audible: Boolean(tab.audible),
     discarded: Boolean(tab.discarded),
     favIconUrl: typeof tab.favIconUrl === 'string' ? tab.favIconUrl : null,
-    index: Number.isInteger(tab.index) ? tab.index : null
+    index: Number.isInteger(tab.index) ? tab.index : null,
+    groupId: Number.isInteger(tab.groupId) ? tab.groupId : -1
   };
 }
 async function loadSessionsFromStorage() {
@@ -251,12 +321,6 @@ async function loadSessionsFromStorage() {
 
   await chrome.storage.local.set({ sessions: migrated });
   return migrated;
-}
-
-async function appendSessionToStorage(sessionObject) {
-  const sessions = await loadSessionsFromStorage();
-  sessions.push(sessionObject);
-  await chrome.storage.local.set({ sessions });
 }
 
 async function deleteSessionAtIndex(index) {
@@ -326,7 +390,7 @@ function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_N
     : [];
 
   const normalizedWindows = windowsSource
-    .map((win) => buildWindowSnapshot(win || {}, {}))
+    .map((win) => constructWindowSnapshot(win || {}, {}))
     .filter((win) => Array.isArray(win.tabs) && win.tabs.length > 0);
 
   const metadataForStorage = {
@@ -361,7 +425,8 @@ async function restoreSessionFromSnapshot(rawSession) {
       await chrome.windows.create({ url: rawSession.map((tab) => tab.url) });
       return;
     }
-    throw new Error('No windows to restore in this session.');
+    await chrome.windows.create({ url: ['chrome://newtab/'] });
+    return;
   }
 
   const orderedWindows = [...windows].sort((a, b) => Number(a.focused) - Number(b.focused));
@@ -372,6 +437,7 @@ async function restoreSessionFromSnapshot(rawSession) {
 
 async function restoreSingleWindow(windowSnapshot) {
   const tabs = Array.isArray(windowSnapshot.tabs) ? windowSnapshot.tabs : [];
+  const groups = Array.isArray(windowSnapshot.groups) ? windowSnapshot.groups : [];
   const urls = tabs.length > 0 ? tabs.map((tab) => tab.url || 'chrome://newtab/') : ['chrome://newtab/'];
 
   const hasValidBounds =
@@ -427,6 +493,46 @@ async function restoreSingleWindow(windowSnapshot) {
 
     if (Object.keys(updateProps).length > 0) {
       await chrome.tabs.update(actualTab.id, updateProps);
+    }
+  }
+
+  // Restore tab groups
+  if (groups.length > 0 && chrome.tabGroups) {
+    try {
+      // Group tabs by their groupId
+      const groupMap = new Map();
+      groups.forEach(group => {
+        groupMap.set(group.id, { ...group, tabIds: [] });
+      });
+
+      // Assign tabs to groups
+      for (let i = 0; i < tabs.length && i < createdTabs.length; i += 1) {
+        const targetTab = tabs[i];
+        const actualTab = createdTabs[i];
+        if (targetTab.groupId !== -1 && groupMap.has(targetTab.groupId)) {
+          groupMap.get(targetTab.groupId).tabIds.push(actualTab.id);
+        }
+      }
+
+      // Create groups and assign tabs
+      for (const group of groups) {
+        const groupData = groupMap.get(group.id);
+        if (groupData && groupData.tabIds.length > 0) {
+          try {
+            // Group the tabs
+            const groupId = await chrome.tabs.group({ tabIds: groupData.tabIds });
+            // Update group properties
+            const updatePayload = buildTabGroupUpdatePayload(groupData);
+            if (Object.keys(updatePayload).length > 0) {
+              await chrome.tabGroups.update(groupId, updatePayload);
+            }
+          } catch (e) {
+            console.warn('[background] Failed to create tab group', e);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[background] Tab groups restoration failed', e);
     }
   }
 
