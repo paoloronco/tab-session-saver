@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tab Saver</title>
+  <title>Tab Session Saver</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
@@ -152,36 +152,104 @@
       border-radius: 4px;
       border: 1px solid #ccc;
     }
+
+    .footer-section {
+      margin-top: 1.5rem;
+    }
+
+    .footer-links {
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+
+    .footer-links a {
+      color: var(--accent-color, #007bff);
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+
+    body.dark-mode .footer-links a {
+      color: #66b3ff;
+    }
+
+    .footer-info {
+      text-align: center;
+      color: #6c757d;
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+
+    body.dark-mode .footer-info {
+      color: #adb5bd;
+    }
+
+    body.dark-mode hr {
+      border-top-color: #444;
+    }
   </style>
   <script src="popup.js" defer></script>
 </head>
 
 <body class="light-mode">
   <div id="settings-icon">⚙️</div>
-  <h1>Tab Saver</h1>
+  <h1 data-translate="title">Tab Session Saver</h1>
   <div id="main-section">
-    <button id="save">💾 Save tabs</button>
+    <button id="save" data-translate="save_button">💾 Save tabs</button>
     <div id="sessions"></div>
   </div>
   <div id="settings-section">
-    <h2>Settings</h2>
+    <h2 data-translate="settings_title">Settings</h2>
+    <div class="setting-group">
+      <label for="language" data-translate="language_label">Language:</label>
+      <select id="language">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="it">Italiano</option>
+        <option value="fr">Français</option>
+        <option value="de">Deutsch</option>
+      </select>
+    </div>
     <div class="toggle-container">
-      <label for="darkMode">Dark Mode</label>
+      <label for="darkMode" data-translate="dark_mode_label">Dark Mode</label>
       <input type="checkbox" id="darkMode">
     </div>
     <div class="setting-group">
-      <label for="accentColor">Main color:</label>
+      <label for="accentColor" data-translate="color_label">Main color:</label>
       <select id="accentColor">
-        <option value="#007bff">Blue</option>
-        <option value="#28a745">Green</option>
-        <option value="#ffc107">Yellow</option>
-        <option value="#dc3545">Red</option>
-        <option value="#6f42c1">Purple</option>
+        <option value="#007bff" data-translate="color_blue">Blue</option>
+        <option value="#28a745" data-translate="color_green">Green</option>
+        <option value="#ffc107" data-translate="color_yellow">Yellow</option>
+        <option value="#dc3545" data-translate="color_red">Red</option>
+        <option value="#6f42c1" data-translate="color_purple">Purple</option>
       </select>
     </div>
     <div class="setting-group">
-      <label for="maxSessions">Saved sessions limit</label>
+      <label for="maxSessions" data-translate="sessions_limit_label">Saved sessions limit</label>
       <input type="number" id="maxSessions" value="10" min="1">
+    </div>
+    
+    <div class="footer-section">
+      <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #ccc;">
+      
+      <div class="footer-links">
+        <a href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=it" target="_blank" data-translate="chrome_store_link">Chrome Web Store</a>
+        <br>
+        <span data-translate="developer_label">Developer:</span> <a href="https://paoloronco.it" target="_blank">Paolo Ronco</a>
+        <br>
+        <a href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" data-translate="privacy_policy_link">Privacy Policy</a>
+      </div>
+      
+      <div class="footer-info">
+        <small>
+          <span data-translate="version_label">Version:</span> 3.0<br>
+          © 2025 Paolo Ronco<br>
+          <span data-translate="rights_reserved">All rights reserved</span>
+        </small>
+      </div>
     </div>
   </div>
 </body>
