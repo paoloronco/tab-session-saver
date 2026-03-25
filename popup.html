@@ -20,7 +20,8 @@
       font-family: 'Inter', sans-serif;
       margin: 0;
       padding: 0;
-      width: 360px;
+      width: 420px;
+      min-height: 0;
       background: linear-gradient(180deg, #f7f9ff 0%, #eef1f9 100%);
       color: var(--text-primary);
       transition: background-color 0.3s ease, color 0.3s ease;
@@ -49,6 +50,8 @@
       flex-direction: column;
       gap: 1.25rem;
       padding: 1.25rem 1.25rem 1.5rem;
+      max-height: 600px;
+      overflow-y: auto;
     }
 
     .card {
@@ -171,7 +174,7 @@
     }
 
     .session-entry.menu-open {
-      z-index: 30;
+      /* Menu is now fixed-positioned overlay */
     }
 
     .session-top {
@@ -275,14 +278,12 @@
 
     .menu-content {
       display: none;
-      position: absolute;
-      top: calc(100% + 0.4rem);
-      right: 0;
+      position: fixed;
       background-color: var(--surface);
       border: 1px solid var(--border-color);
       border-radius: 12px;
       box-shadow: var(--shadow);
-      z-index: 10;
+      z-index: 1000;
       min-width: 150px;
       padding: 0.35rem 0;
     }
@@ -378,8 +379,9 @@
       display: flex;
       flex-direction: column;
       gap: 0.4rem;
-      max-height: 160px;
+      max-height: clamp(160px, 35vh, 320px);
       overflow-y: auto;
+      min-height: 0;
     }
 
     .preview-favicon {
@@ -426,6 +428,22 @@
       background: var(--surface);
       border: 1px solid transparent;
       transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .preview-remove-btn {
+      margin-left: auto;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .preview-remove-btn:hover {
+      background: var(--surface-alt);
+      color: var(--accent-color);
     }
 
     .preview-item:hover {

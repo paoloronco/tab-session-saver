@@ -362,6 +362,12 @@ function closeAllMenus(options = {}) {
   const { preservePreviews = false } = options;
   document.querySelectorAll('.menu-content').forEach(menu => {
     menu.style.display = 'none';
+    menu.style.removeProperty('top');
+    menu.style.removeProperty('left');
+      // Restore menu to original parent if it was moved to body
+      if (menu._originalParent && document.body.contains(menu)) {
+        menu._originalParent.appendChild(menu);
+      }
   });
   document.querySelectorAll('.menu-button[aria-expanded]').forEach(button => {
     button.setAttribute('aria-expanded', 'false');
@@ -600,8 +606,32 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   }
 
+  async function loadSessionsFromStorageWithRetry(retries = 2) {
+    for (let i = 0; i <= retries; i++) {
+      try {
+        return await new Promise((resolve, reject) => {
+          chrome.storage.local.get('sessions', (result) => {
+            if (chrome.runtime.lastError) {
+              reject(chrome.runtime.lastError);
+            } else {
+              resolve(result.sessions || []);
+            }
+          });
+        });
+      } catch (err) {
+        console.warn(`[popup] Storage read attempt ${i + 1} failed:`, err);
+        if (i < retries) {
+          await new Promise(r => setTimeout(r, 50 * Math.pow(2, i))); // exponential backoff
+        } else {
+          console.error('[popup] All storage read attempts failed, returning empty array');
+          return [];
+        }
+      }
+    }
+  }
+
   function loadSessions() {
-    chrome.runtime.sendMessage({ action: 'get_sessions' }, (sessionsRaw) => {
+    loadSessionsFromStorageWithRetry().then((sessionsRaw) => {
       const container = document.getElementById('sessions');
       const emptyState = document.getElementById('empty-state');
 
@@ -705,6 +735,8 @@ document.addEventListener('DOMContentLoaded', () => {
         menuWrapper.className = 'menu-wrapper';
         menuWrapper.appendChild(menuBtn);
         menuWrapper.appendChild(menu);
+  // Store reference to original parent for cleanup
+  menu._originalParent = menuWrapper;
 
         const restoreBtn = document.createElement('button');
         restoreBtn.className = 'restore-btn';
@@ -803,9 +835,76 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 content.insertBefore(titleEl, content.firstChild);
+                // Remove button for this tab in preview
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'preview-remove-btn';
+                removeBtn.type = 'button';
+                removeBtn.setAttribute('aria-label', 'Remove tab from session');
+                removeBtn.textContent = '✕';
+
+                // Handler to remove this tab from session data and UI
+                removeBtn.addEventListener('click', (ev) => {
+                  ev.stopPropagation();
+                  const confirmed = confirm('Remove this tab from the saved session?');
+                  if (!confirmed) return;
+
+                  // Mutate the underlying sessionPayload data
+                  const windowTabsArr = Array.isArray(winSnapshot.tabs) ? winSnapshot.tabs : [];
+                  // Remove tab from data
+                  windowTabsArr.splice(tabIndex, 1);
+
+                  // If window became empty, remove it
+                  if (windowTabsArr.length === 0) {
+                    sessionPayload.windows.splice(wIndex, 1);
+                    // Remove window block from DOM
+                    if (windowBlock && windowBlock.parentNode) windowBlock.parentNode.removeChild(windowBlock);
+                  } else {
+                    // Remove the item element from DOM
+                    if (item && item.parentNode) item.parentNode.removeChild(item);
+                    // Re-number remaining preview-index badges in this window
+                    const remaining = items.querySelectorAll('.preview-item .preview-index');
+                    remaining.forEach((badge, i) => (badge.textContent = String(i + 1)));
+                  }
+
+                  // Recompute counts and update header/meta
+                  const { windowsCount: newWindowsCount, tabsCount: newTabsCount } = computeSessionCounts(sessionPayload);
+                  const newTabsLabel =
+                    newTabsCount === 1
+                      ? getTranslation('tab_count_one')
+                      : getTranslation('tab_count_other').replace('{count}', newTabsCount);
+                  const newWindowsLabel =
+                    newWindowsCount === 1
+                      ? getTranslation('window_count_one')
+                      : getTranslation('window_count_other').replace('{count}', newWindowsCount);
+
+                  // Update preview header count
+                  const previewCountEl = previewHeader.querySelector('.preview-count');
+                  if (previewCountEl) previewCountEl.textContent = `${newTabsLabel} • ${newWindowsLabel}`;
+
+                  // Update session label meta
+                  const { date: d, time: t } = formatTimestamp(sessionPayload.timestamp);
+                  const strategy = sessionPayload.desktopStrategy || sessionPayload.metadata?.desktopStrategy;
+                  const metaSegments = [d, t, newWindowsLabel, newTabsLabel];
+                  if (strategy === 'workspace') metaSegments.push(getTranslation('desktop_scope_workspace'));
+                  const metaEl = label.querySelector('.session-meta');
+                  if (metaEl) metaEl.innerHTML = metaSegments.map(segment => `<span>${segment}</span>`).join('');
+
+                  // Persist changes: if no tabs left, delete session; else update session
+                  if (newTabsCount === 0) {
+                    chrome.runtime.sendMessage({ action: 'delete_session', index }, (res) => {
+                      if (res && res.success) loadSessions();
+                    });
+                  } else {
+                    chrome.runtime.sendMessage({ action: 'update_session', index, session: sessionPayload }, (res) => {
+                      if (!res || !res.success) console.error('Failed to update session after tab removal', res && res.error);
+                    });
+                  }
+                });
+
                 item.appendChild(indexBadge);
                 item.appendChild(iconWrapper);
                 item.appendChild(content);
+                item.appendChild(removeBtn);
                 items.appendChild(item);
               });
             }
@@ -860,10 +959,34 @@ document.addEventListener('DOMContentLoaded', () => {
           const wasOpen = menu.style.display === 'block';
           closeAllMenus();
           if (!wasOpen) {
+            // Position menu as fixed overlay using viewport coordinates
+            const btnRect = menuBtn.getBoundingClientRect();
+            const menuHeight = 120; // Estimated height for flipping logic
+            const popupRect = document.querySelector('body').getBoundingClientRect();
+            
+            // Position menu below button
+            let top = btnRect.bottom + 6;
+            let left = btnRect.right - 160; // Align right edge, accounting for min-width: 150px
+            
+            // Flip menu above button if insufficient space below
+            // (account for viewport height - typically 600-800px for Chrome popup)
+            if (top + menuHeight > window.innerHeight - 10) {
+              top = btnRect.top - menuHeight - 6;
+            }
+            
+            // Clamp left within viewport with padding
+            const minLeft = 8;
+            const maxLeft = window.innerWidth - 160 - 8;
+            left = Math.max(minLeft, Math.min(left, maxLeft));
+            
             menu.style.display = 'block';
-            const spacer = menu.offsetHeight + 12;
+            menu.style.top = `${Math.max(0, top)}px`;
+            menu.style.left = `${left}px`;
+            // Move menu to body to escape popup's scroll container
+            if (menu.parentNode !== document.body) {
+              document.body.appendChild(menu);
+            }
             entry.classList.add('menu-open');
-            entry.style.marginBottom = `${spacer}px`;
             menuBtn.setAttribute('aria-expanded', 'true');
           }
         });
@@ -888,6 +1011,14 @@ document.addEventListener('DOMContentLoaded', () => {
         entry.appendChild(previewContainer);
         container.appendChild(entry);
       });
+    }).catch((err) => {
+      console.error('[popup] Failed to load sessions:', err);
+      const container = document.getElementById('sessions');
+      const emptyState = document.getElementById('empty-state');
+      if (container && emptyState) {
+        container.innerHTML = '';
+        emptyState.style.display = 'block';
+      }
     });
   }
 
@@ -929,8 +1060,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSessions();
 });
 
-
-
-
+// Note: loadSessions is now called inside DOMContentLoaded handler above
 
 

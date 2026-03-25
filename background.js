@@ -55,6 +55,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           sendResponse({ success });
           break;
         }
+        case 'update_session': {
+          const { index, session } = request;
+          const success = await updateSessionAtIndex(index, session);
+          sendResponse({ success });
+          break;
+        }
         default:
           sendResponse({ success: false, error: 'Unknown action' });
       }
@@ -266,6 +272,16 @@ async function renameSessionAtIndex(index, newName) {
   if (index < 0 || index >= sessions.length) return false;
   if (typeof newName !== 'string' || !newName.trim()) return false;
   sessions[index].name = newName.trim();
+  await chrome.storage.local.set({ sessions });
+  return true;
+}
+
+async function updateSessionAtIndex(index, sessionObject) {
+  const sessions = await loadSessionsFromStorage();
+  if (index < 0 || index >= sessions.length) return false;
+  // Normalize/validate session object before storing
+  const normalized = normalizeSessionForStorage(sessionObject, sessions[index]?.name || DEFAULT_SESSION_NAME);
+  sessions[index] = normalized;
   await chrome.storage.local.set({ sessions });
   return true;
 }
