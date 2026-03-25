@@ -6,258 +6,709 @@
   <title>Tab Session Saver</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --accent-color: #4c6ef5;
+      --surface: #ffffff;
+      --surface-alt: #f2f5fb;
+      --text-primary: #1c2333;
+      --text-secondary: #5c6475;
+      --border-color: #e0e6f3;
+      --shadow: 0 12px 24px rgba(28, 35, 51, 0.08);
+    }
+
     body {
       font-family: 'Inter', sans-serif;
       margin: 0;
-      padding: 1rem;
-      width: 300px;
-      transition: background-color 0.3s, color 0.3s;
+      padding: 0;
+      width: 360px;
+      background: linear-gradient(180deg, #f7f9ff 0%, #eef1f9 100%);
+      color: var(--text-primary);
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     body.light-mode {
-      background-color: #f8f9fa;
-      color: #343a40;
+      --surface: #ffffff;
+      --surface-alt: #f2f5fb;
+      --text-primary: #1c2333;
+      --text-secondary: #5c6475;
+      --border-color: #e0e6f3;
+      background: linear-gradient(180deg, #f7f9ff 0%, #eef1f9 100%);
     }
 
     body.dark-mode {
-      background-color: #121212;
-      color: #f1f1f1;
+      --surface: #181d28;
+      --surface-alt: #111520;
+      --text-primary: #f3f4f6;
+      --text-secondary: #c0c5d6;
+      --border-color: #292f3f;
+      background: linear-gradient(180deg, #10131b 0%, #0b0d13 100%);
     }
 
-    h1, h2 {
+    .popup {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      padding: 1.25rem 1.25rem 1.5rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 1rem;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .header-main {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .app-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(76, 110, 245, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: var(--accent-color);
+    }
+
+    h1 {
       font-size: 1.2rem;
-      margin-bottom: 1rem;
+      margin: 0;
     }
 
-    #settings-icon {
-      position: absolute;
-      top: 8px;
-      right: 10px;
-      font-size: 1.2rem;
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin: 0.25rem 0 0;
+    }
+
+    .icon-button {
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      height: 40px;
+      width: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
     }
 
-    button {
-      background-color: var(--accent-color, #007bff);
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      margin-bottom: 1rem;
-      width: 100%;
+    .icon-button:hover {
+      background: var(--surface-alt);
+      border-color: var(--accent-color);
     }
 
-    .session-entry {
-      background-color: #e9ecef;
-      margin: 0.25rem 0;
-      padding: 0.75rem;
-      border-radius: 6px;
-      position: relative;
+    .icon-button svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--text-primary);
     }
 
-    body.dark-mode .session-entry {
-      background-color: #2c2c2c;
-    }
-
-    .session-label {
+    #main-section {
       display: block;
-      line-height: 1.4;
-      padding-right: 2.5rem;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .menu-button {
-      position: absolute;
-      top: 0.75rem;
-      left: 8rem;
-      background: none;
-      border: none;
-      font-size: 1.2rem;
-      cursor: pointer;
-      color: inherit;
-      outline: none;
-    }
-
-    .menu-content {
-        display: none;
-        position: absolute;
-        top: 2.2rem;
-        right: 0.5rem;
-        background-color: #ffffff;
-        border: 1px solid #ffffff;
-        border-radius: 12px; /* meno stondato */
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); /* ombra più leggera */
-        z-index: 10;
-        min-width: 120px; /* più stretto */
-        padding: 0.2rem 0; /* meno spazio interno */
-      }
-
-    body.dark-mode .menu-content {
-      background-color: #1e1e1e;
-      border-color: #333;
-    }
-
-    .menu-content button {
-        background: none;
-        border: none;
-        width: 100%;
-        padding: 0.35rem 0.75rem; /* più compatto */
-        text-align: left;
-        font-size: 0.8rem; /* leggermente più piccolo */
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem; /* meno spazio tra icona e testo */
-        color: #212529;
-    }
-
-    body.dark-mode .menu-content button {
-        color: #f1f1f1;
-      }  
-
-    .preview-list {
-      display: none;
-      margin-top: 0.5rem;
-      font-size: 0.8rem;
-    }
-
-    .preview-list a {
-      display: block;
-      color: inherit;
-      text-decoration: none;
     }
 
     #settings-section {
       display: none;
     }
 
-    .toggle-container {
+    .primary-btn {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 12px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent-color), #6f85ff);
+      color: #ffffff;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      margin-bottom: 1rem;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 18px rgba(76, 110, 245, 0.24);
+    }
+
+    .session-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .session-entry {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 0.9rem 0.85rem;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .session-entry:hover {
+      border-color: var(--accent-color);
+      transform: translateY(-1px);
+    }
+
+    .session-entry.menu-open {
+      z-index: 30;
+    }
+
+    .session-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+    }
+
+    .session-label {
+      display: block;
+      cursor: pointer;
+      user-select: none;
+      color: var(--text-primary);
+      flex: 1;
+      min-width: 0;
+    }
+
+    .session-label strong {
+      font-size: 0.95rem;
+      display: inline-block;
+      margin-bottom: 0.25rem;
+    }
+
+    .session-meta {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .session-actions {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      margin-top: 1rem;
+      flex-shrink: 0;
+    }
+
+    .restore-btn {
+      padding: 0.45rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: var(--surface-alt);
+      color: var(--text-primary);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .restore-btn:hover {
+      background: var(--surface);
+      border-color: var(--accent-color);
+      transform: translateY(-1px);
+    }
+
+    .menu-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .menu-button {
+      position: relative;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 8px;
+      transition: background-color 0.2s ease;
+    }
+
+    .menu-button:hover {
+      background-color: var(--surface-alt);
+    }
+
+    .menu-button svg {
+      width: 16px;
+      height: 16px;
+      fill: var(--text-secondary);
+    }
+
+    .menu-content {
+      display: none;
+      position: absolute;
+      top: calc(100% + 0.4rem);
+      right: 0;
+      background-color: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      z-index: 10;
+      min-width: 150px;
+      padding: 0.35rem 0;
+    }
+
+    .menu-content button {
+      background: none;
+      border: none;
+      width: 100%;
+      padding: 0.5rem 0.85rem;
+      text-align: left;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: background-color 0.2s ease;
+    }
+
+    .menu-content button:hover {
+      background: var(--surface-alt);
+    }
+
+    .preview-container {
+      display: none;
+      margin-top: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      background: var(--surface-alt);
+      padding: 0.75rem;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .preview-container.is-open {
+      display: block;
+    }
+
+    .preview-windows {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .preview-window {
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--surface);
+      padding: 0.55rem 0.6rem 0.6rem;
+      box-shadow: 0 2px 6px rgba(28, 35, 51, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .preview-window-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+
+    body.dark-mode .preview-window {
+      background: var(--surface);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+    }
+
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .preview-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 0.1rem 0.5rem;
+      border: 1px solid var(--border-color);
+      background: var(--surface);
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+
+    .preview-items {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .preview-favicon {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      background: var(--surface-alt);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .preview-favicon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .preview-favicon.is-placeholder {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      line-height: 1;
+    }
+
+    body.dark-mode .preview-favicon {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .preview-empty {
+      padding: 0.6rem 0.35rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .preview-item {
+      display: flex;
+      gap: 0.55rem;
+      align-items: flex-start;
+      padding: 0.45rem 0.6rem;
+      border-radius: 10px;
+      background: var(--surface);
+      border: 1px solid transparent;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .preview-item:hover {
+      border-color: var(--accent-color);
+      background: var(--surface-alt);
+      box-shadow: 0 4px 10px rgba(28, 35, 51, 0.12);
+    }
+
+    body.dark-mode .preview-item:hover {
+      box-shadow: 0 6px 14px rgba(10, 12, 18, 0.4);
+    }
+
+    .preview-index {
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      background: var(--surface-alt);
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .preview-item:hover .preview-index {
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    .preview-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      min-width: 0;
+    }
+
+    .preview-title {
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .preview-domain {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty-state {
+      background: var(--surface-alt);
+      border: 1px dashed var(--border-color);
+      border-radius: 14px;
+      padding: 1rem;
+      margin-top: 0.5rem;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    .empty-state h2 {
+      font-size: 0.95rem;
+      margin: 0 0 0.35rem;
+      color: var(--text-primary);
+    }
+
+    .settings {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
     }
 
     .setting-group {
-      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
     }
 
-    select, input[type="number"] {
+    label {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    select,
+    input[type="number"] {
       width: 100%;
-      padding: 0.4rem;
+      padding: 0.55rem;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text-primary);
       font-size: 0.9rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
+    }
+
+    select:focus,
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.18);
+    }
+
+    .toggle-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.6rem 0.75rem;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #c4cad9;
+      transition: 0.3s;
+      border-radius: 999px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      top: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+      box-shadow: 0 6px 12px rgba(28, 35, 51, 0.12);
+    }
+
+    .toggle-switch input:checked + .slider {
+      background-color: var(--accent-color);
+    }
+
+    .toggle-switch input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    .settings-actions button {
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: 10px;
+      padding: 0.65rem 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .settings-actions button:hover {
+      background: var(--surface-alt);
+      border-color: var(--accent-color);
     }
 
     .footer-section {
-      margin-top: 1.5rem;
-    }
-
-    .footer-links {
-      margin-bottom: 1rem;
-      line-height: 1.6;
+      border-top: 1px solid var(--border-color);
+      padding-top: 1rem;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
     }
 
     .footer-links a {
-      color: var(--accent-color, #007bff);
+      color: var(--accent-color);
       text-decoration: none;
-      font-size: 0.85rem;
     }
 
     .footer-links a:hover {
       text-decoration: underline;
     }
 
-    body.dark-mode .footer-links a {
-      color: #66b3ff;
-    }
-
     .footer-info {
+      margin-top: 0.75rem;
       text-align: center;
-      color: #6c757d;
-      font-size: 0.75rem;
-      line-height: 1.4;
-    }
-
-    body.dark-mode .footer-info {
-      color: #adb5bd;
-    }
-
-    body.dark-mode hr {
-      border-top-color: #444;
     }
   </style>
   <script src="popup.js" defer></script>
 </head>
 
 <body class="light-mode">
-  <div id="settings-icon">⚙️</div>
-  <h1 data-translate="title">Tab Session Saver</h1>
-  <div id="main-section">
-    <button id="save" data-translate="save_button">💾 Save tabs</button>
-    <div id="sessions"></div>
-  </div>
-  <div id="settings-section">
-    <h2 data-translate="settings_title">Settings</h2>
-    <div class="setting-group">
-      <label for="language" data-translate="language_label">Language:</label>
-      <select id="language">
-        <option value="en">English</option>
-        <option value="es">Español</option>
-        <option value="it">Italiano</option>
-        <option value="fr">Français</option>
-        <option value="de">Deutsch</option>
-      </select>
-    </div>
-    <div class="toggle-container">
-      <label for="darkMode" data-translate="dark_mode_label">Dark Mode</label>
-      <input type="checkbox" id="darkMode">
-    </div>
-    <div class="setting-group">
-      <label for="accentColor" data-translate="color_label">Main color:</label>
-      <select id="accentColor">
-        <option value="#007bff" data-translate="color_blue">Blue</option>
-        <option value="#28a745" data-translate="color_green">Green</option>
-        <option value="#ffc107" data-translate="color_yellow">Yellow</option>
-        <option value="#dc3545" data-translate="color_red">Red</option>
-        <option value="#6f42c1" data-translate="color_purple">Purple</option>
-      </select>
-    </div>
-    <div class="setting-group">
-      <label for="maxSessions" data-translate="sessions_limit_label">Saved sessions limit</label>
-      <input type="number" id="maxSessions" value="10" min="1">
-    </div>
-    <div class="setting-group">
-      <button id="exportSessions">Export saved sessions (JSON)</button>
-    </div>
-    <div class="setting-group">
-      <button id="importSessions">Import sessions (JSON)</button>
-      <input type="file" id="importFileInput" accept="application/json" style="display: none;">
-    </div>
-    
-    <div class="footer-section">
-      <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #ccc;">
-      
-      <div class="footer-links">
-        <a href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=it" target="_blank" data-translate="chrome_store_link">Chrome Web Store</a>
-        <br>
-        <span data-translate="developer_label">Developer:</span> <a href="https://paoloronco.it" target="_blank">Paolo Ronco</a>
-        <br>
-        <a href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" data-translate="privacy_policy_link">Privacy Policy</a>
+  <div class="popup">
+    <header>
+      <div class="header-main">
+        <div class="app-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4.5 5.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v5h-15v-5z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M7 5.5h.01" stroke-width="2" stroke-linecap="round"></path>
+            <path d="M11 5.5h.01" stroke-width="2" stroke-linecap="round"></path>
+            <path d="M4 10.5h16v3" stroke-width="1.6" stroke-linecap="round"></path>
+            <path d="M8 13.5l4 4 4-4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M6.5 18.5h11" stroke-width="1.6" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 data-translate="title">Tab Session Saver</h1>
+          <p class="subtitle" data-translate="subtitle">Keep your workspaces ready in one click.</p>
+        </div>
       </div>
-      
-      <div class="footer-info">
-        <small>
-          <span data-translate="version_label">Version:</span> 3.0<br>
-          © 2025 Paolo Ronco<br>
+      <button id="settings-icon" class="icon-button" aria-label="Open settings" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" stroke-width="1.6"></path>
+          <path d="M19.4 9.5a7.97 7.97 0 0 1 0 5l2 3.46-2.8 2.8-3.46-2a7.97 7.97 0 0 1-5 0l-3.46 2-2.8-2.8 2-3.46a7.97 7.97 0 0 1 0-5l-2-3.46 2.8-2.8 3.46 2a7.97 7.97 0 0 1 5 0l3.46-2 2.8 2.8-2 3.46z" stroke-width="1.6" stroke-linecap="round"></path>
+        </svg>
+      </button>
+    </header>
+
+    <main id="main-section" class="card">
+      <button id="save" class="primary-btn" data-translate="save_button">Save current tabs</button>
+
+      <div id="sessions" class="session-list" role="list"></div>
+
+      <div id="empty-state" class="empty-state">
+        <h2 data-translate="empty_state_title">No sessions saved yet</h2>
+        <p data-translate="empty_state_description">Save your current window to build your collection and reopen everything instantly.</p>
+      </div>
+    </main>
+
+    <section id="settings-section" class="card settings">
+      <h2 data-translate="settings_title">Settings</h2>
+
+      <div class="setting-group">
+        <label for="language" data-translate="language_label">Language</label>
+        <select id="language">
+          <option value="en">English</option>
+          <option value="es">Espa&ntilde;ol</option>
+          <option value="it">Italiano</option>
+          <option value="fr">Fran&ccedil;ais</option>
+          <option value="de">Deutsch</option>
+        </select>
+      </div>
+
+      <div class="toggle-container">
+        <span data-translate="dark_mode_label">Dark mode</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="darkMode">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="setting-group">
+        <label for="accentColor" data-translate="color_label">Accent color</label>
+        <select id="accentColor">
+          <option value="#4c6ef5" data-translate="color_blue">Blue</option>
+          <option value="#228b22" data-translate="color_green">Green</option>
+          <option value="#ffb020" data-translate="color_yellow">Yellow</option>
+          <option value="#f35f5f" data-translate="color_red">Red</option>
+          <option value="#8b5cf6" data-translate="color_purple">Purple</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label for="maxSessions" data-translate="sessions_limit_label">Saved sessions limit</label>
+        <input type="number" id="maxSessions" value="10" min="1">
+      </div>
+
+      <div class="setting-group settings-actions">
+        <button id="exportSessions" data-translate="export_button">Export saved sessions (JSON)</button>
+        <button id="importSessions" data-translate="import_button">Import sessions (JSON)</button>
+        <input type="file" id="importFileInput" accept="application/json" style="display: none;">
+      </div>
+
+      <div class="footer-section">
+        <div class="footer-links">
+          <a href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=it" target="_blank" data-translate="chrome_store_link">Chrome Web Store</a>
+          <br>
+          <span data-translate="developer_label">Developer:</span> <a href="https://paoloronco.it" target="_blank">Paolo Ronco</a>
+          <br>
+          <a href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" data-translate="privacy_policy_link">Privacy Policy</a>
+        </div>
+        <div class="footer-info">
+          <span data-translate="version_label">Version:</span> 5.0<br>
+          &copy; 2025 Paolo Ronco<br>
           <span data-translate="rights_reserved">All rights reserved</span>
-        </small>
+        </div>
       </div>
-    </div>
+    </section>
   </div>
 </body>
 </html>
