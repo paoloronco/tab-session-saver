@@ -125,14 +125,10 @@ async function captureFallbackSnapshot(reason, options = {}) {
   const allWindows = await chrome.windows.getAll({ populate: true, windowTypes: ['normal'] });
   const currentWindow = await resolveCaptureWindow(allWindows, options.sourceWindowId);
 
-  let windowsToCapture = [];
-  if (currentWindow && typeof currentWindow.id === 'number') {
+  let windowsToCapture = allWindows.filter((win) => Array.isArray(win.tabs) && win.tabs.length > 0);
+  if (windowsToCapture.length === 0 && currentWindow && typeof currentWindow.id === 'number') {
     const matchingWindow = allWindows.find((win) => win.id === currentWindow.id) || currentWindow;
-    windowsToCapture = [matchingWindow];
-  }
-
-  if (windowsToCapture.length === 0) {
-    windowsToCapture = allWindows.filter((win) => Array.isArray(win.tabs) && win.tabs.length > 0).slice(0, 1);
+    windowsToCapture = matchingWindow ? [matchingWindow] : [];
   }
 
   let snapshots = await Promise.all(
@@ -167,8 +163,8 @@ async function captureFallbackSnapshot(reason, options = {}) {
   return {
     windows: snapshots,
     desktopKey: null,
-    desktopStrategy: 'window',
-    heuristics: `fallback-window:${reason ? reason.message || String(reason) : 'unknown'}`,
+    desktopStrategy: null,
+    heuristics: `fallback-global:${reason ? reason.message || String(reason) : 'unknown'}`,
     platform
   };
 }
@@ -204,21 +200,22 @@ function filterWindowsForCurrentDesktop(allWindows, currentWindow, desktopKey) {
     }
   }
 
-  if (currentWindow && typeof currentWindow.id === 'number') {
-    const currentOnly = eligibleWindows.filter((win) => win.id === currentWindow.id);
-    if (currentOnly.length > 0) {
-      return {
-        windows: currentOnly,
-        desktopStrategy: 'window',
-        heuristics: 'strict-window-fallback'
-      };
-    }
+  const windowsWithDesktopIds = eligibleWindows.filter((win) => deriveDesktopKey(win));
+  if (windowsWithDesktopIds.length === 0) {
+    return {
+      windows: eligibleWindows,
+      desktopStrategy: null,
+      heuristics: 'global-fallback-no-desktop-id'
+    };
   }
 
   return {
-    windows: [],
+    windows:
+      currentWindow && typeof currentWindow.id === 'number'
+        ? eligibleWindows.filter((win) => win.id === currentWindow.id)
+        : [],
     desktopStrategy: 'window',
-    heuristics: 'no-window-match'
+    heuristics: 'mixed-desktop-metadata-window-fallback'
   };
 }
 
