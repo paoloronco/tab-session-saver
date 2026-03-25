@@ -5,7 +5,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const timestamp = new Date().toISOString();
         chrome.storage.local.get({ sessions: [] }, (data) => {
           const sessions = data.sessions;
-          sessions.push({ timestamp, session });
+          sessions.push({ timestamp, session, name: `Session ${sessions.length + 1}` });
           chrome.storage.local.set({ sessions });
           sendResponse({ success: true });
         });
@@ -32,6 +32,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         chrome.storage.local.set({ sessions: data.sessions }, () => {
           sendResponse({ success: true });
         });
+      });
+      return true;
+    }
+
+    // Aggiunta della funzionalità di rinomina
+    if (request.action === "rename_session") {
+      chrome.storage.local.get({ sessions: [] }, (data) => {
+        // Controlla se l'indice è valido
+        if (request.index >= 0 && request.index < data.sessions.length) {
+          // Aggiorna il nome della sessione
+          data.sessions[request.index].name = request.newName;
+          // Salva le modifiche
+          chrome.storage.local.set({ sessions: data.sessions }, () => {
+            sendResponse({ success: true });
+          });
+        } else {
+          sendResponse({ success: false, error: "Invalid index" });
+        }
       });
       return true;
     }

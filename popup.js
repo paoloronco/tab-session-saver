@@ -41,7 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.tabs.query({ currentWindow: true }, (tabs) => {
         const session = tabs.map(tab => ({ title: tab.title, url: tab.url }));
         const timestamp = new Date().toISOString();
-        sessions.push({ timestamp, session });
+        // Aggiungiamo un nome predefinito per la sessione
+        const sessionName = `Session ${sessions.length + 1}`;
+        sessions.push({ timestamp, session, name: sessionName });
 
         // Limita il numero di sessioni salvate
         const trimmed = sessions.slice(-max);
@@ -49,6 +51,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   });
+
+  // Funzione per rinominare una sessione
+  function renameSession(index, newName) {
+    chrome.runtime.sendMessage({ 
+      action: 'rename_session', 
+      index: index, 
+      newName: newName 
+    }, (res) => {
+      if (res.success) loadSessions();
+    });
+  }
 
   function loadSessions() {
     chrome.runtime.sendMessage({ action: 'get_sessions' }, (sessions) => {
@@ -60,7 +73,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const label = document.createElement('span');
         label.className = 'session-label';
-        label.innerHTML = `📂 <strong>Session ${i + 1}</strong><br>${new Date(s.timestamp).toLocaleDateString()}<br>${new Date(s.timestamp).toLocaleTimeString()}`;
+        // Visualizza il nome personalizzato o quello predefinito
+        const sessionName = s.name || `Session ${i + 1}`;
+        label.innerHTML = `📂 <strong>${sessionName}</strong><br>${new Date(s.timestamp).toLocaleDateString()}<br>${new Date(s.timestamp).toLocaleTimeString()}`;
 
         const menuBtn = document.createElement('button');
         menuBtn.className = 'menu-button';
@@ -75,6 +90,21 @@ document.addEventListener('DOMContentLoaded', () => {
           chrome.runtime.sendMessage({ action: 'delete_session', index: i }, (res) => {
             if (res.success) loadSessions();
           });
+        });
+
+        const renameBtn = document.createElement('button');
+        renameBtn.textContent = 'Rename';
+        renameBtn.addEventListener('click', () => {
+          // Nascondi il menu
+          menu.style.display = 'none';
+          
+          // Chiedi il nuovo nome
+          const newName = prompt('Enter a new name for this session:', sessionName);
+          
+          // Se l'utente ha inserito un nome e ha premuto OK
+          if (newName !== null && newName.trim() !== '') {
+            renameSession(i, newName.trim());
+          }
         });
 
         const previewBtn = document.createElement('button');
@@ -98,6 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
           preview.style.display = preview.style.display === 'block' ? 'none' : 'block';
         });
 
+        menu.appendChild(renameBtn); // Aggiungi il bottone Rename
         menu.appendChild(deleteBtn);
         menu.appendChild(previewBtn);
         entry.appendChild(label);
