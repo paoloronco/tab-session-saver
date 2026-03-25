@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Tabs Session Saver",
-    "version": "5.0",
+    "version": "6.0",
     "description": "Save and restore your tabs sessions easily",
     "permissions": ["tabs", "storage", "windows"],
     "action": {
@@ -15,5 +15,18 @@
     },
     "background": {
       "service_worker": "background.js"
-    }
+    },
+    "web_accessible_resources": [
+      {
+        "resources": [
+          "welcome.html",
+          "welcome.js",
+          "img-1616.png",
+          "img-3232.png",
+          "img-4848.png",
+          "img-128128.png"
+        ],
+        "matches": ["<all_urls>"]
+      }
+    ]
   }
