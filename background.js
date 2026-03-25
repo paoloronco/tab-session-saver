@@ -15,7 +15,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     try {
       switch (request.action) {
         case 'capture_current_desktop': {
-          const snapshot = await captureCurrentDesktopSnapshot();
+          const snapshot = await captureCurrentDesktopSnapshot({
+            sourceWindowId: Number.isInteger(request?.sourceWindowId) ? request.sourceWindowId : null
+          });
           sendResponse({ success: true, ...snapshot });
           break;
         }
@@ -57,19 +59,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true;
 });
 
-async function captureCurrentDesktopSnapshot() {
+async function captureCurrentDesktopSnapshot(options = {}) {
   try {
-    const currentWindow = await chrome.windows.getCurrent();
     const allWindows = await chrome.windows.getAll({ populate: true, windowTypes: ['normal'] });
-
-    const enrichedCurrent =
-      (typeof currentWindow?.id === 'number'
-        ? allWindows.find((win) => win.id === currentWindow.id)
-        : null) || currentWindow || null;
+    const enrichedCurrent = await resolveCaptureWindow(allWindows, options.sourceWindowId);
+    if (!enrichedCurrent) {
+      throw new Error('No active browser window available for capture.');
+    }
 
     const desktopKey = deriveDesktopKey(enrichedCurrent);
-    const desktopStrategy = desktopKey ? 'workspace' : null;
-    const filteredWindows = filterWindowsForCurrentDesktop(allWindows, enrichedCurrent, desktopKey);
+    const { windows: filteredWindows, desktopStrategy, heuristics } =
+      filterWindowsForCurrentDesktop(allWindows, enrichedCurrent, desktopKey);
 
     const snapshots = await Promise.all(filteredWindows.map(async (win) =>
       buildWindowSnapshot(win, { focusedWindowId: enrichedCurrent?.id })
@@ -84,22 +84,68 @@ async function captureCurrentDesktopSnapshot() {
       windows: snapshots,
       desktopKey: desktopKey ?? null,
       desktopStrategy,
-      heuristics: desktopKey ? 'native' : 'fallback',
+      heuristics,
       platform
     };
   } catch (error) {
     console.warn('[background] primary capture failed, using fallback', error);
-    return captureFallbackSnapshot(error);
+    return captureFallbackSnapshot(error, options);
   }
 }
 
-async function captureFallbackSnapshot(reason) {
+async function resolveCaptureWindow(allWindows, sourceWindowId = null) {
+  if (Number.isInteger(sourceWindowId)) {
+    const explicitWindow = allWindows.find((win) => win.id === sourceWindowId);
+    if (explicitWindow) {
+      return explicitWindow;
+    }
+    try {
+      const fetchedWindow = await chrome.windows.get(sourceWindowId, { populate: true });
+      if (fetchedWindow?.type === 'normal') {
+        return fetchedWindow;
+      }
+    } catch (error) {
+      console.warn('[background] Failed to resolve source window', sourceWindowId, error);
+    }
+  }
+
+  try {
+    const lastFocused = await chrome.windows.getLastFocused({ populate: true, windowTypes: ['normal'] });
+    if (typeof lastFocused?.id === 'number') {
+      return allWindows.find((win) => win.id === lastFocused.id) || lastFocused;
+    }
+  } catch (error) {
+    console.warn('[background] Failed to resolve last focused window', error);
+  }
+
+  return allWindows.find((win) => Array.isArray(win.tabs) && win.tabs.length > 0) || null;
+}
+
+async function captureFallbackSnapshot(reason, options = {}) {
   const allWindows = await chrome.windows.getAll({ populate: true, windowTypes: ['normal'] });
-  let snapshots = await Promise.all(allWindows.map((win) => buildWindowSnapshot(win, {})));
+  const currentWindow = await resolveCaptureWindow(allWindows, options.sourceWindowId);
+
+  let windowsToCapture = [];
+  if (currentWindow && typeof currentWindow.id === 'number') {
+    const matchingWindow = allWindows.find((win) => win.id === currentWindow.id) || currentWindow;
+    windowsToCapture = [matchingWindow];
+  }
+
+  if (windowsToCapture.length === 0) {
+    windowsToCapture = allWindows.filter((win) => Array.isArray(win.tabs) && win.tabs.length > 0).slice(0, 1);
+  }
+
+  let snapshots = await Promise.all(
+    windowsToCapture.map((win) =>
+      buildWindowSnapshot(win, { focusedWindowId: currentWindow?.id ?? null })
+    )
+  );
 
   const hasTabs = snapshots.some((win) => Array.isArray(win.tabs) && win.tabs.length > 0);
   if (!hasTabs) {
-    const tabs = await chrome.tabs.query({});
+    const tabs = currentWindow && typeof currentWindow.id === 'number'
+      ? await chrome.tabs.query({ windowId: currentWindow.id })
+      : await chrome.tabs.query({});
     if (tabs.length > 0) {
       const fallbackWindow = await buildWindowSnapshot(
         {
@@ -121,8 +167,8 @@ async function captureFallbackSnapshot(reason) {
   return {
     windows: snapshots,
     desktopKey: null,
-    desktopStrategy: null,
-    heuristics: `fallback:${reason ? reason.message || String(reason) : 'unknown'}`,
+    desktopStrategy: 'window',
+    heuristics: `fallback-window:${reason ? reason.message || String(reason) : 'unknown'}`,
     platform
   };
 }
@@ -142,22 +188,38 @@ function deriveDesktopKey(win) {
 }
 
 function filterWindowsForCurrentDesktop(allWindows, currentWindow, desktopKey) {
-  return allWindows.filter((win) => {
+  const eligibleWindows = allWindows.filter((win) => {
     if (win.type && win.type !== 'normal') return false;
-    if (!Array.isArray(win.tabs) || win.tabs.length === 0) return false;
-
-    const winKey = deriveDesktopKey(win);
-    if (desktopKey && winKey) {
-      return winKey === desktopKey;
-    }
-
-    if (currentWindow && typeof currentWindow.id === 'number' && win.id === currentWindow.id) {
-      return true;
-    }
-
-    // Without desktop identifiers, include all normal browser windows.
-    return true;
+    return Array.isArray(win.tabs) && win.tabs.length > 0;
   });
+
+  if (desktopKey) {
+    const desktopWindows = eligibleWindows.filter((win) => deriveDesktopKey(win) === desktopKey);
+    if (desktopWindows.length > 0) {
+      return {
+        windows: desktopWindows,
+        desktopStrategy: 'workspace',
+        heuristics: 'native'
+      };
+    }
+  }
+
+  if (currentWindow && typeof currentWindow.id === 'number') {
+    const currentOnly = eligibleWindows.filter((win) => win.id === currentWindow.id);
+    if (currentOnly.length > 0) {
+      return {
+        windows: currentOnly,
+        desktopStrategy: 'window',
+        heuristics: 'strict-window-fallback'
+      };
+    }
+  }
+
+  return {
+    windows: [],
+    desktopStrategy: 'window',
+    heuristics: 'no-window-match'
+  };
 }
 
 function sanitizeGroupSnapshot(group) {

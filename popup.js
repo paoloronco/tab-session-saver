@@ -342,7 +342,7 @@ function sanitizeWindowForClient(win) {
   };
 }
 
-function createPreviewItem(tab, displayIndex, originalIndex, wIndex, winSnapshot, sessionPayload, index, label, previewHeader, windowBlock, items) {
+function createPreviewItem(tab, displayIndex, winSnapshot, sessionPayload, index, label, previewContainer) {
   const item = document.createElement('div');
   item.className = 'preview-item';
 
@@ -397,49 +397,34 @@ function createPreviewItem(tab, displayIndex, originalIndex, wIndex, winSnapshot
       const confirmed = confirm('Remove this tab from the saved session?');
       if (!confirmed) return;
 
-      // Mutate the underlying sessionPayload data
-      const windowTabsArr = Array.isArray(winSnapshot.tabs) ? winSnapshot.tabs : [];
-      // Get the removed tab before splicing
-      const removedTab = windowTabsArr[originalIndex];
-      // Remove tab from data
-      windowTabsArr.splice(originalIndex, 1);
+      const currentWindowIndex = Array.isArray(sessionPayload.windows)
+        ? sessionPayload.windows.indexOf(winSnapshot)
+        : -1;
+      if (currentWindowIndex === -1) return;
 
-      // Check if the removed tab was in a group, and if group is now empty, remove group
+      const windowTabsArr = Array.isArray(winSnapshot.tabs) ? winSnapshot.tabs : [];
+      const currentTabIndex = windowTabsArr.indexOf(tab);
+      if (currentTabIndex === -1) return;
+
+      const removedTab = windowTabsArr[currentTabIndex];
+      windowTabsArr.splice(currentTabIndex, 1);
+
       if (removedTab && removedTab.groupId !== -1) {
         const windowGroupsArr = Array.isArray(winSnapshot.groups) ? winSnapshot.groups : [];
         const groupIndex = windowGroupsArr.findIndex(g => g.id === removedTab.groupId);
         if (groupIndex !== -1) {
           const remainingTabsInGroup = windowTabsArr.filter(t => t.groupId === removedTab.groupId);
           if (remainingTabsInGroup.length === 0) {
-            // Remove empty group
             windowGroupsArr.splice(groupIndex, 1);
           }
         }
       }
 
-      // If window became empty, remove it
       if (windowTabsArr.length === 0) {
-        sessionPayload.windows.splice(wIndex, 1);
-        // Remove window block from DOM
-        if (windowBlock && windowBlock.parentNode) windowBlock.parentNode.removeChild(windowBlock);
-      } else {
-        // Remove the item element from DOM
-        if (item && item.parentNode) item.parentNode.removeChild(item);
-        // Re-number remaining preview-index badges in this window
-        const remaining = items.querySelectorAll('.preview-item .preview-index');
-        remaining.forEach((badge, i) => (badge.textContent = String(i + 1)));
+        sessionPayload.windows.splice(currentWindowIndex, 1);
       }
 
-      // Recompute counts and update header/meta
       const countInfo = describeSessionCounts(sessionPayload);
-
-      // Update preview header count
-      const previewCountEl = previewHeader.querySelector('.preview-count');
-      if (previewCountEl) {
-        previewCountEl.textContent = formatCountSummary(countInfo);
-      }
-
-      // Update session label meta
       const { date: d, time: t } = formatTimestamp(sessionPayload.timestamp);
       const strategy = sessionPayload.desktopStrategy || sessionPayload.metadata?.desktopStrategy;
       const metaSegments = [d, t, countInfo.windowsLabel, countInfo.tabsLabel];
@@ -455,7 +440,11 @@ function createPreviewItem(tab, displayIndex, originalIndex, wIndex, winSnapshot
         });
       } else {
         chrome.runtime.sendMessage({ action: 'update_session', index, session: sessionPayload }, (res) => {
-          if (!res || !res.success) console.error('Failed to update session after tab removal', res && res.error);
+          if (!res || !res.success) {
+            console.error('Failed to update session after tab removal', res && res.error);
+            return;
+          }
+          renderPreview(sessionPayload, previewContainer, index, label);
         });
       }
     } catch (e) {
@@ -534,7 +523,7 @@ function renderPreview(sessionPayload, previewContainer, index, label) {
       let globalTabIndex = 0;
 
       ungroupedTabs.forEach(({ tab, originalIndex }) => {
-        const item = createPreviewItem(tab, globalTabIndex, originalIndex, wIndex, winSnapshot, sessionPayload, index, label, previewHeader, windowBlock, items);
+        const item = createPreviewItem(tab, globalTabIndex, winSnapshot, sessionPayload, index, label, previewContainer);
         items.appendChild(item);
         globalTabIndex++;
       });
@@ -550,7 +539,7 @@ function renderPreview(sessionPayload, previewContainer, index, label) {
           const groupContainer = document.createElement('div');
           groupContainer.className = 'preview-group';
           groupTabs.forEach(({ tab, originalIndex }) => {
-            const item = createPreviewItem(tab, globalTabIndex, originalIndex, wIndex, winSnapshot, sessionPayload, index, label, previewHeader, windowBlock, items);
+            const item = createPreviewItem(tab, globalTabIndex, winSnapshot, sessionPayload, index, label, previewContainer);
             groupContainer.appendChild(item);
             globalTabIndex++;
           });
@@ -876,63 +865,81 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const existing = Array.isArray(existingRaw) ? existingRaw : [];
 
-            chrome.runtime.sendMessage({ action: 'capture_current_desktop' }, (snapshot) => {
+            chrome.tabs.query({ active: true, currentWindow: true }, (activeTabs) => {
               try {
                 if (chrome.runtime.lastError) {
-                  console.error('Capture message error', chrome.runtime.lastError);
-                  alert('Unable to capture the current session. Please try again.');
-                  saveButtonEl.disabled = false;
-                  return;
-                }
-                if (!snapshot || !snapshot.success) {
-                  console.error('Capture error', snapshot?.error);
-                  alert('Unable to capture the current session. Please try again.');
+                  console.error('Active tab lookup error', chrome.runtime.lastError);
+                  alert('Unable to identify the active browser window. Please try again.');
                   saveButtonEl.disabled = false;
                   return;
                 }
 
-                const timestamp = new Date().toISOString();
-                const defaultName = `${getTranslation('session_default_name')} ${existing.length + 1}`;
+                const sourceWindowId = Array.isArray(activeTabs) && activeTabs[0] && Number.isInteger(activeTabs[0].windowId)
+                  ? activeTabs[0].windowId
+                  : null;
 
-                const metadata = {
-                  desktopKey: snapshot.desktopKey ?? null,
-                  ...(snapshot.desktopStrategy ? { desktopStrategy: snapshot.desktopStrategy } : {}),
-                  ...(snapshot.heuristics ? { heuristics: snapshot.heuristics } : {})
-                };
-                const sessionObject = normalizeSessionSnapshot({
-                  name: defaultName,
-                  timestamp,
-                  windows: snapshot.windows,
-                  metadata,
-                  platform: snapshot.platform ?? null
-                });
-
-                if (!sessionObject.windows.length) {
-                  alert('No browser windows were detected to save on this desktop.');
-                  saveButtonEl.disabled = false;
-                  return;
-                }
-
-                const max = parseInt(localStorage.getItem('maxSessions') || '10', 10);
-                const merged = existing.concat(sessionObject);
-                const trimmed = merged.slice(-max);
-
-                chrome.storage.local.set({ sessions: trimmed }, () => {
+                chrome.runtime.sendMessage({ action: 'capture_current_desktop', sourceWindowId }, (snapshot) => {
                   try {
-                    saveButtonEl.disabled = false;
                     if (chrome.runtime.lastError) {
-                      console.error('Session save error', chrome.runtime.lastError);
-                      alert('Unable to save this session. Please try again.');
+                      console.error('Capture message error', chrome.runtime.lastError);
+                      alert('Unable to capture the current session. Please try again.');
+                      saveButtonEl.disabled = false;
                       return;
                     }
-                    loadSessions();
+                    if (!snapshot || !snapshot.success) {
+                      console.error('Capture error', snapshot?.error);
+                      alert('Unable to capture the current session. Please try again.');
+                      saveButtonEl.disabled = false;
+                      return;
+                    }
+
+                    const timestamp = new Date().toISOString();
+                    const defaultName = `${getTranslation('session_default_name')} ${existing.length + 1}`;
+
+                    const metadata = {
+                      desktopKey: snapshot.desktopKey ?? null,
+                      ...(snapshot.desktopStrategy ? { desktopStrategy: snapshot.desktopStrategy } : {}),
+                      ...(snapshot.heuristics ? { heuristics: snapshot.heuristics } : {})
+                    };
+                    const sessionObject = normalizeSessionSnapshot({
+                      name: defaultName,
+                      timestamp,
+                      windows: snapshot.windows,
+                      metadata,
+                      platform: snapshot.platform ?? null
+                    });
+
+                    if (!sessionObject.windows.length) {
+                      alert('No browser windows were detected to save on this desktop.');
+                      saveButtonEl.disabled = false;
+                      return;
+                    }
+
+                    const max = parseInt(localStorage.getItem('maxSessions') || '10', 10);
+                    const merged = existing.concat(sessionObject);
+                    const trimmed = merged.slice(-max);
+
+                    chrome.storage.local.set({ sessions: trimmed }, () => {
+                      try {
+                        saveButtonEl.disabled = false;
+                        if (chrome.runtime.lastError) {
+                          console.error('Session save error', chrome.runtime.lastError);
+                          alert('Unable to save this session. Please try again.');
+                          return;
+                        }
+                        loadSessions();
+                      } catch (e) {
+                        console.error('Error in save set callback', e);
+                        saveButtonEl.disabled = false;
+                      }
+                    });
                   } catch (e) {
-                    console.error('Error in save set callback', e);
+                    console.error('Error in capture callback', e);
                     saveButtonEl.disabled = false;
                   }
                 });
               } catch (e) {
-                console.error('Error in capture callback', e);
+                console.error('Error while resolving active tab window', e);
                 saveButtonEl.disabled = false;
               }
             });
