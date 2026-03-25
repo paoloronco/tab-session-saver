@@ -225,6 +225,7 @@ const localeMap = {
 };
 
 let currentLanguage = 'en';
+let reloadSessions = () => {};
 
 // Translation function
 function translatePage(lang) {
@@ -436,7 +437,7 @@ function createPreviewItem(tab, displayIndex, winSnapshot, sessionPayload, index
       // Persist changes: if no tabs left, delete session; else update session
       if (countInfo.tabsCount === 0) {
         chrome.runtime.sendMessage({ action: 'delete_session', index }, (res) => {
-          if (res && res.success) loadSessions();
+          if (res && res.success) reloadSessions();
         });
       } else {
         chrome.runtime.sendMessage({ action: 'update_session', index, session: sessionPayload }, (res) => {
@@ -522,7 +523,7 @@ function renderPreview(sessionPayload, previewContainer, index, label) {
 
       let globalTabIndex = 0;
 
-      ungroupedTabs.forEach(({ tab, originalIndex }) => {
+      ungroupedTabs.forEach(({ tab }) => {
         const item = createPreviewItem(tab, globalTabIndex, winSnapshot, sessionPayload, index, label, previewContainer);
         items.appendChild(item);
         globalTabIndex++;
@@ -538,7 +539,7 @@ function renderPreview(sessionPayload, previewContainer, index, label) {
 
           const groupContainer = document.createElement('div');
           groupContainer.className = 'preview-group';
-          groupTabs.forEach(({ tab, originalIndex }) => {
+          groupTabs.forEach(({ tab }) => {
             const item = createPreviewItem(tab, globalTabIndex, winSnapshot, sessionPayload, index, label, previewContainer);
             groupContainer.appendChild(item);
             globalTabIndex++;
@@ -1236,6 +1237,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  reloadSessions = loadSessions;
 
   // Carica impostazioni salvate
   function restoreSettings() {
