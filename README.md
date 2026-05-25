@@ -13,7 +13,7 @@ Save, manage, restore, export, and import Chrome tab sessions with a local-first
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.1.0-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.2.0-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -93,14 +93,14 @@ The working extension files are in [`Chrome-extension`](/e:/Projects/BROWSERS-Ex
 
 ## Changelog
 
-### 7.1.0
+### 7.2.0
 
-- updated extension version to `7.1.0`
+- updated extension version to `7.2.0`
 - fixed removal of individual tabs from saved sessions so repeated removals stay consistent in UI and storage
 - revised session capture flow to bind capture more explicitly to the popup window and improve fallback handling
 - added repository documentation and AGPL-3.0 licensing
 
-### 7.0.0
+### 7.1.0
 
 - previous stable release
 - session save and restore for Chrome windows and tabs
