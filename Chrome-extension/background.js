@@ -1,6 +1,9 @@
 
 const DEFAULT_SESSION_NAME = 'Session';
 const TAB_GROUP_COLORS = new Set(['grey', 'blue', 'red', 'yellow', 'green', 'cyan', 'orange', 'pink', 'purple']);
+const RESTORE_IN_PROGRESS_ERROR = 'RESTORE_IN_PROGRESS';
+
+let activeRestoreToken = null;
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
@@ -28,8 +31,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
         case 'open_session': {
           if (!request.session) throw new Error('No session payload provided.');
-          await restoreSessionFromSnapshot(request.session);
-          sendResponse({ success: true });
+          const result = await restoreSessionWithLock(request.session);
+          sendResponse(result);
           break;
         }
         case 'delete_session': {
@@ -58,6 +61,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   })();
   return true;
 });
+
+async function restoreSessionWithLock(session) {
+  if (activeRestoreToken) {
+    return {
+      success: false,
+      error: 'A session restore is already in progress.',
+      code: RESTORE_IN_PROGRESS_ERROR
+    };
+  }
+
+  const restoreToken = Symbol('restore');
+  activeRestoreToken = restoreToken;
+
+  try {
+    await restoreSessionFromSnapshot(session);
+    return { success: true };
+  } finally {
+    if (activeRestoreToken === restoreToken) {
+      activeRestoreToken = null;
+    }
+  }
+}
 
 async function captureCurrentDesktopSnapshot(options = {}) {
   try {

@@ -7,6 +7,8 @@ const translations = {
     subtitle: "Keep your workspaces ready in one click.",
     save_button: "Save current tabs",
     restore_button: "Restore",
+    restore_in_progress: "Restoring...",
+    restore_in_progress_message: "A session restore is already in progress.",
     export_button: "Export saved sessions (JSON)",
     import_button: "Import sessions (JSON)",
     settings_title: "Settings",
@@ -49,6 +51,8 @@ const translations = {
     subtitle: "Mant\u00E9n tus espacios de trabajo listos con un clic.",
     save_button: "Guardar pesta\u00F1as actuales",
     restore_button: "Restaurar",
+    restore_in_progress: "Restaurando...",
+    restore_in_progress_message: "Ya hay una restauraci\u00F3n de sesi\u00F3n en curso.",
     export_button: "Exportar sesiones guardadas (JSON)",
     import_button: "Importar sesiones (JSON)",
     settings_title: "Configuraci\u00F3n",
@@ -91,6 +95,8 @@ const translations = {
     subtitle: "Tieni i tuoi spazi di lavoro pronti con un clic.",
     save_button: "Salva le schede correnti",
     restore_button: "Ripristina",
+    restore_in_progress: "Ripristino...",
+    restore_in_progress_message: "Un ripristino sessione \u00E8 gi\u00E0 in corso.",
     export_button: "Esporta le sessioni salvate (JSON)",
     import_button: "Importa le sessioni (JSON)",
     settings_title: "Impostazioni",
@@ -133,6 +139,8 @@ const translations = {
     subtitle: "Gardez vos espaces de travail pr\u00EAts en un clic.",
     save_button: "Enregistrer les onglets en cours",
     restore_button: "Restaurer",
+    restore_in_progress: "Restauration...",
+    restore_in_progress_message: "Une restauration de session est d\u00E9j\u00E0 en cours.",
     export_button: "Exporter les sessions enregistr\u00E9es (JSON)",
     import_button: "Importer des sessions (JSON)",
     settings_title: "Param\u00E8tres",
@@ -175,6 +183,8 @@ const translations = {
     subtitle: "Halte deine Arbeitsbereiche mit einem Klick bereit.",
     save_button: "Aktuelle Tabs speichern",
     restore_button: "Wiederherstellen",
+    restore_in_progress: "Wiederherstellung...",
+    restore_in_progress_message: "Eine Sitzungswiederherstellung l\u00E4uft bereits.",
     export_button: "Gespeicherte Sitzungen exportieren (JSON)",
     import_button: "Sitzungen importieren (JSON)",
     settings_title: "Einstellungen",
@@ -226,6 +236,7 @@ const localeMap = {
 
 let currentLanguage = 'en';
 let reloadSessions = () => {};
+let restoreRequestInFlight = false;
 
 // Translation function
 function translatePage(lang) {
@@ -255,6 +266,16 @@ function getTranslation(key) {
   return translations[currentLanguage] && translations[currentLanguage][key] 
     ? translations[currentLanguage][key] 
     : translations['en'][key] || key;
+}
+
+function setRestoreControlsBusy(isBusy) {
+  document.querySelectorAll('.restore-btn').forEach((button) => {
+    button.disabled = isBusy;
+    button.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+    button.textContent = isBusy
+      ? getTranslation('restore_in_progress')
+      : getTranslation('restore_button');
+  });
 }
 
 function formatTimestamp(value) {
@@ -1118,27 +1139,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const triggerRestore = () => {
           closeAllMenus();
+          if (restoreRequestInFlight) {
+            return;
+          }
           if (!sessionPayload.windows || sessionPayload.windows.length === 0) {
             alert('This session has no windows to restore.');
             return;
           }
+          restoreRequestInFlight = true;
+          setRestoreControlsBusy(true);
           chrome.runtime.sendMessage(
             { action: 'open_session', session: sessionPayload },
             (res) => {
               try {
+                const resetRestoreRequest = () => {
+                  restoreRequestInFlight = false;
+                  setRestoreControlsBusy(false);
+                };
                 if (chrome.runtime.lastError) {
+                  resetRestoreRequest();
                   console.error('Restore error', chrome.runtime.lastError);
                   alert('Unable to restore this session: ' + String(chrome.runtime.lastError.message));
                   return;
                 }
                 if (!res || !res.success) {
+                  resetRestoreRequest();
                   console.error('Restore failed', res && res.error);
+                  if (res && res.code === 'RESTORE_IN_PROGRESS') {
+                    alert(getTranslation('restore_in_progress_message'));
+                    return;
+                  }
                   alert('Unable to restore this session: ' + (res && res.error ? String(res.error) : 'Unknown error'));
                   window.close();
                   return;
                 }
                 window.close();
               } catch (e) {
+                restoreRequestInFlight = false;
+                setRestoreControlsBusy(false);
                 console.error('Error in restore callback', e);
               }
             }
