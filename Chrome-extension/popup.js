@@ -7,6 +7,8 @@ const translations = {
     subtitle: "Keep your workspaces ready in one click.",
     save_button: "Save current tabs",
     restore_button: "Restore",
+    restore_session_button: "Restore entire session",
+    restore_window_button: "Restore window",
     restore_in_progress: "Restoring...",
     restore_in_progress_message: "A session restore is already in progress.",
     export_button: "Export saved sessions (JSON)",
@@ -51,6 +53,8 @@ const translations = {
     subtitle: "Mant\u00E9n tus espacios de trabajo listos con un clic.",
     save_button: "Guardar pesta\u00F1as actuales",
     restore_button: "Restaurar",
+    restore_session_button: "Restaurar toda la sesi\u00F3n",
+    restore_window_button: "Restaurar ventana",
     restore_in_progress: "Restaurando...",
     restore_in_progress_message: "Ya hay una restauraci\u00F3n de sesi\u00F3n en curso.",
     export_button: "Exportar sesiones guardadas (JSON)",
@@ -95,6 +99,8 @@ const translations = {
     subtitle: "Tieni i tuoi spazi di lavoro pronti con un clic.",
     save_button: "Salva le schede correnti",
     restore_button: "Ripristina",
+    restore_session_button: "Ripristina l'intera sessione",
+    restore_window_button: "Ripristina finestra",
     restore_in_progress: "Ripristino...",
     restore_in_progress_message: "Un ripristino sessione \u00E8 gi\u00E0 in corso.",
     export_button: "Esporta le sessioni salvate (JSON)",
@@ -139,6 +145,8 @@ const translations = {
     subtitle: "Gardez vos espaces de travail pr\u00EAts en un clic.",
     save_button: "Enregistrer les onglets en cours",
     restore_button: "Restaurer",
+    restore_session_button: "Restaurer toute la session",
+    restore_window_button: "Restaurer la fen\u00EAtre",
     restore_in_progress: "Restauration...",
     restore_in_progress_message: "Une restauration de session est d\u00E9j\u00E0 en cours.",
     export_button: "Exporter les sessions enregistr\u00E9es (JSON)",
@@ -183,6 +191,8 @@ const translations = {
     subtitle: "Halte deine Arbeitsbereiche mit einem Klick bereit.",
     save_button: "Aktuelle Tabs speichern",
     restore_button: "Wiederherstellen",
+    restore_session_button: "Gesamte Sitzung wiederherstellen",
+    restore_window_button: "Fenster wiederherstellen",
     restore_in_progress: "Wiederherstellung...",
     restore_in_progress_message: "Eine Sitzungswiederherstellung l\u00E4uft bereits.",
     export_button: "Gespeicherte Sitzungen exportieren (JSON)",
@@ -268,13 +278,70 @@ function getTranslation(key) {
     : translations['en'][key] || key;
 }
 
+function configureRestoreButton(button, idleText) {
+  button.dataset.restoreControl = 'true';
+  button.dataset.restoreIdleLabel = idleText;
+  button.textContent = idleText;
+}
+
 function setRestoreControlsBusy(isBusy) {
-  document.querySelectorAll('.restore-btn').forEach((button) => {
+  document.querySelectorAll('button[data-restore-control="true"]').forEach((button) => {
     button.disabled = isBusy;
     button.setAttribute('aria-busy', isBusy ? 'true' : 'false');
     button.textContent = isBusy
       ? getTranslation('restore_in_progress')
-      : getTranslation('restore_button');
+      : button.dataset.restoreIdleLabel || getTranslation('restore_button');
+  });
+}
+
+function triggerRestoreMessage(message, options = {}) {
+  const {
+    emptyMessage = 'This session has no windows to restore.',
+    closeOnFailure = true
+  } = options;
+
+  closeAllMenus();
+  if (restoreRequestInFlight) {
+    return;
+  }
+  if (!message) {
+    alert(emptyMessage);
+    return;
+  }
+
+  restoreRequestInFlight = true;
+  setRestoreControlsBusy(true);
+  chrome.runtime.sendMessage(message, (res) => {
+    try {
+      const resetRestoreRequest = () => {
+        restoreRequestInFlight = false;
+        setRestoreControlsBusy(false);
+      };
+      if (chrome.runtime.lastError) {
+        resetRestoreRequest();
+        console.error('Restore error', chrome.runtime.lastError);
+        alert('Unable to restore this session: ' + String(chrome.runtime.lastError.message));
+        return;
+      }
+      if (!res || !res.success) {
+        resetRestoreRequest();
+        console.error('Restore failed', res && res.error);
+        if (res && res.code === 'RESTORE_IN_PROGRESS') {
+          alert(getTranslation('restore_in_progress_message'));
+          return;
+        }
+        alert('Unable to restore this session: ' + (res && res.error ? String(res.error) : 'Unknown error'));
+        if (closeOnFailure) {
+          window.close();
+        }
+        return;
+      }
+      window.close();
+    } catch (e) {
+      restoreRequestInFlight = false;
+      setRestoreControlsBusy(false);
+      console.error('Error in restore callback', e);
+    }
   });
 }
 
@@ -488,7 +555,37 @@ function renderPreview(sessionPayload, previewContainer, index, label) {
 
   const previewHeader = document.createElement('div');
   previewHeader.className = 'preview-header';
-  previewHeader.innerHTML = `<span>${getTranslation('preview_title')}</span><span class="preview-count">${formatCountSummary(countInfo)}</span>`;
+
+  const previewTitleWrap = document.createElement('div');
+  previewTitleWrap.className = 'preview-header-title';
+
+  const previewTitle = document.createElement('span');
+  previewTitle.textContent = getTranslation('preview_title');
+
+  const previewCount = document.createElement('span');
+  previewCount.className = 'preview-count';
+  previewCount.textContent = formatCountSummary(countInfo);
+
+  previewTitleWrap.appendChild(previewTitle);
+  previewTitleWrap.appendChild(previewCount);
+  previewHeader.appendChild(previewTitleWrap);
+
+  const previewSessionRestoreBtn = document.createElement('button');
+  previewSessionRestoreBtn.className = 'restore-btn preview-session-restore-btn';
+  previewSessionRestoreBtn.type = 'button';
+  configureRestoreButton(previewSessionRestoreBtn, getTranslation('restore_session_button'));
+  previewSessionRestoreBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (!sessionPayload.windows || sessionPayload.windows.length === 0) {
+      alert('This session has no windows to restore.');
+      return;
+    }
+    triggerRestoreMessage(
+      { action: 'open_session', session: sessionPayload },
+      { emptyMessage: 'This session has no windows to restore.' }
+    );
+  });
+  previewHeader.appendChild(previewSessionRestoreBtn);
   previewContainer.appendChild(previewHeader);
 
   const previewWindowsWrapper = document.createElement('div');
@@ -518,7 +615,36 @@ function renderPreview(sessionPayload, previewContainer, index, label) {
         ? getTranslation('tab_count_one')
         : getTranslation('tab_count_other').replace('{count}', windowTabs.length);
 
-    windowHeader.innerHTML = `<span>${getTranslation('preview_window_label').replace('{index}', wIndex + 1)}</span><span class="preview-count">${windowTabsLabel}</span>`;
+    const windowHeaderText = document.createElement('div');
+    windowHeaderText.className = 'preview-window-title';
+
+    const windowLabel = document.createElement('span');
+    windowLabel.textContent = getTranslation('preview_window_label').replace('{index}', wIndex + 1);
+
+    const windowCount = document.createElement('span');
+    windowCount.className = 'preview-count';
+    windowCount.textContent = windowTabsLabel;
+
+    windowHeaderText.appendChild(windowLabel);
+    windowHeaderText.appendChild(windowCount);
+
+    const restoreWindowBtn = document.createElement('button');
+    restoreWindowBtn.className = 'restore-window-btn';
+    restoreWindowBtn.type = 'button';
+    configureRestoreButton(restoreWindowBtn, getTranslation('restore_window_button'));
+    restoreWindowBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      triggerRestoreMessage(
+        { action: 'restore_window', windowSnapshot: winSnapshot },
+        {
+          emptyMessage: 'This window cannot be restored.',
+          closeOnFailure: false
+        }
+      );
+    });
+
+    windowHeader.appendChild(windowHeaderText);
+    windowHeader.appendChild(restoreWindowBtn);
 
     const items = document.createElement('div');
     items.className = 'preview-items';
@@ -1048,7 +1174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const { date, time } = formatTimestamp(normalized.timestamp);
         const countInfo = describeSessionCounts(normalized);
-        if (countInfo.tabsCount === 0) return;
+        if (countInfo.tabsCount === 0 && countInfo.windowsCount === 0) return;
         const strategy = normalized.desktopStrategy || normalized.metadata?.desktopStrategy;
         const metaSegments = [date, time, countInfo.windowsLabel, countInfo.tabsLabel];
         if (countInfo.groupsLabel) metaSegments.splice(3, 0, countInfo.groupsLabel);
@@ -1119,7 +1245,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const restoreBtn = document.createElement('button');
         restoreBtn.className = 'restore-btn';
         restoreBtn.type = 'button';
-        restoreBtn.textContent = getTranslation('restore_button');
+        configureRestoreButton(restoreBtn, getTranslation('restore_button'));
 
         const actions = document.createElement('div');
         actions.className = 'session-actions';
@@ -1138,48 +1264,13 @@ document.addEventListener('DOMContentLoaded', () => {
         previewContainer.addEventListener('click', (event) => event.stopPropagation());
 
         const triggerRestore = () => {
-          closeAllMenus();
-          if (restoreRequestInFlight) {
-            return;
-          }
           if (!sessionPayload.windows || sessionPayload.windows.length === 0) {
             alert('This session has no windows to restore.');
             return;
           }
-          restoreRequestInFlight = true;
-          setRestoreControlsBusy(true);
-          chrome.runtime.sendMessage(
+          triggerRestoreMessage(
             { action: 'open_session', session: sessionPayload },
-            (res) => {
-              try {
-                const resetRestoreRequest = () => {
-                  restoreRequestInFlight = false;
-                  setRestoreControlsBusy(false);
-                };
-                if (chrome.runtime.lastError) {
-                  resetRestoreRequest();
-                  console.error('Restore error', chrome.runtime.lastError);
-                  alert('Unable to restore this session: ' + String(chrome.runtime.lastError.message));
-                  return;
-                }
-                if (!res || !res.success) {
-                  resetRestoreRequest();
-                  console.error('Restore failed', res && res.error);
-                  if (res && res.code === 'RESTORE_IN_PROGRESS') {
-                    alert(getTranslation('restore_in_progress_message'));
-                    return;
-                  }
-                  alert('Unable to restore this session: ' + (res && res.error ? String(res.error) : 'Unknown error'));
-                  window.close();
-                  return;
-                }
-                window.close();
-              } catch (e) {
-                restoreRequestInFlight = false;
-                setRestoreControlsBusy(false);
-                console.error('Error in restore callback', e);
-              }
-            }
+            { emptyMessage: 'This session has no windows to restore.' }
           );
         };
 

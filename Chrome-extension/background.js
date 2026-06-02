@@ -35,6 +35,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           sendResponse(result);
           break;
         }
+        case 'restore_window': {
+          if (!request.windowSnapshot) throw new Error('No window payload provided.');
+          const result = await restoreWindowWithLock(request.windowSnapshot);
+          sendResponse(result);
+          break;
+        }
         case 'delete_session': {
           const success = await deleteSessionAtIndex(request.index);
           sendResponse({ success });
@@ -63,6 +69,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 async function restoreSessionWithLock(session) {
+  return runRestoreWithLock(() => restoreSessionFromSnapshot(session));
+}
+
+async function restoreWindowWithLock(windowSnapshot) {
+  return runRestoreWithLock(async () => {
+    const normalizedWindow = constructWindowSnapshot(windowSnapshot || {}, {});
+    await restoreSingleWindow(normalizedWindow);
+  });
+}
+
+async function runRestoreWithLock(restoreOperation) {
   if (activeRestoreToken) {
     return {
       success: false,
@@ -75,7 +92,7 @@ async function restoreSessionWithLock(session) {
   activeRestoreToken = restoreToken;
 
   try {
-    await restoreSessionFromSnapshot(session);
+    await restoreOperation();
     return { success: true };
   } finally {
     if (activeRestoreToken === restoreToken) {
@@ -433,8 +450,9 @@ async function updateSessionAtIndex(index, sessionObject) {
   await chrome.storage.local.set({ sessions });
   return true;
 }
-function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_NAME) {
+function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_NAME, options = {}) {
   const base = rawSession && typeof rawSession === 'object' ? rawSession : {};
+  const { includeEmptyWindows = false } = options;
 
   const timestamp =
     typeof base.timestamp === 'string' && base.timestamp
@@ -475,7 +493,7 @@ function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_N
 
   const normalizedWindows = windowsSource
     .map((win) => constructWindowSnapshot(win || {}, {}))
-    .filter((win) => Array.isArray(win.tabs) && win.tabs.length > 0);
+    .filter((win) => includeEmptyWindows || (Array.isArray(win.tabs) && win.tabs.length > 0));
 
   const metadataForStorage = {
     ...metadata,
@@ -501,7 +519,7 @@ function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_N
   return sessionObject;
 }
 async function restoreSessionFromSnapshot(rawSession) {
-  const normalized = normalizeSessionForStorage(rawSession);
+  const normalized = normalizeSessionForStorage(rawSession, DEFAULT_SESSION_NAME, { includeEmptyWindows: true });
   const windows = Array.isArray(normalized.windows) ? normalized.windows : [];
 
   if (windows.length === 0) {

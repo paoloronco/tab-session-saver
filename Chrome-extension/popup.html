@@ -220,7 +220,8 @@
       flex-shrink: 0;
     }
 
-    .restore-btn {
+    .restore-btn,
+    .restore-window-btn {
       padding: 0.45rem 0.75rem;
       border-radius: 10px;
       border: 1px solid var(--accent-color);
@@ -233,7 +234,8 @@
       transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .restore-btn:hover {
+    .restore-btn:hover,
+    .restore-window-btn:hover {
       background: var(--accent-color);
       color: #ffffff;
       border-color: var(--accent-color);
@@ -241,19 +243,29 @@
       box-shadow: 0 6px 14px color-mix(in srgb, var(--accent-color) 35%, transparent);
     }
 
-    .restore-btn:focus-visible {
+    .restore-btn:focus-visible,
+    .restore-window-btn:focus-visible {
       outline: 2px solid var(--accent-color);
       outline-offset: 2px;
     }
 
     .restore-btn:disabled,
-    .restore-btn:disabled:hover {
+    .restore-btn:disabled:hover,
+    .restore-window-btn:disabled,
+    .restore-window-btn:disabled:hover {
       border-color: var(--border-color);
       background: var(--hover-bg);
       color: var(--muted-color);
       cursor: wait;
       transform: none;
       box-shadow: none;
+    }
+
+    .restore-window-btn,
+    .preview-session-restore-btn {
+      padding: 0.35rem 0.55rem;
+      font-size: 0.72rem;
+      white-space: nowrap;
     }
 
     .menu-wrapper {
@@ -355,11 +367,21 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 0.5rem;
       font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--text-secondary);
+    }
+
+    .preview-window-title,
+    .preview-header-title {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      min-width: 0;
+      flex-wrap: wrap;
     }
 
     body.dark-mode .preview-window {
@@ -371,6 +393,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 0.5rem;
       font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;
@@ -778,7 +801,7 @@
           <a href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" data-translate="privacy_policy_link">Privacy Policy</a>
         </div>
         <div class="footer-info">
-          <span data-translate="version_label">Version:</span> 7.2.1<br>
+          <span data-translate="version_label">Version:</span> 7.2.2<br>
           &copy; 2025 Paolo Ronco<br>
           <span data-translate="rights_reserved">All rights reserved</span>
         </div>

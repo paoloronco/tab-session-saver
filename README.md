@@ -13,7 +13,7 @@ Save, manage, restore, export, and import Chrome tab sessions with a local-first
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.2.1-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.2.2-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -41,7 +41,7 @@ It stores session data locally with `chrome.storage.local` and supports:
 | --- | --- |
 | Download extension | [Chrome Web Store](https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=en) |
 | Load unpacked | `chrome://extensions` |
-| Extension source | [`Chrome-extension`](/e:/Projects/BROWSERS-Extensions/Chrome-Extensions/Chrome-session-save/Chrome%20Extension/V7.1/Chome-Extension/Chrome-extension) |
+| Extension source | [`Chrome-extension`](./Chrome-extension) |
 
 ## Highlights
 
@@ -56,16 +56,16 @@ It stores session data locally with `chrome.storage.local` and supports:
 
 ## Project Structure
 
-The working extension files are in [`Chrome-extension`](/e:/Projects/BROWSERS-Extensions/Chrome-Extensions/Chrome-session-save/Chrome%20Extension/V7.1/Chome-Extension/Chrome-extension).
+The working extension files are in [`Chrome-extension`](./Chrome-extension).
 
 | File | Purpose |
 | --- | --- |
-| [`Chrome-extension/manifest.json`](/e:/Projects/BROWSERS-Extensions/Chrome-Extensions/Chrome-session-save/Chrome%20Extension/V7.1/Chome-Extension/Chrome-extension/manifest.json) | Manifest V3 configuration |
-| [`Chrome-extension/background.js`](/e:/Projects/BROWSERS-Extensions/Chrome-Extensions/Chrome-session-save/Chrome%20Extension/V7.1/Chome-Extension/Chrome-extension/background.js) | background service worker, capture, storage, restore |
-| [`Chrome-extension/popup.html`](/e:/Projects/BROWSERS-Extensions/Chrome-Extensions/Chrome-session-save/Chrome%20Extension/V7.1/Chome-Extension/Chrome-extension/popup.html) | popup UI |
-| [`Chrome-extension/popup.js`](/e:/Projects/BROWSERS-Extensions/Chrome-Extensions/Chrome-session-save/Chrome%20Extension/V7.1/Chome-Extension/Chrome-extension/popup.js) | popup logic, preview, import/export, settings |
-| [`Chrome-extension/welcome.html`](/e:/Projects/BROWSERS-Extensions/Chrome-Extensions/Chrome-session-save/Chrome%20Extension/V7.1/Chome-Extension/Chrome-extension/welcome.html) | onboarding page |
-| [`Chrome-extension/welcome.js`](/e:/Projects/BROWSERS-Extensions/Chrome-Extensions/Chrome-session-save/Chrome%20Extension/V7.1/Chome-Extension/Chrome-extension/welcome.js) | onboarding behavior and translations |
+| [`Chrome-extension/manifest.json`](./Chrome-extension/manifest.json) | Manifest V3 configuration |
+| [`Chrome-extension/background.js`](./Chrome-extension/background.js) | background service worker, capture, storage, restore |
+| [`Chrome-extension/popup.html`](./Chrome-extension/popup.html) | popup UI |
+| [`Chrome-extension/popup.js`](./Chrome-extension/popup.js) | popup logic, preview, import/export, settings |
+| [`Chrome-extension/welcome.html`](./Chrome-extension/welcome.html) | onboarding page |
+| [`Chrome-extension/welcome.js`](./Chrome-extension/welcome.js) | onboarding behavior and translations |
 
 ## Local Development
 
@@ -74,7 +74,7 @@ The working extension files are in [`Chrome-extension`](/e:/Projects/BROWSERS-Ex
 1. Open `chrome://extensions`
 2. Enable `Developer mode`
 3. Click `Load unpacked`
-4. Select [`Chrome-extension`](/e:/Projects/BROWSERS-Extensions/Chrome-Extensions/Chrome-session-save/Chrome%20Extension/V7.1/Chome-Extension/Chrome-extension)
+4. Select [`Chrome-extension`](./Chrome-extension)
 
 ### Permissions
 
@@ -92,6 +92,13 @@ The working extension files are in [`Chrome-extension`](/e:/Projects/BROWSERS-Ex
 > When Chrome does not expose reliable desktop or workspace metadata, a standard extension cannot perfectly separate Windows virtual desktops.
 
 ## Changelog
+
+### 7.2.2
+
+- updated extension version to `7.2.2`
+- added per-window restore actions in the session preview
+- reused the existing restore pipeline for single-window restores
+- fixed README links that pointed to an old local folder path
 
 ### 7.2.1
 
@@ -119,4 +126,4 @@ The working extension files are in [`Chrome-extension`](/e:/Projects/BROWSERS-Ex
 
 This repository is licensed under the GNU Affero General Public License v3.0.
 
-Full text: [`Chrome-extension/LICENSE`](/e:/Projects/BROWSERS-Extensions/Chrome-Extensions/Chrome-session-save/Chrome%20Extension/V7.1/Chome-Extension/Chrome-extension/LICENSE)
+Full text: [`Chrome-extension/LICENSE`](./Chrome-extension/LICENSE)
