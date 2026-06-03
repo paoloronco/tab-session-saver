@@ -1268,10 +1268,17 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('This session has no windows to restore.');
             return;
           }
-          triggerRestoreMessage(
-            { action: 'open_session', session: sessionPayload },
-            { emptyMessage: 'This session has no windows to restore.' }
-          );
+          // Guard early so a second click during the tabs.query callback is also blocked.
+          if (restoreRequestInFlight) return;
+          chrome.tabs.query({ active: true, currentWindow: true }, (activeTabs) => {
+            const sourceWindowId = (Array.isArray(activeTabs) && activeTabs[0] && Number.isInteger(activeTabs[0].windowId))
+              ? activeTabs[0].windowId
+              : null;
+            triggerRestoreMessage(
+              { action: 'open_session', session: sessionPayload, sourceWindowId },
+              { emptyMessage: 'This session has no windows to restore.' }
+            );
+          });
         };
 
         restoreBtn.addEventListener('click', (event) => {

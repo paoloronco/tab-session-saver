@@ -31,7 +31,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
         case 'open_session': {
           if (!request.session) throw new Error('No session payload provided.');
-          const result = await restoreSessionWithLock(request.session);
+          const sourceWindowId = Number.isInteger(request.sourceWindowId) ? request.sourceWindowId : null;
+          const result = await restoreSessionWithLock(request.session, { sourceWindowId });
           sendResponse(result);
           break;
         }
@@ -68,8 +69,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true;
 });
 
-async function restoreSessionWithLock(session) {
-  return runRestoreWithLock(() => restoreSessionFromSnapshot(session));
+async function restoreSessionWithLock(session, options = {}) {
+  return runRestoreWithLock(() => restoreSessionFromSnapshot(session, options));
 }
 
 async function restoreWindowWithLock(windowSnapshot) {
@@ -518,9 +519,43 @@ function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_N
 
   return sessionObject;
 }
-async function restoreSessionFromSnapshot(rawSession) {
+async function restoreSessionFromSnapshot(rawSession, options = {}) {
+  const { sourceWindowId = null } = options;
+
+  // Before restoring, check if the source window is a disposable empty startup window.
+  // A window is disposable only if it has exactly 1 tab, the tab is a safe empty page,
+  // and the tab is not pinned.  We reuse it for the first restored window so the final
+  // window count equals the saved session count (not +1 from the startup window).
+  let reuseWindowId = null;
+  if (Number.isInteger(sourceWindowId)) {
+    try {
+      const sourceWin = await chrome.windows.get(sourceWindowId, { populate: true });
+      const sourceTabs = Array.isArray(sourceWin.tabs) ? sourceWin.tabs : [];
+      const SAFE_EMPTY_URLS = new Set(['chrome://newtab/', 'about:blank', 'about:newtab', '']);
+      const isDisposable = (
+        sourceWin.type === 'normal' &&
+        sourceTabs.length === 1 &&
+        !sourceTabs[0].pinned &&
+        SAFE_EMPTY_URLS.has(sourceTabs[0].url)
+      );
+      console.log(
+        '[restore] source window', sourceWindowId,
+        '| tabs:', sourceTabs.length,
+        '| url:', sourceTabs[0]?.url,
+        '| disposable:', isDisposable
+      );
+      if (isDisposable) {
+        reuseWindowId = sourceWindowId;
+      }
+    } catch (err) {
+      console.warn('[restore] could not inspect source window', sourceWindowId, err);
+    }
+  }
+
   const normalized = normalizeSessionForStorage(rawSession, DEFAULT_SESSION_NAME, { includeEmptyWindows: true });
   const windows = Array.isArray(normalized.windows) ? normalized.windows : [];
+
+  console.log('[restore] windows to restore:', windows.length, '| reuseWindowId:', reuseWindowId);
 
   if (windows.length === 0) {
     if (Array.isArray(rawSession)) {
@@ -531,13 +566,27 @@ async function restoreSessionFromSnapshot(rawSession) {
     return;
   }
 
+  // Unfocused windows first so the focused window ends up on top.
   const orderedWindows = [...windows].sort((a, b) => Number(a.focused) - Number(b.focused));
+
+  // Reuse the disposable startup window for the first window in the restore order.
+  let reuseForFirst = reuseWindowId;
+  let windowsRestored = 0;
   for (const winSnapshot of orderedWindows) {
-    await restoreSingleWindow(winSnapshot);
+    try {
+      await restoreSingleWindow(winSnapshot, { reuseWindowId: reuseForFirst });
+      windowsRestored++;
+    } catch (err) {
+      // One window failing should not abort the entire restore.
+      console.warn('[restore] window restore failed, continuing with remaining windows:', err);
+    }
+    reuseForFirst = null; // Only reuse the startup window for the very first window.
   }
+  console.log('[restore] completed:', windowsRestored, '/', orderedWindows.length, 'windows restored');
 }
 
-async function restoreSingleWindow(windowSnapshot) {
+async function restoreSingleWindow(windowSnapshot, options = {}) {
+  const { reuseWindowId = null } = options;
   const tabs = Array.isArray(windowSnapshot.tabs) ? windowSnapshot.tabs : [];
   const groups = Array.isArray(windowSnapshot.groups) ? windowSnapshot.groups : [];
   const urls = tabs.length > 0 ? tabs.map((tab) => tab.url || 'chrome://newtab/') : ['chrome://newtab/'];
@@ -571,12 +620,42 @@ async function restoreSingleWindow(windowSnapshot) {
   }
 
   let createdWindow;
-  try {
-    createdWindow = await chrome.windows.create(createData);
-  } catch (err) {
-    console.warn('[background] windows.create failed, retrying without state/bounds', err);
-    createdWindow = await chrome.windows.create({ url: urls, focused: Boolean(windowSnapshot.focused) });
-    desiredState = 'normal';
+
+  if (Number.isInteger(reuseWindowId)) {
+    // Reuse the empty startup window: navigate its tab and append any additional tabs.
+    console.log('[restore] reusing window', reuseWindowId, 'for', urls.length, 'tab(s)');
+    try {
+      const existingTabs = await chrome.tabs.query({ windowId: reuseWindowId });
+      if (existingTabs.length > 0) {
+        await chrome.tabs.update(existingTabs[0].id, { url: urls[0] });
+      } else {
+        await chrome.tabs.create({ windowId: reuseWindowId, url: urls[0] });
+      }
+      for (let i = 1; i < urls.length; i++) {
+        await chrome.tabs.create({ windowId: reuseWindowId, url: urls[i] });
+      }
+      if (Boolean(windowSnapshot.focused)) {
+        await chrome.windows.update(reuseWindowId, { focused: true });
+      }
+      createdWindow = { id: reuseWindowId };
+    } catch (err) {
+      console.warn('[restore] reuse window failed, falling back to new window:', err);
+      try {
+        createdWindow = await chrome.windows.create(createData);
+      } catch (fallbackErr) {
+        console.warn('[restore] windows.create also failed, retrying without state/bounds', fallbackErr);
+        createdWindow = await chrome.windows.create({ url: urls, focused: Boolean(windowSnapshot.focused) });
+        desiredState = 'normal';
+      }
+    }
+  } else {
+    try {
+      createdWindow = await chrome.windows.create(createData);
+    } catch (err) {
+      console.warn('[background] windows.create failed, retrying without state/bounds', err);
+      createdWindow = await chrome.windows.create({ url: urls, focused: Boolean(windowSnapshot.focused) });
+      desiredState = 'normal';
+    }
   }
 
   const createdTabs = await chrome.tabs.query({ windowId: createdWindow.id });
