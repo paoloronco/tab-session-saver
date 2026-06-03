@@ -46,7 +46,15 @@ const translations = {
     window_count_other: "{count} windows",
     group_count_one: "1 group",
     group_count_other: "{count} groups",
-    desktop_scope_workspace: "Current desktop"
+    desktop_scope_workspace: "Current desktop",
+    browser_support_label: "Browser Support",
+    browser_support_loading: "Detecting browser…",
+    browser_support_supported: "Supported",
+    browser_support_not_supported: "Not officially supported",
+    browser_support_unknown: "Unknown",
+    browser_support_detected: "Detected browser",
+    browser_support_official: "Official browser",
+    browser_warning_text: "Unsupported browser detected. Some restore features, tab groups, and multi-window behavior may differ from standard Google Chrome."
   },
   es: {
     title: "Guardador de pesta\u00F1as",
@@ -92,7 +100,15 @@ const translations = {
     window_count_other: "{count} ventanas",
     group_count_one: "1 grupo",
     group_count_other: "{count} grupos",
-    desktop_scope_workspace: "Escritorio actual"
+    desktop_scope_workspace: "Escritorio actual",
+    browser_support_label: "Compatibilidad del navegador",
+    browser_support_loading: "Detectando navegador…",
+    browser_support_supported: "Compatible",
+    browser_support_not_supported: "No compatible oficialmente",
+    browser_support_unknown: "Desconocido",
+    browser_support_detected: "Navegador detectado",
+    browser_support_official: "Navegador oficial",
+    browser_warning_text: "Navegador no compatible detectado. Algunas funciones de restauración, grupos de pestañas y ventanas múltiples pueden diferir de Google Chrome estándar."
   },
   it: {
     title: "Salva schede",
@@ -138,7 +154,15 @@ const translations = {
     window_count_other: "{count} finestre",
     group_count_one: "1 gruppo",
     group_count_other: "{count} gruppi",
-    desktop_scope_workspace: "Desktop attuale"
+    desktop_scope_workspace: "Desktop attuale",
+    browser_support_label: "Supporto browser",
+    browser_support_loading: "Rilevamento browser…",
+    browser_support_supported: "Supportato",
+    browser_support_not_supported: "Non ufficialmente supportato",
+    browser_support_unknown: "Sconosciuto",
+    browser_support_detected: "Browser rilevato",
+    browser_support_official: "Browser ufficiale",
+    browser_warning_text: "Browser non supportato rilevato. Alcune funzioni di ripristino, gruppi di schede e finestre multiple potrebbero comportarsi diversamente rispetto a Google Chrome standard."
   },
   fr: {
     title: "Sauvegarde d'onglets",
@@ -184,7 +208,15 @@ const translations = {
     window_count_other: "{count} fen\u00EAtres",
     group_count_one: "1 groupe",
     group_count_other: "{count} groupes",
-    desktop_scope_workspace: "Bureau actuel"
+    desktop_scope_workspace: "Bureau actuel",
+    browser_support_label: "Compatibilité navigateur",
+    browser_support_loading: "Détection du navigateur…",
+    browser_support_supported: "Pris en charge",
+    browser_support_not_supported: "Non pris en charge officiellement",
+    browser_support_unknown: "Inconnu",
+    browser_support_detected: "Navigateur détecté",
+    browser_support_official: "Navigateur officiel",
+    browser_warning_text: "Navigateur non pris en charge détecté. Certaines fonctions de restauration, groupes d'onglets et comportements multi-fenêtres peuvent différer de Google Chrome standard."
   },
   de: {
     title: "Tab-Sitzungsspeicher",
@@ -230,7 +262,15 @@ const translations = {
     window_count_other: "{count} Fenster",
     group_count_one: "1 Gruppe",
     group_count_other: "{count} Gruppen",
-    desktop_scope_workspace: "Aktueller Desktop"
+    desktop_scope_workspace: "Aktueller Desktop",
+    browser_support_label: "Browser-Unterstützung",
+    browser_support_loading: "Browser wird erkannt…",
+    browser_support_supported: "Unterstützt",
+    browser_support_not_supported: "Nicht offiziell unterstützt",
+    browser_support_unknown: "Unbekannt",
+    browser_support_detected: "Erkannter Browser",
+    browser_support_official: "Offizieller Browser",
+    browser_warning_text: "Nicht unterstützter Browser erkannt. Einige Wiederherstellungsfunktionen, Tab-Gruppen und Multi-Fenster-Verhalten können sich von Standard-Google-Chrome unterscheiden."
   }
 };
 
@@ -843,6 +883,57 @@ function closeAllMenus(options = {}) {
   });
 }
 
+// Detect the running browser.
+// Returns { id, name, supported } where supported is true (Chrome), false (other Chromium), or null (unknown).
+// Detection limitations: Brave spoofs Chrome's UA — we use navigator.brave.isBrave() to catch it.
+// Pure Chromium builds (without a browser-specific marker) are reported as 'chrome'.
+async function detectBrowserType() {
+  try {
+    const ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+
+    // Brave has navigator.brave.isBrave() — check first because Brave spoofs Chrome's UA.
+    if (typeof navigator !== 'undefined' && navigator.brave && typeof navigator.brave.isBrave === 'function') {
+      try {
+        const isBrave = await navigator.brave.isBrave();
+        if (isBrave) return { id: 'brave', name: 'Brave', supported: false };
+      } catch (_) { /* isBrave() rejected, not Brave or API changed */ }
+    }
+
+    // Edge adds "Edg/" to the UA string.
+    if (/Edg\//.test(ua) || /Edge\//.test(ua)) {
+      return { id: 'edge', name: 'Microsoft Edge', supported: false };
+    }
+    // Opera adds "OPR/".
+    if (/OPR\//.test(ua)) {
+      return { id: 'opera', name: 'Opera', supported: false };
+    }
+    // Vivaldi adds "Vivaldi/".
+    if (/Vivaldi\//.test(ua)) {
+      return { id: 'vivaldi', name: 'Vivaldi', supported: false };
+    }
+
+    // userAgentData (Chrome 90+): "Google Chrome" brand only in standard Chrome.
+    if (typeof navigator !== 'undefined' && navigator.userAgentData) {
+      const brands = (navigator.userAgentData.brands || []).map(b => (b.brand || '').toLowerCase());
+      if (brands.some(b => b === 'google chrome')) {
+        return { id: 'chrome', name: 'Google Chrome', supported: true };
+      }
+      if (brands.some(b => b === 'chromium')) {
+        return { id: 'chromium', name: 'Chromium', supported: false };
+      }
+    }
+
+    // Fallback: UA has "Chrome/" — most likely standard Chrome (or undetected Chromium build).
+    if (/Chrome\//.test(ua)) {
+      return { id: 'chrome', name: 'Google Chrome', supported: true };
+    }
+
+    return { id: 'unknown', name: null, supported: null };
+  } catch (_) {
+    return { id: 'unknown', name: null, supported: null };
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const accentSelect = document.getElementById('accentColor');
   const darkToggle = document.getElementById('darkMode');
@@ -1412,6 +1503,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
   restoreSettings();
   loadSessions();
+
+  // Browser detection: show warning banner and populate the settings support section.
+  detectBrowserType().then((browserInfo) => {
+    const supportInfoEl = document.getElementById('browser-support-info');
+    if (supportInfoEl) {
+      supportInfoEl.textContent = '';
+
+      const officialRow = document.createElement('span');
+      const officialLabel = document.createTextNode(getTranslation('browser_support_official') + ': ');
+      const officialValue = document.createElement('strong');
+      officialValue.textContent = 'Google Chrome';
+      officialRow.appendChild(officialLabel);
+      officialRow.appendChild(officialValue);
+
+      const detectedRow = document.createElement('span');
+      const detectedLabel = document.createTextNode(getTranslation('browser_support_detected') + ': ');
+      const detectedValue = document.createElement('strong');
+      detectedValue.textContent = browserInfo.name || getTranslation('browser_support_unknown');
+      detectedRow.appendChild(detectedLabel);
+      detectedRow.appendChild(detectedValue);
+
+      const statusRow = document.createElement('span');
+      const statusLabel = document.createTextNode('Status: ');
+      const statusValue = document.createElement('strong');
+      statusValue.textContent = browserInfo.supported === true
+        ? getTranslation('browser_support_supported')
+        : browserInfo.supported === false
+          ? getTranslation('browser_support_not_supported')
+          : getTranslation('browser_support_unknown');
+      if (browserInfo.supported === true) statusValue.className = 'browser-support-status-ok';
+      if (browserInfo.supported === false) statusValue.className = 'browser-support-status-warn';
+      statusRow.appendChild(statusLabel);
+      statusRow.appendChild(statusValue);
+
+      supportInfoEl.appendChild(officialRow);
+      supportInfoEl.appendChild(detectedRow);
+      supportInfoEl.appendChild(statusRow);
+    }
+
+    if (browserInfo.supported === false) {
+      const warningEl = document.getElementById('browser-warning');
+      const warningTextEl = document.getElementById('browser-warning-text');
+      const dismissedKey = 'browserWarningDismissed_' + (browserInfo.id || 'unknown');
+      if (warningEl && warningTextEl && !localStorage.getItem(dismissedKey)) {
+        warningTextEl.textContent = getTranslation('browser_warning_text');
+        warningEl.style.display = 'flex';
+        const closeBtn = document.getElementById('browser-warning-close');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', () => {
+            warningEl.style.display = 'none';
+            localStorage.setItem(dismissedKey, '1');
+          });
+        }
+      }
+    }
+  });
 });
 
 // Note: loadSessions is now called inside DOMContentLoaded handler above

@@ -704,6 +704,79 @@
       margin-top: 0.75rem;
       text-align: center;
     }
+
+    .browser-warning {
+      background: rgba(255, 176, 32, 0.1);
+      border: 1px solid rgba(255, 176, 32, 0.45);
+      border-radius: 10px;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.8rem;
+      color: #7a5a00;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      line-height: 1.4;
+    }
+
+    body.dark-mode .browser-warning {
+      color: #ffd88a;
+      background: rgba(255, 176, 32, 0.08);
+      border-color: rgba(255, 176, 32, 0.3);
+    }
+
+    .browser-warning-text {
+      flex: 1;
+    }
+
+    .browser-warning-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0;
+      color: inherit;
+      line-height: 1;
+      opacity: 0.6;
+      flex-shrink: 0;
+    }
+
+    .browser-warning-close:hover {
+      opacity: 1;
+    }
+
+    .browser-support-info {
+      background: var(--surface-alt);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      line-height: 1.5;
+    }
+
+    .browser-support-info strong {
+      color: var(--text-primary);
+    }
+
+    .browser-support-status-ok {
+      color: #228b22;
+    }
+
+    body.dark-mode .browser-support-status-ok {
+      color: #6fcf6f;
+    }
+
+    .browser-support-status-warn {
+      color: #c07000;
+    }
+
+    body.dark-mode .browser-support-status-warn {
+      color: #ffd070;
+    }
   </style>
   <script src="popup.js" defer></script>
 </head>
@@ -736,6 +809,12 @@
     </header>
 
     <main id="main-section" class="card">
+      <div id="browser-warning" class="browser-warning" style="display:none;">
+        <span aria-hidden="true">&#9888;</span>
+        <span id="browser-warning-text" class="browser-warning-text"></span>
+        <button id="browser-warning-close" class="browser-warning-close" aria-label="Dismiss warning">&times;</button>
+      </div>
+
       <button id="save" class="primary-btn" data-translate="save_button">Save current tabs</button>
 
       <div id="sessions" class="session-list" role="list"></div>
@@ -782,6 +861,13 @@
       <div class="setting-group">
         <label for="maxSessions" data-translate="sessions_limit_label">Saved sessions limit</label>
         <input type="number" id="maxSessions" value="10" min="1">
+      </div>
+
+      <div class="setting-group" id="browser-support-group">
+        <label data-translate="browser_support_label">Browser Support</label>
+        <div id="browser-support-info" class="browser-support-info">
+          <span data-translate="browser_support_loading">Detecting browser&hellip;</span>
+        </div>
       </div>
 
       <div class="setting-group settings-actions">

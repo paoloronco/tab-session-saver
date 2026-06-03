@@ -99,6 +99,22 @@
     code.inline{background:#0a1630;padding:.15rem .35rem;border:1px solid rgba(255,255,255,.08);border-radius:6px}
 
     .inline-svg{height:18px;width:18px;vertical-align:-3px;margin-right:6px}
+
+    /* Browser compatibility warning */
+    .browser-warn{
+      display:none;align-items:flex-start;gap:12px;
+      background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.4);
+      border-radius:12px;padding:14px 16px;margin-bottom:18px;
+      font-size:.95rem;color:#c8941a;line-height:1.5
+    }
+    .browser-warn-icon{font-size:1.4rem;line-height:1;flex-shrink:0}
+    .browser-warn-body{flex:1}
+    .browser-warn-title{font-weight:700;margin-bottom:4px}
+    .browser-warn-close{
+      background:none;border:none;cursor:pointer;color:inherit;
+      font-size:1.2rem;line-height:1;opacity:.6;padding:0;flex-shrink:0
+    }
+    .browser-warn-close:hover{opacity:1}
   </style>
 </head>
 <body>
@@ -129,6 +145,16 @@
         <p class="lead" data-i18n="hero_lead">Save, manage, restore, export and import tab groups. Everything stays <strong>on your device</strong>.</p>
       </div>
     </header>
+
+    <!-- Browser compatibility warning (shown by JS only on non-Chrome browsers) -->
+    <div id="browser-warn" class="browser-warn" role="alert" aria-live="polite">
+      <span class="browser-warn-icon" aria-hidden="true">&#9888;</span>
+      <div class="browser-warn-body">
+        <div class="browser-warn-title" id="browser-warn-title"></div>
+        <div id="browser-warn-text"></div>
+      </div>
+      <button class="browser-warn-close" id="browser-warn-close" aria-label="Dismiss">&times;</button>
+    </div>
 
     <div class="grid">
       <!-- Left column -->
