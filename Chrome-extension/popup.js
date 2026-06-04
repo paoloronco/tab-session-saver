@@ -328,6 +328,28 @@ function getTranslation(key) {
     : translations['en'][key] || key;
 }
 
+function getMaxSessionsLimit() {
+  const parsed = Number.parseInt(localStorage.getItem('maxSessions') || '10', 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 10;
+}
+
+function setMaxSessionsLimit(value) {
+  const parsed = Number.parseInt(value, 10);
+  const normalized = Number.isInteger(parsed) && parsed > 0 ? parsed : 10;
+  localStorage.setItem('maxSessions', String(normalized));
+  return normalized;
+}
+
+function renderMetaSegments(container, segments) {
+  if (!container) return;
+  container.textContent = '';
+  segments.forEach((segment) => {
+    const chip = document.createElement('span');
+    chip.textContent = segment;
+    container.appendChild(chip);
+  });
+}
+
 function configureRestoreButton(button, idleText) {
   button.dataset.restoreControl = 'true';
   button.dataset.restoreIdleLabel = idleText;
@@ -570,7 +592,7 @@ function createPreviewItem(tab, displayIndex, winSnapshot, sessionPayload, index
       if (countInfo.groupsLabel) metaSegments.splice(3, 0, countInfo.groupsLabel);
       if (strategy === 'workspace') metaSegments.push(getTranslation('desktop_scope_workspace'));
       const metaEl = label.querySelector('.session-meta');
-      if (metaEl) metaEl.innerHTML = metaSegments.map(segment => `<span>${segment}</span>`).join('');
+      renderMetaSegments(metaEl, metaSegments);
 
       // Persist changes: if no tabs left, delete session; else update session
       if (countInfo.tabsCount === 0) {
@@ -737,7 +759,14 @@ function renderPreview(sessionPayload, previewContainer, index, label) {
         if (groupTabs.length > 0) {
           const groupHeader = document.createElement('div');
           groupHeader.className = 'preview-group-header';
-          groupHeader.innerHTML = `<span class="group-title">${group.title || 'Group'}</span><span class="group-color" style="background-color: ${group.color}"></span>`;
+          const groupTitle = document.createElement('span');
+          groupTitle.className = 'group-title';
+          groupTitle.textContent = group.title || 'Group';
+          const groupColor = document.createElement('span');
+          groupColor.className = 'group-color';
+          groupColor.style.backgroundColor = group.color;
+          groupHeader.appendChild(groupTitle);
+          groupHeader.appendChild(groupColor);
           items.appendChild(groupHeader);
 
           const groupContainer = document.createElement('div');
@@ -978,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // LIMITO NUMERO DI SESSIONI
   maxSessionsInput.addEventListener('change', e => {
-    localStorage.setItem('maxSessions', e.target.value);
+    e.target.value = String(setMaxSessionsLimit(e.target.value));
   });
 
   // EXPORT SESSIONS
@@ -1050,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 resultSessions = replace ? importedSessions : resultSessions.concat(importedSessions);
 
-                const max = parseInt(localStorage.getItem('maxSessions') || '10', 10);
+                const max = getMaxSessionsLimit();
                 if (resultSessions.length > max) {
                   resultSessions = resultSessions.slice(-max);
                 }
@@ -1167,7 +1196,7 @@ document.addEventListener('DOMContentLoaded', () => {
                       return;
                     }
 
-                    const max = parseInt(localStorage.getItem('maxSessions') || '10', 10);
+                    const max = getMaxSessionsLimit();
                     const merged = existing.concat(sessionObject);
                     const trimmed = merged.slice(-max);
 
@@ -1290,12 +1319,13 @@ document.addEventListener('DOMContentLoaded', () => {
         label.className = 'session-label';
         label.setAttribute('role', 'button');
         label.setAttribute('tabindex', '0');
-        label.innerHTML = `
-          <strong>${sessionName}</strong>
-          <div class="session-meta">
-            ${metaSegments.map(segment => `<span>${segment}</span>`).join('')}
-          </div>
-        `;
+        const labelTitle = document.createElement('strong');
+        labelTitle.textContent = sessionName;
+        const labelMeta = document.createElement('div');
+        labelMeta.className = 'session-meta';
+        renderMetaSegments(labelMeta, metaSegments);
+        label.appendChild(labelTitle);
+        label.appendChild(labelMeta);
 
         const menuBtn = document.createElement('button');
         menuBtn.className = 'menu-button';
@@ -1504,7 +1534,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.remove('light-mode');
     }
     if (savedLimit) {
-      maxSessionsInput.value = savedLimit;
+      maxSessionsInput.value = String(setMaxSessionsLimit(savedLimit));
     }
     if (savedLanguage) {
       languageSelect.value = savedLanguage;
