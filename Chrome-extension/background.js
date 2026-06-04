@@ -657,10 +657,11 @@ async function restoreSingleWindow(windowSnapshot, options = {}) {
 
   let desiredState = sanitizeState(windowSnapshot.state || 'normal');
   const createState = desiredState === 'minimized' ? 'normal' : desiredState;
+  const shouldFocusWindow = windowSnapshot.focused === true;
 
   const createData = {
     url: urls,
-    focused: Boolean(windowSnapshot.focused)
+    focused: shouldFocusWindow
   };
   if (createState !== 'normal') {
     createData.state = createState;
@@ -688,7 +689,7 @@ async function restoreSingleWindow(windowSnapshot, options = {}) {
       for (let i = 1; i < urls.length; i++) {
         await chrome.tabs.create({ windowId: reuseWindowId, url: urls[i] });
       }
-      if (Boolean(windowSnapshot.focused)) {
+      if (shouldFocusWindow) {
         await chrome.windows.update(reuseWindowId, { focused: true });
       }
       createdWindow = { id: reuseWindowId };
@@ -699,7 +700,7 @@ async function restoreSingleWindow(windowSnapshot, options = {}) {
         createdWindow = await chrome.windows.create(createData);
       } catch (fallbackErr) {
         console.warn('[restore] windows.create also failed, retrying without state/bounds', fallbackErr);
-        createdWindow = await chrome.windows.create({ url: urls, focused: Boolean(windowSnapshot.focused) });
+        createdWindow = await chrome.windows.create({ url: urls, focused: shouldFocusWindow });
         desiredState = 'normal';
       }
     }
@@ -708,7 +709,7 @@ async function restoreSingleWindow(windowSnapshot, options = {}) {
       createdWindow = await chrome.windows.create(createData);
     } catch (err) {
       console.warn('[background] windows.create failed, retrying without state/bounds', err);
-      createdWindow = await chrome.windows.create({ url: urls, focused: Boolean(windowSnapshot.focused) });
+      createdWindow = await chrome.windows.create({ url: urls, focused: shouldFocusWindow });
       desiredState = 'normal';
     }
   }

@@ -11,7 +11,9 @@
           if (await navigator.brave.isBrave()) {
             return { id: 'brave', name: 'Brave', supported: false, confidence: 'high' };
           }
-        } catch (_) {}
+        } catch (error) {
+          console.debug('[browser-support] Brave detection unavailable:', error);
+        }
       }
 
       if (brands.some(b => b === 'microsoft edge') || /Edg\//.test(ua) || /Edge\//.test(ua)) {
