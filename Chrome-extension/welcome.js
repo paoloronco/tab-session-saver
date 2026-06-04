@@ -48,7 +48,9 @@
       privacy_title: "Privacy",
       privacy_text: "Session data is stored <strong>locally</strong> using <code class='inline'>chrome.storage.local</code>. No URLs or preferences are sent to external servers.",
       browser_warn_title: "Unsupported browser detected",
-      browser_warn_text: "This extension is officially developed and tested for Google Chrome. You appear to be using a Chromium-based browser that is not officially supported. Some features — especially session restore, tab groups, and multi-window behavior — may behave differently."
+      browser_warn_text: "This extension is officially developed and tested for Google Chrome. You appear to be using a Chromium-based browser that is not officially supported. Some features — especially session restore, tab groups, and multi-window behavior — may behave differently.",
+      browser_unknown_title: "Browser could not be reliably identified",
+      browser_unknown_text: "Official support is provided for Google Chrome. Some restore features, tab groups, and multi-window behavior may differ in this browser."
     },
     it: {
       lang_label: "Lingua",
@@ -96,7 +98,9 @@
       privacy_title: "Privacy",
       privacy_text: "I dati delle sessioni sono salvati <strong>in locale</strong> con <code class='inline'>chrome.storage.local</code>. Nessun dato viene inviato a server esterni.",
       browser_warn_title: "Browser non supportato rilevato",
-      browser_warn_text: "Questa estensione è sviluppata e testata ufficialmente per Google Chrome. Sembra che tu stia usando un browser basato su Chromium non ufficialmente supportato. Alcune funzioni — in particolare il ripristino delle sessioni, i gruppi di schede e il comportamento multi-finestra — potrebbero funzionare diversamente."
+      browser_warn_text: "Questa estensione è sviluppata e testata ufficialmente per Google Chrome. Sembra che tu stia usando un browser basato su Chromium non ufficialmente supportato. Alcune funzioni — in particolare il ripristino delle sessioni, i gruppi di schede e il comportamento multi-finestra — potrebbero funzionare diversamente.",
+      browser_unknown_title: "Impossibile identificare il browser in modo affidabile",
+      browser_unknown_text: "Il supporto ufficiale è fornito per Google Chrome. Alcune funzioni di ripristino, gruppi di schede e comportamento multi-finestra potrebbero differire in questo browser."
     },
     es: {
       lang_label: "Idioma",
@@ -139,7 +143,9 @@
       privacy_title: "Privacidad",
       privacy_text: "Los datos se guardan <strong>localmente</strong> con <code class='inline'>chrome.storage.local</code>.",
       browser_warn_title: "Navegador no compatible detectado",
-      browser_warn_text: "Esta extensión está desarrollada y probada oficialmente para Google Chrome. Parece que estás usando un navegador basado en Chromium que no está oficialmente soportado. Algunas funciones, especialmente la restauración de sesiones, grupos de pestañas y el comportamiento multi-ventana, pueden comportarse de forma diferente."
+      browser_warn_text: "Esta extensión está desarrollada y probada oficialmente para Google Chrome. Parece que estás usando un navegador basado en Chromium que no está oficialmente soportado. Algunas funciones, especialmente la restauración de sesiones, grupos de pestañas y el comportamiento multi-ventana, pueden comportarse de forma diferente.",
+      browser_unknown_title: "No se pudo identificar el navegador de forma fiable",
+      browser_unknown_text: "El soporte oficial se proporciona para Google Chrome. Algunas funciones de restauración, grupos de pestañas y comportamiento multi-ventana pueden diferir en este navegador."
     },
     de: {
       lang_label: "Sprache",
@@ -182,7 +188,9 @@
       privacy_title: "Datenschutz",
       privacy_text: "Sitzungsdaten werden <strong>lokal</strong> in <code class='inline'>chrome.storage.local</code> gespeichert.",
       browser_warn_title: "Nicht unterstützter Browser erkannt",
-      browser_warn_text: "Diese Erweiterung wird offiziell für Google Chrome entwickelt und getestet. Du verwendest scheinbar einen Chromium-basierten Browser, der nicht offiziell unterstützt wird. Einige Funktionen – insbesondere Sitzungswiederherstellung, Tab-Gruppen und Multi-Fenster-Verhalten – können sich anders verhalten."
+      browser_warn_text: "Diese Erweiterung wird offiziell für Google Chrome entwickelt und getestet. Du verwendest scheinbar einen Chromium-basierten Browser, der nicht offiziell unterstützt wird. Einige Funktionen – insbesondere Sitzungswiederherstellung, Tab-Gruppen und Multi-Fenster-Verhalten – können sich anders verhalten.",
+      browser_unknown_title: "Der Browser konnte nicht zuverlässig identifiziert werden",
+      browser_unknown_text: "Offizieller Support wird für Google Chrome bereitgestellt. Einige Wiederherstellungsfunktionen, Tab-Gruppen und Multi-Fenster-Verhalten können in diesem Browser abweichen."
     },
     fr: {
       lang_label: "Langue",
@@ -225,32 +233,37 @@
       privacy_title: "Confidentialité",
       privacy_text: "Les données sont stockées <strong>localement</strong> via <code class='inline'>chrome.storage.local</code>.",
       browser_warn_title: "Navigateur non pris en charge détecté",
-      browser_warn_text: "Cette extension est officiellement développée et testée pour Google Chrome. Vous semblez utiliser un navigateur basé sur Chromium qui n'est pas officiellement pris en charge. Certaines fonctionnalités — notamment la restauration de session, les groupes d'onglets et le comportement multi-fenêtres — peuvent se comporter différemment."
+      browser_warn_text: "Cette extension est officiellement développée et testée pour Google Chrome. Vous semblez utiliser un navigateur basé sur Chromium qui n'est pas officiellement pris en charge. Certaines fonctionnalités — notamment la restauration de session, les groupes d'onglets et le comportement multi-fenêtres — peuvent se comporter différemment.",
+      browser_unknown_title: "Le navigateur n'a pas pu être identifié de manière fiable",
+      browser_unknown_text: "Le support officiel est fourni pour Google Chrome. Certaines fonctions de restauration, groupes d'onglets et comportements multi-fenêtres peuvent différer dans ce navigateur."
     }
   };
 
   // Browser detection — same logic as popup.js.
-  // Returns { id, name, supported } where supported: true=Chrome, false=other Chromium, null=unknown.
+  // Returns { id, name, supported, confidence } where supported is true (Chrome),
+  // false (known non-Chrome Chromium), or null (not reliably identified).
   async function detectBrowserType() {
     try {
       const ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+      const brands = typeof navigator !== 'undefined' && navigator.userAgentData
+        ? (navigator.userAgentData.brands || []).map(b => (b.brand || '').toLowerCase())
+        : [];
+
       if (typeof navigator !== 'undefined' && navigator.brave && typeof navigator.brave.isBrave === 'function') {
         try {
-          if (await navigator.brave.isBrave()) return { id: 'brave', name: 'Brave', supported: false };
+          if (await navigator.brave.isBrave()) return { id: 'brave', name: 'Brave', supported: false, confidence: 'high' };
         } catch (_) {}
       }
-      if (/Edg\//.test(ua) || /Edge\//.test(ua)) return { id: 'edge', name: 'Microsoft Edge', supported: false };
-      if (/OPR\//.test(ua)) return { id: 'opera', name: 'Opera', supported: false };
-      if (/Vivaldi\//.test(ua)) return { id: 'vivaldi', name: 'Vivaldi', supported: false };
-      if (typeof navigator !== 'undefined' && navigator.userAgentData) {
-        const brands = (navigator.userAgentData.brands || []).map(b => (b.brand || '').toLowerCase());
-        if (brands.some(b => b === 'google chrome')) return { id: 'chrome', name: 'Google Chrome', supported: true };
-        if (brands.some(b => b === 'chromium')) return { id: 'chromium', name: 'Chromium', supported: false };
-      }
-      if (/Chrome\//.test(ua)) return { id: 'chrome', name: 'Google Chrome', supported: true };
-      return { id: 'unknown', name: null, supported: null };
+      if (brands.some(b => b === 'microsoft edge') || /Edg\//.test(ua) || /Edge\//.test(ua)) return { id: 'edge', name: 'Microsoft Edge', supported: false, confidence: brands.length ? 'high' : 'medium' };
+      if (brands.some(b => b === 'opera') || /OPR\//.test(ua)) return { id: 'opera', name: 'Opera', supported: false, confidence: brands.length ? 'high' : 'medium' };
+      if (brands.some(b => b === 'vivaldi') || /Vivaldi\//.test(ua)) return { id: 'vivaldi', name: 'Vivaldi', supported: false, confidence: brands.length ? 'high' : 'medium' };
+      if (brands.some(b => b === 'ulaa') || /Ulaa\//i.test(ua)) return { id: 'ulaa', name: 'Ulaa', supported: false, confidence: brands.length ? 'high' : 'medium' };
+      if (brands.some(b => b === 'google chrome')) return { id: 'chrome', name: 'Google Chrome', supported: true, confidence: 'high' };
+      if (brands.some(b => b === 'chromium')) return { id: 'chromium', name: 'Chromium', supported: false, confidence: 'medium' };
+      if (/Chrome\//.test(ua)) return { id: 'unknown', name: null, supported: null, confidence: 'low' };
+      return { id: 'unknown', name: null, supported: null, confidence: 'low' };
     } catch (_) {
-      return { id: 'unknown', name: null, supported: null };
+      return { id: 'unknown', name: null, supported: null, confidence: 'low' };
     }
   }
 
@@ -278,8 +291,22 @@
     });
   }
 
+  function getBrowserWarningCopy(dict, browserInfo) {
+    if (browserInfo && browserInfo.supported === false) {
+      return {
+        title: dict.browser_warn_title || i18n.en.browser_warn_title,
+        text: dict.browser_warn_text || i18n.en.browser_warn_text
+      };
+    }
+    return {
+      title: dict.browser_unknown_title || i18n.en.browser_unknown_title,
+      text: dict.browser_unknown_text || i18n.en.browser_unknown_text
+    };
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     const select = document.getElementById('lang');
+    let activeBrowserInfo = null;
     if (select) {
       select.addEventListener('change', (e) => {
         setLang(e.target.value);
@@ -287,8 +314,9 @@
         const warnTitle = document.getElementById('browser-warn-title');
         const warnText = document.getElementById('browser-warn-text');
         const dict = i18n[e.target.value] || i18n.en;
-        if (warnTitle) warnTitle.textContent = dict.browser_warn_title || i18n.en.browser_warn_title;
-        if (warnText) warnText.textContent = dict.browser_warn_text || i18n.en.browser_warn_text;
+        const warningCopy = getBrowserWarningCopy(dict, activeBrowserInfo);
+        if (warnTitle) warnTitle.textContent = warningCopy.title;
+        if (warnText) warnText.textContent = warningCopy.text;
       });
     }
     setLang('en');
@@ -300,7 +328,8 @@
 
     // Show browser compatibility warning for unsupported Chromium-based browsers.
     detectBrowserType().then((browserInfo) => {
-      if (browserInfo.supported !== false) return;
+      activeBrowserInfo = browserInfo;
+      if (browserInfo.supported === true) return;
       const warnEl = document.getElementById('browser-warn');
       const warnTitle = document.getElementById('browser-warn-title');
       const warnText = document.getElementById('browser-warn-text');
@@ -309,8 +338,9 @@
 
       const lang = (select && select.value) || 'en';
       const dict = i18n[lang] || i18n.en;
-      if (warnTitle) warnTitle.textContent = dict.browser_warn_title || i18n.en.browser_warn_title;
-      if (warnText) warnText.textContent = dict.browser_warn_text || i18n.en.browser_warn_text;
+      const warningCopy = getBrowserWarningCopy(dict, browserInfo);
+      if (warnTitle) warnTitle.textContent = warningCopy.title;
+      if (warnText) warnText.textContent = warningCopy.text;
       warnEl.style.display = 'flex';
 
       const warnClose = document.getElementById('browser-warn-close');

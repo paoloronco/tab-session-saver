@@ -54,7 +54,9 @@ const translations = {
     browser_support_unknown: "Unknown",
     browser_support_detected: "Detected browser",
     browser_support_official: "Official browser",
-    browser_warning_text: "Unsupported browser detected. Some restore features, tab groups, and multi-window behavior may differ from standard Google Chrome."
+    browser_support_status: "Status",
+    browser_warning_text: "Unsupported browser detected. Some restore features, tab groups, and multi-window behavior may differ from standard Google Chrome.",
+    browser_warning_unknown_text: "Browser could not be reliably identified. Official support is provided for Google Chrome."
   },
   es: {
     title: "Guardador de pesta\u00F1as",
@@ -108,7 +110,9 @@ const translations = {
     browser_support_unknown: "Desconocido",
     browser_support_detected: "Navegador detectado",
     browser_support_official: "Navegador oficial",
-    browser_warning_text: "Navegador no compatible detectado. Algunas funciones de restauración, grupos de pestañas y ventanas múltiples pueden diferir de Google Chrome estándar."
+    browser_support_status: "Estado",
+    browser_warning_text: "Navegador no compatible detectado. Algunas funciones de restauración, grupos de pestañas y ventanas múltiples pueden diferir de Google Chrome estándar.",
+    browser_warning_unknown_text: "No se pudo identificar el navegador de forma fiable. El soporte oficial se proporciona para Google Chrome."
   },
   it: {
     title: "Salva schede",
@@ -162,7 +166,9 @@ const translations = {
     browser_support_unknown: "Sconosciuto",
     browser_support_detected: "Browser rilevato",
     browser_support_official: "Browser ufficiale",
-    browser_warning_text: "Browser non supportato rilevato. Alcune funzioni di ripristino, gruppi di schede e finestre multiple potrebbero comportarsi diversamente rispetto a Google Chrome standard."
+    browser_support_status: "Stato",
+    browser_warning_text: "Browser non supportato rilevato. Alcune funzioni di ripristino, gruppi di schede e finestre multiple potrebbero comportarsi diversamente rispetto a Google Chrome standard.",
+    browser_warning_unknown_text: "Impossibile identificare il browser in modo affidabile. Il supporto ufficiale è fornito per Google Chrome."
   },
   fr: {
     title: "Sauvegarde d'onglets",
@@ -216,7 +222,9 @@ const translations = {
     browser_support_unknown: "Inconnu",
     browser_support_detected: "Navigateur détecté",
     browser_support_official: "Navigateur officiel",
-    browser_warning_text: "Navigateur non pris en charge détecté. Certaines fonctions de restauration, groupes d'onglets et comportements multi-fenêtres peuvent différer de Google Chrome standard."
+    browser_support_status: "Statut",
+    browser_warning_text: "Navigateur non pris en charge détecté. Certaines fonctions de restauration, groupes d'onglets et comportements multi-fenêtres peuvent différer de Google Chrome standard.",
+    browser_warning_unknown_text: "Le navigateur n'a pas pu être identifié de manière fiable. Le support officiel est fourni pour Google Chrome."
   },
   de: {
     title: "Tab-Sitzungsspeicher",
@@ -270,7 +278,9 @@ const translations = {
     browser_support_unknown: "Unbekannt",
     browser_support_detected: "Erkannter Browser",
     browser_support_official: "Offizieller Browser",
-    browser_warning_text: "Nicht unterstützter Browser erkannt. Einige Wiederherstellungsfunktionen, Tab-Gruppen und Multi-Fenster-Verhalten können sich von Standard-Google-Chrome unterscheiden."
+    browser_support_status: "Status",
+    browser_warning_text: "Nicht unterstützter Browser erkannt. Einige Wiederherstellungsfunktionen, Tab-Gruppen und Multi-Fenster-Verhalten können sich von Standard-Google-Chrome unterscheiden.",
+    browser_warning_unknown_text: "Der Browser konnte nicht zuverlässig identifiziert werden. Offizieller Support wird für Google Chrome bereitgestellt."
   }
 };
 
@@ -884,53 +894,50 @@ function closeAllMenus(options = {}) {
 }
 
 // Detect the running browser.
-// Returns { id, name, supported } where supported is true (Chrome), false (other Chromium), or null (unknown).
-// Detection limitations: Brave spoofs Chrome's UA — we use navigator.brave.isBrave() to catch it.
-// Pure Chromium builds (without a browser-specific marker) are reported as 'chrome'.
+// Returns { id, name, supported, confidence } where supported is true (Chrome),
+// false (known non-Chrome Chromium), or null (not reliably identified).
 async function detectBrowserType() {
   try {
     const ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+    const brands = typeof navigator !== 'undefined' && navigator.userAgentData
+      ? (navigator.userAgentData.brands || []).map(b => (b.brand || '').toLowerCase())
+      : [];
 
-    // Brave has navigator.brave.isBrave() — check first because Brave spoofs Chrome's UA.
+    // Brave has navigator.brave.isBrave(); check first because Brave spoofs Chrome-like identifiers.
     if (typeof navigator !== 'undefined' && navigator.brave && typeof navigator.brave.isBrave === 'function') {
       try {
         const isBrave = await navigator.brave.isBrave();
-        if (isBrave) return { id: 'brave', name: 'Brave', supported: false };
+        if (isBrave) return { id: 'brave', name: 'Brave', supported: false, confidence: 'high' };
       } catch (_) { /* isBrave() rejected, not Brave or API changed */ }
     }
 
-    // Edge adds "Edg/" to the UA string.
-    if (/Edg\//.test(ua) || /Edge\//.test(ua)) {
-      return { id: 'edge', name: 'Microsoft Edge', supported: false };
+    if (brands.some(b => b === 'microsoft edge') || /Edg\//.test(ua) || /Edge\//.test(ua)) {
+      return { id: 'edge', name: 'Microsoft Edge', supported: false, confidence: brands.length ? 'high' : 'medium' };
     }
-    // Opera adds "OPR/".
-    if (/OPR\//.test(ua)) {
-      return { id: 'opera', name: 'Opera', supported: false };
+    if (brands.some(b => b === 'opera') || /OPR\//.test(ua)) {
+      return { id: 'opera', name: 'Opera', supported: false, confidence: brands.length ? 'high' : 'medium' };
     }
-    // Vivaldi adds "Vivaldi/".
-    if (/Vivaldi\//.test(ua)) {
-      return { id: 'vivaldi', name: 'Vivaldi', supported: false };
+    if (brands.some(b => b === 'vivaldi') || /Vivaldi\//.test(ua)) {
+      return { id: 'vivaldi', name: 'Vivaldi', supported: false, confidence: brands.length ? 'high' : 'medium' };
     }
-
-    // userAgentData (Chrome 90+): "Google Chrome" brand only in standard Chrome.
-    if (typeof navigator !== 'undefined' && navigator.userAgentData) {
-      const brands = (navigator.userAgentData.brands || []).map(b => (b.brand || '').toLowerCase());
-      if (brands.some(b => b === 'google chrome')) {
-        return { id: 'chrome', name: 'Google Chrome', supported: true };
-      }
-      if (brands.some(b => b === 'chromium')) {
-        return { id: 'chromium', name: 'Chromium', supported: false };
-      }
+    if (/Ulaa\//i.test(ua) || brands.some(b => b === 'ulaa')) {
+      return { id: 'ulaa', name: 'Ulaa', supported: false, confidence: brands.length ? 'high' : 'medium' };
     }
 
-    // Fallback: UA has "Chrome/" — most likely standard Chrome (or undetected Chromium build).
+    if (brands.some(b => b === 'google chrome')) {
+      return { id: 'chrome', name: 'Google Chrome', supported: true, confidence: 'high' };
+    }
+    if (brands.some(b => b === 'chromium')) {
+      return { id: 'chromium', name: 'Chromium', supported: false, confidence: 'medium' };
+    }
+
     if (/Chrome\//.test(ua)) {
-      return { id: 'chrome', name: 'Google Chrome', supported: true };
+      return { id: 'unknown', name: null, supported: null, confidence: 'low' };
     }
 
-    return { id: 'unknown', name: null, supported: null };
+    return { id: 'unknown', name: null, supported: null, confidence: 'low' };
   } catch (_) {
-    return { id: 'unknown', name: null, supported: null };
+    return { id: 'unknown', name: null, supported: null, confidence: 'low' };
   }
 }
 
@@ -1525,7 +1532,7 @@ document.addEventListener('DOMContentLoaded', () => {
       detectedRow.appendChild(detectedValue);
 
       const statusRow = document.createElement('span');
-      const statusLabel = document.createTextNode('Status: ');
+      const statusLabel = document.createTextNode(getTranslation('browser_support_status') + ': ');
       const statusValue = document.createElement('strong');
       statusValue.textContent = browserInfo.supported === true
         ? getTranslation('browser_support_supported')
@@ -1542,12 +1549,14 @@ document.addEventListener('DOMContentLoaded', () => {
       supportInfoEl.appendChild(statusRow);
     }
 
-    if (browserInfo.supported === false) {
+    if (browserInfo.supported !== true) {
       const warningEl = document.getElementById('browser-warning');
       const warningTextEl = document.getElementById('browser-warning-text');
       const dismissedKey = 'browserWarningDismissed_' + (browserInfo.id || 'unknown');
       if (warningEl && warningTextEl && !localStorage.getItem(dismissedKey)) {
-        warningTextEl.textContent = getTranslation('browser_warning_text');
+        warningTextEl.textContent = browserInfo.supported === false
+          ? getTranslation('browser_warning_text')
+          : getTranslation('browser_warning_unknown_text');
         warningEl.style.display = 'flex';
         const closeBtn = document.getElementById('browser-warning-close');
         if (closeBtn) {
