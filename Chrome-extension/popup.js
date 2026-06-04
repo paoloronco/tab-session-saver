@@ -55,6 +55,7 @@ const translations = {
     browser_support_detected: "Detected browser",
     browser_support_official: "Official browser",
     browser_support_status: "Status",
+    browser_support_description: "This extension is officially developed and tested for Google Chrome. Chromium-based browsers may behave differently, especially for session restore, tab groups, and multi-window behavior.",
     browser_warning_text: "Unsupported browser detected. Some restore features, tab groups, and multi-window behavior may differ from standard Google Chrome.",
     browser_warning_unknown_text: "Browser could not be reliably identified. Official support is provided for Google Chrome."
   },
@@ -111,6 +112,7 @@ const translations = {
     browser_support_detected: "Navegador detectado",
     browser_support_official: "Navegador oficial",
     browser_support_status: "Estado",
+    browser_support_description: "Esta extensión está desarrollada y probada oficialmente para Google Chrome. Los navegadores basados en Chromium pueden comportarse de forma diferente, especialmente al restaurar sesiones, grupos de pestañas y múltiples ventanas.",
     browser_warning_text: "Navegador no compatible detectado. Algunas funciones de restauración, grupos de pestañas y ventanas múltiples pueden diferir de Google Chrome estándar.",
     browser_warning_unknown_text: "No se pudo identificar el navegador de forma fiable. El soporte oficial se proporciona para Google Chrome."
   },
@@ -167,6 +169,7 @@ const translations = {
     browser_support_detected: "Browser rilevato",
     browser_support_official: "Browser ufficiale",
     browser_support_status: "Stato",
+    browser_support_description: "Questa estensione è sviluppata e testata ufficialmente per Google Chrome. I browser basati su Chromium possono comportarsi diversamente, soprattutto per ripristino sessioni, gruppi di schede e finestre multiple.",
     browser_warning_text: "Browser non supportato rilevato. Alcune funzioni di ripristino, gruppi di schede e finestre multiple potrebbero comportarsi diversamente rispetto a Google Chrome standard.",
     browser_warning_unknown_text: "Impossibile identificare il browser in modo affidabile. Il supporto ufficiale è fornito per Google Chrome."
   },
@@ -223,6 +226,7 @@ const translations = {
     browser_support_detected: "Navigateur détecté",
     browser_support_official: "Navigateur officiel",
     browser_support_status: "Statut",
+    browser_support_description: "Cette extension est officiellement développée et testée pour Google Chrome. Les navigateurs basés sur Chromium peuvent se comporter différemment, notamment pour la restauration de session, les groupes d'onglets et le multi-fenêtre.",
     browser_warning_text: "Navigateur non pris en charge détecté. Certaines fonctions de restauration, groupes d'onglets et comportements multi-fenêtres peuvent différer de Google Chrome standard.",
     browser_warning_unknown_text: "Le navigateur n'a pas pu être identifié de manière fiable. Le support officiel est fourni pour Google Chrome."
   },
@@ -279,6 +283,7 @@ const translations = {
     browser_support_detected: "Erkannter Browser",
     browser_support_official: "Offizieller Browser",
     browser_support_status: "Status",
+    browser_support_description: "Diese Erweiterung wird offiziell für Google Chrome entwickelt und getestet. Chromium-basierte Browser können sich anders verhalten, besonders bei Sitzungswiederherstellung, Tab-Gruppen und mehreren Fenstern.",
     browser_warning_text: "Nicht unterstützter Browser erkannt. Einige Wiederherstellungsfunktionen, Tab-Gruppen und Multi-Fenster-Verhalten können sich von Standard-Google-Chrome unterscheiden.",
     browser_warning_unknown_text: "Der Browser konnte nicht zuverlässig identifiziert werden. Offizieller Support wird für Google Chrome bereitgestellt."
   }
@@ -928,54 +933,6 @@ function closeAllMenus(options = {}) {
   });
 }
 
-// Detect the running browser.
-// Returns { id, name, supported, confidence } where supported is true (Chrome),
-// false (known non-Chrome Chromium), or null (not reliably identified).
-async function detectBrowserType() {
-  try {
-    const ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
-    const brands = typeof navigator !== 'undefined' && navigator.userAgentData
-      ? (navigator.userAgentData.brands || []).map(b => (b.brand || '').toLowerCase())
-      : [];
-
-    // Brave has navigator.brave.isBrave(); check first because Brave spoofs Chrome-like identifiers.
-    if (typeof navigator !== 'undefined' && navigator.brave && typeof navigator.brave.isBrave === 'function') {
-      try {
-        const isBrave = await navigator.brave.isBrave();
-        if (isBrave) return { id: 'brave', name: 'Brave', supported: false, confidence: 'high' };
-      } catch (_) { /* isBrave() rejected, not Brave or API changed */ }
-    }
-
-    if (brands.some(b => b === 'microsoft edge') || /Edg\//.test(ua) || /Edge\//.test(ua)) {
-      return { id: 'edge', name: 'Microsoft Edge', supported: false, confidence: brands.length ? 'high' : 'medium' };
-    }
-    if (brands.some(b => b === 'opera') || /OPR\//.test(ua)) {
-      return { id: 'opera', name: 'Opera', supported: false, confidence: brands.length ? 'high' : 'medium' };
-    }
-    if (brands.some(b => b === 'vivaldi') || /Vivaldi\//.test(ua)) {
-      return { id: 'vivaldi', name: 'Vivaldi', supported: false, confidence: brands.length ? 'high' : 'medium' };
-    }
-    if (/Ulaa\//i.test(ua) || brands.some(b => b === 'ulaa')) {
-      return { id: 'ulaa', name: 'Ulaa', supported: false, confidence: brands.length ? 'high' : 'medium' };
-    }
-
-    if (brands.some(b => b === 'google chrome')) {
-      return { id: 'chrome', name: 'Google Chrome', supported: true, confidence: 'high' };
-    }
-    if (brands.some(b => b === 'chromium')) {
-      return { id: 'chromium', name: 'Chromium', supported: false, confidence: 'medium' };
-    }
-
-    if (/Chrome\//.test(ua)) {
-      return { id: 'unknown', name: null, supported: null, confidence: 'low' };
-    }
-
-    return { id: 'unknown', name: null, supported: null, confidence: 'low' };
-  } catch (_) {
-    return { id: 'unknown', name: null, supported: null, confidence: 'low' };
-  }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   const accentSelect = document.getElementById('accentColor');
   const darkToggle = document.getElementById('darkMode');
@@ -1548,7 +1505,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSessions();
 
   // Browser detection: show warning banner and populate the settings support section.
-  detectBrowserType().then((browserInfo) => {
+  window.browserSupport.detectBrowserType().then((browserInfo) => {
     const supportInfoEl = document.getElementById('browser-support-info');
     if (supportInfoEl) {
       supportInfoEl.textContent = '';
@@ -1583,6 +1540,10 @@ document.addEventListener('DOMContentLoaded', () => {
       supportInfoEl.appendChild(officialRow);
       supportInfoEl.appendChild(detectedRow);
       supportInfoEl.appendChild(statusRow);
+
+      const descriptionRow = document.createElement('span');
+      descriptionRow.textContent = getTranslation('browser_support_description');
+      supportInfoEl.appendChild(descriptionRow);
     }
 
     if (browserInfo.supported !== true) {

@@ -21,6 +21,7 @@
         "resources": [
           "welcome.html",
           "welcome.js",
+          "browser-support.js",
           "img-1616.png",
           "img-3232.png",
           "img-4848.png",
