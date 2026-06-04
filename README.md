@@ -13,7 +13,7 @@ Save, manage, restore, export, and import Chrome tab sessions with a local-first
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.3.0-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.3.1-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -93,9 +93,9 @@ The working extension files are in [`Chrome-extension`](./Chrome-extension).
 
 ## Changelog
 
-### 7.3.0
+### 7.3.1
 
-- updated extension version to `7.3.0`
+- updated extension version to `7.3.1`
 - **fix**: empty Chrome startup window is now reused for the first restored session window instead of being left open alongside the restored windows — restoring an N-window session always results in exactly N windows
 - **improve**: session restore loop now isolates per-window errors so a single failing window no longer aborts the entire restore
 - **improve**: added `[restore]` debug log lines for disposable window detection, reuse/fallback decision, window count, and completion
