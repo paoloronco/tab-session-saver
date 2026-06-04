@@ -18,8 +18,16 @@
       --shadow: 0 12px 24px rgba(28, 35, 51, 0.08);
     }
 
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
     html {
       width: 420px;
+      height: auto;
+      max-height: 600px;
       overflow: hidden;
     }
 
@@ -28,6 +36,7 @@
       margin: 0;
       padding: 0;
       width: 100%;
+      max-height: 600px;
       min-height: 0;
       background: linear-gradient(180deg, #f7f9ff 0%, #eef1f9 100%);
       color: var(--text-primary);
@@ -62,8 +71,9 @@
       flex-direction: column;
       gap: 1.25rem;
       padding: 1.25rem 1.25rem 1.5rem;
-      max-height: 600px;
+      max-height: min(600px, 100vh);
       overflow-y: auto;
+      overscroll-behavior: contain;
     }
 
     .card {
