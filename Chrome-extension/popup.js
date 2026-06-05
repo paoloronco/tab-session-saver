@@ -290,6 +290,20 @@ const translations = {
 };
 
 const TAB_GROUP_COLORS = new Set(['grey', 'blue', 'red', 'yellow', 'green', 'cyan', 'orange', 'pink', 'purple']);
+const MAX_IMPORT_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_CLIENT_STRING_LENGTH = 4096;
+const SAFE_RESTORE_PROTOCOLS = new Set([
+  'http:',
+  'https:',
+  'file:',
+  'chrome:',
+  'chrome-extension:',
+  'edge:',
+  'brave:',
+  'opera:',
+  'vivaldi:'
+]);
+const SAFE_FAVICON_PROTOCOLS = new Set(['http:', 'https:', 'chrome:', 'chrome-extension:']);
 
 const localeMap = {
   en: 'en-US',
@@ -354,6 +368,22 @@ function renderMetaSegments(container, segments) {
     container.appendChild(chip);
   });
 }
+
+function createMenuIcon() {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  [5, 12, 19].forEach((cy) => {
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', '12');
+    circle.setAttribute('cy', String(cy));
+    circle.setAttribute('r', '1.5');
+    circle.setAttribute('fill', 'currentColor');
+    svg.appendChild(circle);
+  });
+  return svg;
+}
+
 
 function configureRestoreButton(button, idleText) {
   button.dataset.restoreControl = 'true';
@@ -444,17 +474,53 @@ function extractHostname(url) {
   }
 }
 
+function clampString(value, maxLength = MAX_CLIENT_STRING_LENGTH) {
+  if (typeof value !== 'string') return '';
+  return value.length > maxLength ? value.slice(0, maxLength) : value;
+}
+
+function normalizeRestorableUrl(value) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > MAX_CLIENT_STRING_LENGTH) return null;
+
+  const lower = trimmed.toLowerCase();
+  if (lower === 'about:blank' || lower === 'about:newtab') {
+    return trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    return SAFE_RESTORE_PROTOCOLS.has(parsed.protocol) ? trimmed : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function sanitizeFaviconUrl(value) {
+  if (typeof value !== 'string' || value.length > MAX_CLIENT_STRING_LENGTH) return null;
+  if (/^data:image\//i.test(value) && value.length <= 4096) return value;
+  try {
+    const parsed = new URL(value);
+    return SAFE_FAVICON_PROTOCOLS.has(parsed.protocol) ? value : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 function sanitizeTabForClient(tab) {
-  if (!tab || typeof tab.url !== 'string') return null;
+  const url = normalizeRestorableUrl(tab?.url);
+  if (!url) return null;
   return {
-    title: typeof tab.title === 'string' && tab.title ? tab.title : tab.url,
-    url: tab.url,
+    title: clampString(typeof tab.title === 'string' && tab.title ? tab.title : url),
+    url,
     pinned: Boolean(tab.pinned),
     active: Boolean(tab.active),
     muted: typeof tab.muted === 'boolean' ? tab.muted : Boolean(tab.mutedInfo?.muted),
-    favIconUrl: typeof tab.favIconUrl === 'string' ? tab.favIconUrl : null,
+    favIconUrl: sanitizeFaviconUrl(tab.favIconUrl),
     audible: Boolean(tab.audible),
     discarded: Boolean(tab.discarded),
+    index: Number.isInteger(tab.index) ? tab.index : null,
     groupId: Number.isInteger(tab.groupId) ? tab.groupId : -1
   };
 }
@@ -484,7 +550,7 @@ function sanitizeGroupForClient(group) {
 
   return {
     id: normalizedId,
-    title: typeof group.title === 'string' ? group.title : '',
+    title: clampString(typeof group.title === 'string' ? group.title : '', 256),
     color: TAB_GROUP_COLORS.has(color) ? color : 'grey',
     collapsed: Boolean(group.collapsed)
   };
@@ -494,6 +560,14 @@ function sanitizeWindowForClient(win) {
   const tabs = Array.isArray(win?.tabs) ? win.tabs : [];
   const groups = Array.isArray(win?.groups) ? win.groups : [];
   const sanitizedGroups = groups.map((group) => sanitizeGroupForClient(group)).filter(Boolean);
+  let sanitizedTabs = tabs.map((tab) => sanitizeTabForClient(tab)).filter(Boolean);
+  if (sanitizedTabs.some((tab) => Number.isInteger(tab.index))) {
+    sanitizedTabs = sanitizedTabs.sort((a, b) => {
+      const leftIndex = Number.isInteger(a.index) ? a.index : Number.MAX_SAFE_INTEGER;
+      const rightIndex = Number.isInteger(b.index) ? b.index : Number.MAX_SAFE_INTEGER;
+      return leftIndex - rightIndex;
+    });
+  }
   return {
     state: win?.state || 'normal',
     focused: Boolean(win?.focused),
@@ -503,7 +577,7 @@ function sanitizeWindowForClient(win) {
     height: Number.isFinite(win?.height) ? win.height : null,
     incognito: Boolean(win?.incognito),
     alwaysOnTop: Boolean(win?.alwaysOnTop),
-    tabs: tabs.map((tab) => sanitizeTabForClient(tab)).filter(Boolean),
+    tabs: sanitizedTabs,
     groups: sanitizedGroups
   };
 }
@@ -522,10 +596,13 @@ function createPreviewItem(tab, displayIndex, winSnapshot, sessionPayload, index
     const iconImg = document.createElement('img');
     iconImg.src = tab.favIconUrl;
     iconImg.alt = '';
+    iconImg.loading = 'lazy';
+    iconImg.decoding = 'async';
+    iconImg.referrerPolicy = 'no-referrer';
     iconWrapper.appendChild(iconImg);
   } else {
     iconWrapper.classList.add('is-placeholder');
-    iconWrapper.innerHTML = '&bull;';
+    iconWrapper.textContent = '\u2022';
   }
 
   const content = document.createElement('div');
@@ -627,7 +704,7 @@ function createPreviewItem(tab, displayIndex, winSnapshot, sessionPayload, index
 }
 
 function renderPreview(sessionPayload, previewContainer, index, label) {
-  previewContainer.innerHTML = '';
+  previewContainer.replaceChildren();
   const countInfo = describeSessionCounts(sessionPayload);
 
   const previewHeader = document.createElement('div');
@@ -796,7 +873,9 @@ function renderPreview(sessionPayload, previewContainer, index, label) {
 
 function normalizeSessionSnapshot(raw) {
   const base = raw && typeof raw === 'object' ? raw : {};
-  const windowsSource = Array.isArray(base.windows)
+  const windowsSource = Array.isArray(raw)
+    ? [{ tabs: raw }]
+    : Array.isArray(base.windows)
     ? base.windows
     : Array.isArray(base.session)
     ? [{ tabs: base.session }]
@@ -842,7 +921,7 @@ function normalizeSessionSnapshot(raw) {
       ? base.timestamp
       : new Date().toISOString();
   const name =
-    typeof base.name === 'string' && base.name.trim() ? base.name.trim() : '';
+    typeof base.name === 'string' && base.name.trim() ? clampString(base.name.trim(), 160) : '';
 
   const normalized = {
     name,
@@ -1004,18 +1083,16 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
+        if (file.size > MAX_IMPORT_FILE_BYTES) {
+          throw new Error('Import file is too large');
+        }
         const reader = new FileReader();
         reader.onload = (ev) => {
           try {
             const parsed = JSON.parse(ev.target.result);
             if (!Array.isArray(parsed)) throw new Error('Invalid format: expected an array');
 
-            const valid = parsed.every(item =>
-              item &&
-              typeof item === 'object' &&
-              typeof item.timestamp === 'string' &&
-              (Array.isArray(item.windows) || Array.isArray(item.session) || Array.isArray(item.tabs))
-            );
+            const valid = parsed.every(item => item && typeof item === 'object');
             if (!valid) throw new Error('Invalid session objects');
 
             const replace = confirm('Replace existing sessions with imported ones? Click OK to replace, Cancel to merge.');
@@ -1032,7 +1109,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     normalized.name = `${getTranslation('session_default_name')} ${baseCount + idx + 1}`;
                   }
                   return normalized;
-                });
+                }).filter((session) => describeSessionCounts(session).tabsCount > 0);
+                if (!importedSessions.length) {
+                  throw new Error('No restorable tabs were found in the import file');
+                }
 
                 resultSessions = replace ? importedSessions : resultSessions.concat(importedSessions);
 
@@ -1056,6 +1136,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
               } catch (e) {
                 console.error('Error in import get_sessions callback', e);
+                alert('Failed to import sessions: ' + (e.message || e));
               }
             });
           } catch (err) {
@@ -1239,7 +1320,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      container.innerHTML = '';
+      container.replaceChildren();
       resetPreviewStates();
 
       const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : [];
@@ -1288,13 +1369,7 @@ document.addEventListener('DOMContentLoaded', () => {
         menuBtn.className = 'menu-button';
         menuBtn.setAttribute('aria-label', getTranslation('session_menu_label'));
         menuBtn.setAttribute('aria-expanded', 'false');
-        menuBtn.innerHTML = `
-          <svg viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="5" r="1.5" fill="currentColor"></circle>
-            <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
-            <circle cx="12" cy="19" r="1.5" fill="currentColor"></circle>
-          </svg>
-        `;
+        menuBtn.appendChild(createMenuIcon());
 
         const menu = document.createElement('div');
         menu.className = 'menu-content';
@@ -1459,7 +1534,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const container = document.getElementById('sessions');
       const emptyState = document.getElementById('empty-state');
       if (container && emptyState) {
-        container.innerHTML = '';
+        container.replaceChildren();
         emptyState.style.display = 'block';
       }
     });

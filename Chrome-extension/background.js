@@ -2,12 +2,25 @@
 const DEFAULT_SESSION_NAME = 'Session';
 const TAB_GROUP_COLORS = new Set(['grey', 'blue', 'red', 'yellow', 'green', 'cyan', 'orange', 'pink', 'purple']);
 const RESTORE_IN_PROGRESS_ERROR = 'RESTORE_IN_PROGRESS';
+const RESTORE_TAB_BATCH_SIZE = 25;
+const MAX_STORED_STRING_LENGTH = 4096;
 const SAFE_DISPOSABLE_WINDOW_URLS = new Set([
   'chrome://newtab/',
   'chrome://new-tab-page/',
   'about:blank',
   'about:newtab',
   ''
+]);
+const SAFE_RESTORE_PROTOCOLS = new Set([
+  'http:',
+  'https:',
+  'file:',
+  'chrome:',
+  'chrome-extension:',
+  'edge:',
+  'brave:',
+  'opera:',
+  'vivaldi:'
 ]);
 
 let activeRestoreToken = null;
@@ -296,10 +309,33 @@ function sanitizeGroupSnapshot(group) {
 
   return {
     id: normalizedId,
-    title: typeof group.title === 'string' ? group.title : '',
+    title: clampString(typeof group.title === 'string' ? group.title : '', 256),
     color: TAB_GROUP_COLORS.has(color) ? color : 'grey',
     collapsed: Boolean(group.collapsed)
   };
+}
+
+function clampString(value, maxLength = MAX_STORED_STRING_LENGTH) {
+  if (typeof value !== 'string') return '';
+  return value.length > maxLength ? value.slice(0, maxLength) : value;
+}
+
+function normalizeRestorableUrl(value) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > MAX_STORED_STRING_LENGTH) return null;
+
+  const lower = trimmed.toLowerCase();
+  if (lower === 'about:blank' || lower === 'about:newtab') {
+    return trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    return SAFE_RESTORE_PROTOCOLS.has(parsed.protocol) ? trimmed : null;
+  } catch (_) {
+    return null;
+  }
 }
 
 function constructWindowSnapshot(windowLike = {}, options = {}) {
@@ -311,6 +347,13 @@ function constructWindowSnapshot(windowLike = {}, options = {}) {
 
   const tabs = Array.isArray(windowLike.tabs) ? windowLike.tabs : [];
   let sanitizedTabs = tabs.map((tab) => sanitizeTabSnapshot(tab)).filter((tab) => tab !== null);
+  if (sanitizedTabs.some((tab) => Number.isInteger(tab.index))) {
+    sanitizedTabs = sanitizedTabs.sort((a, b) => {
+      const leftIndex = Number.isInteger(a.index) ? a.index : Number.MAX_SAFE_INTEGER;
+      const rightIndex = Number.isInteger(b.index) ? b.index : Number.MAX_SAFE_INTEGER;
+      return leftIndex - rightIndex;
+    });
+  }
 
   if (ensureTabs && sanitizedTabs.length === 0) {
     sanitizedTabs = [
@@ -363,7 +406,7 @@ function constructWindowSnapshot(windowLike = {}, options = {}) {
 function buildTabGroupUpdatePayload(group) {
   if (!group || typeof group !== 'object') return {};
   const payload = {
-    title: typeof group.title === 'string' ? group.title : ''
+    title: clampString(typeof group.title === 'string' ? group.title : '', 256)
   };
   const color = typeof group.color === 'string' ? group.color.toLowerCase() : null;
   if (color && TAB_GROUP_COLORS.has(color)) {
@@ -395,17 +438,18 @@ async function buildWindowSnapshot(windowLike, options = {}) {
 }
 
 function sanitizeTabSnapshot(tab) {
-  if (!tab || typeof tab.url !== 'string') return null;
+  const url = normalizeRestorableUrl(tab?.url);
+  if (!url) return null;
 
   return {
-    title: typeof tab.title === 'string' ? tab.title : tab.url,
-    url: tab.url,
+    title: clampString(typeof tab.title === 'string' ? tab.title : url),
+    url,
     pinned: Boolean(tab.pinned),
     active: Boolean(tab.active),
     muted: tab.mutedInfo ? Boolean(tab.mutedInfo.muted) : Boolean(tab.muted),
     audible: Boolean(tab.audible),
     discarded: Boolean(tab.discarded),
-    favIconUrl: typeof tab.favIconUrl === 'string' ? tab.favIconUrl : null,
+    favIconUrl: typeof tab.favIconUrl === 'string' ? clampString(tab.favIconUrl) : null,
     index: Number.isInteger(tab.index) ? tab.index : null,
     groupId: Number.isInteger(tab.groupId) ? tab.groupId : -1
   };
@@ -469,7 +513,7 @@ function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_N
 
   const name =
     typeof base.name === 'string' && base.name.trim()
-      ? base.name.trim()
+      ? clampString(base.name.trim(), 160)
       : fallbackName;
 
   const metadata =
@@ -491,7 +535,9 @@ function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_N
     delete metadata.desktopStrategy;
   }
 
-  const windowsSource = Array.isArray(base.windows)
+  const windowsSource = Array.isArray(rawSession)
+    ? [{ tabs: rawSession }]
+    : Array.isArray(base.windows)
     ? base.windows
     : Array.isArray(base.session)
     ? [{ tabs: base.session }]
@@ -590,10 +636,6 @@ async function restoreSessionFromSnapshot(rawSession, options = {}) {
   console.log('[restore] expected restored window count:', windows.length, '| reuseWindowId:', reuseWindowId);
 
   if (windows.length === 0) {
-    if (Array.isArray(rawSession)) {
-      await chrome.windows.create({ url: rawSession.map((tab) => tab.url) });
-      return;
-    }
     await chrome.windows.create({ url: ['chrome://newtab/'] });
     return;
   }
@@ -660,7 +702,7 @@ async function restoreSingleWindow(windowSnapshot, options = {}) {
   const shouldFocusWindow = windowSnapshot.focused === true;
 
   const createData = {
-    url: urls,
+    url: urls[0],
     focused: shouldFocusWindow
   };
   if (createState !== 'normal') {
@@ -680,15 +722,13 @@ async function restoreSingleWindow(windowSnapshot, options = {}) {
     // Reuse the empty startup window: navigate its tab and append any additional tabs.
     console.log('[restore] reusing window', reuseWindowId, 'for', urls.length, 'tab(s)');
     try {
-      const existingTabs = await chrome.tabs.query({ windowId: reuseWindowId });
+      const existingTabs = (await chrome.tabs.query({ windowId: reuseWindowId })).sort((a, b) => a.index - b.index);
       if (existingTabs.length > 0) {
         await chrome.tabs.update(existingTabs[0].id, { url: urls[0] });
       } else {
         await chrome.tabs.create({ windowId: reuseWindowId, url: urls[0] });
       }
-      for (let i = 1; i < urls.length; i++) {
-        await chrome.tabs.create({ windowId: reuseWindowId, url: urls[i] });
-      }
+      await appendTabsInBatches(reuseWindowId, urls, 1);
       if (shouldFocusWindow) {
         await chrome.windows.update(reuseWindowId, { focused: true });
       }
@@ -697,24 +737,24 @@ async function restoreSingleWindow(windowSnapshot, options = {}) {
     } catch (err) {
       console.warn('[restore] reuse window failed, falling back to new window:', err);
       try {
-        createdWindow = await chrome.windows.create(createData);
+        createdWindow = await createWindowWithBatchedTabs(createData, urls);
       } catch (fallbackErr) {
         console.warn('[restore] windows.create also failed, retrying without state/bounds', fallbackErr);
-        createdWindow = await chrome.windows.create({ url: urls, focused: shouldFocusWindow });
+        createdWindow = await createWindowWithBatchedTabs({ url: urls[0], focused: shouldFocusWindow }, urls);
         desiredState = 'normal';
       }
     }
   } else {
     try {
-      createdWindow = await chrome.windows.create(createData);
+      createdWindow = await createWindowWithBatchedTabs(createData, urls);
     } catch (err) {
       console.warn('[background] windows.create failed, retrying without state/bounds', err);
-      createdWindow = await chrome.windows.create({ url: urls, focused: shouldFocusWindow });
+      createdWindow = await createWindowWithBatchedTabs({ url: urls[0], focused: shouldFocusWindow }, urls);
       desiredState = 'normal';
     }
   }
 
-  const createdTabs = await chrome.tabs.query({ windowId: createdWindow.id });
+  const createdTabs = (await chrome.tabs.query({ windowId: createdWindow.id })).sort((a, b) => a.index - b.index);
   for (let i = 0; i < tabs.length && i < createdTabs.length; i += 1) {
     const targetTab = tabs[i];
     const actualTab = createdTabs[i];
@@ -810,4 +850,47 @@ async function restoreSingleWindow(windowSnapshot, options = {}) {
     windowId: createdWindow.id,
     reused: reusedWindow
   };
+}
+
+async function createWindowWithBatchedTabs(createData, urls) {
+  let createdWindow;
+  try {
+    createdWindow = await chrome.windows.create(createData);
+  } catch (err) {
+    if (createData.url === 'chrome://newtab/') throw err;
+    console.warn('[restore] first tab URL failed, opening new tab placeholder instead:', err);
+    createdWindow = await chrome.windows.create({ ...createData, url: 'chrome://newtab/' });
+  }
+  if (urls.length > 1) {
+    await appendTabsInBatches(createdWindow.id, urls, 1);
+  }
+  return createdWindow;
+}
+
+async function appendTabsInBatches(windowId, urls, startIndex) {
+  for (let i = startIndex; i < urls.length; i += 1) {
+    try {
+      await chrome.tabs.create({
+        windowId,
+        url: urls[i],
+        active: false,
+        index: i
+      });
+    } catch (err) {
+      console.warn('[restore] tab URL failed, opening new tab placeholder instead:', err);
+      try {
+        await chrome.tabs.create({
+          windowId,
+          url: 'chrome://newtab/',
+          active: false,
+          index: i
+        });
+      } catch (fallbackErr) {
+        console.warn('[restore] fallback tab creation failed:', fallbackErr);
+      }
+    }
+    if ((i - startIndex + 1) % RESTORE_TAB_BATCH_SIZE === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  }
 }

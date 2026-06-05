@@ -2,6 +2,7 @@
   async function detectBrowserType() {
     try {
       const ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+      const vendor = (typeof navigator !== 'undefined' && navigator.vendor) || '';
       const brands = typeof navigator !== 'undefined' && navigator.userAgentData
         ? (navigator.userAgentData.brands || []).map(b => (b.brand || '').toLowerCase())
         : [];
@@ -34,8 +35,11 @@
       if (brands.some(b => b === 'chromium')) {
         return { id: 'chromium', name: 'Chromium', supported: false, confidence: 'medium' };
       }
-      if (/Chrome\//.test(ua)) {
-        return { id: 'unknown', name: null, supported: null, confidence: 'low' };
+      if (/Chrome\//.test(ua) && /Google Inc/i.test(vendor)) {
+        return { id: 'chrome', name: 'Google Chrome', supported: true, confidence: 'medium' };
+      }
+      if (/Chromium\//.test(ua) || /Chrome\//.test(ua)) {
+        return { id: 'chromium', name: 'Chromium-based browser', supported: false, confidence: 'low' };
       }
 
       return { id: 'unknown', name: null, supported: null, confidence: 'low' };
