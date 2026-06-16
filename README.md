@@ -1,3 +1,6 @@
+[![Available on GitHub](https://img.shields.io/badge/Available%20on-GitHub-181717?logo=github)](https://github.com/paoloronco/tab-session-saver)
+[![Available on Gitea](https://img.shields.io/badge/Available%20on-Gitea-609926?logo=gitea)](https://gitea.com/paoloronco/tab-session-saver)
+
 <div align="center">
 
 <img src="./Chrome-extension/img-128128.png" alt="Tabs Session Saver logo" width="96" height="96" />
