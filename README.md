@@ -1,6 +1,3 @@
-[![Available on GitHub](https://img.shields.io/badge/Available%20on-GitHub-181717?logo=github)](https://github.com/paoloronco/tab-session-saver)
-[![Available on Gitea](https://img.shields.io/badge/Available%20on-Gitea-609926?logo=gitea)](https://gitea.com/paoloronco/tab-session-saver)
-
 <div align="center">
 
 <img src="./Chrome-extension/img-128128.png" alt="Tabs Session Saver logo" width="96" height="96" />
@@ -19,6 +16,15 @@ Save, manage, restore, export, and import Chrome tab sessions with a local-first
   <img alt="Version" src="https://img.shields.io/badge/version-7.4.2-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
+</p>
+
+<p>
+  <a href="https://github.com/paoloronco/tab-session-saver">
+    <img alt="Available on GitHub" src="https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white" />
+  </a>
+  <a href="https://gitea.com/paoloronco/tab-session-saver">
+    <img alt="Available on Gitea" src="https://img.shields.io/badge/Available_on-Gitea-609926?logo=gitea&logoColor=white" />
+  </a>
 </p>
 
 </div>
