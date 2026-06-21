@@ -611,7 +611,32 @@
     .settings {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 0.85rem;
+    }
+
+    .settings > h2 {
+      margin: 0 0 0.15rem;
+      font-size: 1.05rem;
+    }
+
+    .settings-group-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      padding: 0.85rem;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      background: var(--surface-alt);
+    }
+
+    .settings-group-title {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.055em;
+      line-height: 1.2;
+      text-transform: uppercase;
     }
 
     .setting-group {
@@ -648,10 +673,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: var(--surface);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 0.6rem 0.75rem;
+      gap: 1rem;
+      padding: 0.05rem 0 0.7rem;
+      border-bottom: 1px solid var(--border-color);
     }
 
     .toggle-switch {
@@ -699,6 +723,19 @@
       transform: translateX(20px);
     }
 
+    .settings-description {
+      margin: -0.2rem 0 0;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .settings-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+
     .settings-actions button {
       background: var(--surface);
       border: 1px solid var(--border-color);
@@ -707,6 +744,8 @@
       padding: 0.65rem 0.75rem;
       font-size: 0.85rem;
       font-weight: 600;
+      line-height: 1.25;
+      min-height: 3.2rem;
       cursor: pointer;
       transition: background-color 0.2s ease, border-color 0.2s ease;
     }
@@ -723,18 +762,84 @@
       font-size: 0.8rem;
     }
 
-    .footer-links a {
-      color: var(--accent-color);
-      text-decoration: none;
+    .footer-title {
+      margin: 0 0 0.65rem;
+      color: var(--text-primary);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.055em;
+      text-transform: uppercase;
     }
 
-    .footer-links a:hover {
-      text-decoration: underline;
+    .footer-link-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .footer-link-tile {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+      min-height: 3rem;
+      padding: 0.58rem 0.65rem;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--surface-alt);
+      color: var(--text-primary);
+      text-decoration: none;
+      line-height: 1.25;
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .footer-link-tile:hover {
+      border-color: var(--accent-color);
+      background: var(--surface);
+      color: var(--accent-color);
+    }
+
+    .footer-link-tile:focus-visible,
+    .settings-actions button:focus-visible,
+    .settings select:focus-visible,
+    .toggle-switch input:focus-visible + .slider {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+
+    .footer-link-kicker {
+      color: var(--text-secondary);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .footer-link-name {
+      overflow: hidden;
+      font-size: 0.8rem;
+      font-weight: 650;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .footer-info {
-      margin-top: 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.35rem 0.6rem;
+      margin-top: 0.8rem;
+      color: var(--muted-color);
+      font-size: 0.72rem;
+      line-height: 1.35;
       text-align: center;
+    }
+
+    @media (max-width: 380px) {
+      .settings-actions,
+      .footer-link-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .browser-warning {
@@ -861,8 +966,8 @@
     <section id="settings-section" class="card settings">
       <h2 data-translate="settings_title">Settings</h2>
 
-      <div class="setting-group">
-        <label for="language" data-translate="language_label">Language</label>
+      <div class="settings-group-card settings-language">
+        <label class="settings-group-title" for="language" data-translate="language_label">Language</label>
         <select id="language">
           <option value="en">English</option>
           <option value="es">Espa&ntilde;ol</option>
@@ -872,51 +977,64 @@
         </select>
       </div>
 
-      <div class="toggle-container">
-        <span data-translate="dark_mode_label">Dark mode</span>
-        <label class="toggle-switch">
-          <input type="checkbox" id="darkMode">
-          <span class="slider"></span>
-        </label>
-      </div>
+      <section class="settings-group-card settings-appearance" aria-labelledby="appearance-title">
+        <h3 id="appearance-title" class="settings-group-title" data-translate="appearance_title">Appearance</h3>
+        <div class="toggle-container">
+          <span data-translate="dark_mode_label">Dark mode</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="darkMode">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="setting-group">
+          <label for="accentColor" data-translate="color_label">Accent color</label>
+          <select id="accentColor">
+            <option value="#4c6ef5" data-translate="color_blue">Blue</option>
+            <option value="#228b22" data-translate="color_green">Green</option>
+            <option value="#ffb020" data-translate="color_yellow">Yellow</option>
+            <option value="#f35f5f" data-translate="color_red">Red</option>
+            <option value="#8b5cf6" data-translate="color_purple">Purple</option>
+          </select>
+        </div>
+      </section>
 
-      <div class="setting-group">
-        <label for="accentColor" data-translate="color_label">Accent color</label>
-        <select id="accentColor">
-          <option value="#4c6ef5" data-translate="color_blue">Blue</option>
-          <option value="#228b22" data-translate="color_green">Green</option>
-          <option value="#ffb020" data-translate="color_yellow">Yellow</option>
-          <option value="#f35f5f" data-translate="color_red">Red</option>
-          <option value="#8b5cf6" data-translate="color_purple">Purple</option>
-        </select>
-      </div>
+      <section class="settings-group-card settings-backup" aria-labelledby="backup-title">
+        <h3 id="backup-title" class="settings-group-title" data-translate="backup_title">Backup</h3>
+        <p class="settings-description" data-translate="backup_description">Export a backup or import saved sessions.</p>
+        <div class="settings-actions">
+          <button id="exportSessions" data-translate="export_button">Export saved sessions (JSON)</button>
+          <button id="importSessions" data-translate="import_button">Import sessions (JSON)</button>
+          <input type="file" id="importFileInput" accept="application/json" style="display: none;">
+        </div>
+      </section>
 
-      <div class="setting-group" id="browser-support-group" style="display: none;">
-        <label data-translate="browser_support_label">Browser Support</label>
+      <div id="browser-support-group" class="settings-group-card settings-browser-support" style="display: none;">
+        <h3 class="settings-group-title" data-translate="browser_support_label">Browser Support</h3>
         <div id="browser-support-info" class="browser-support-info">
           <span data-translate="browser_support_loading">Detecting browser&hellip;</span>
         </div>
       </div>
 
-      <div class="setting-group settings-actions">
-        <button id="exportSessions" data-translate="export_button">Export saved sessions (JSON)</button>
-        <button id="importSessions" data-translate="import_button">Import sessions (JSON)</button>
-        <input type="file" id="importFileInput" accept="application/json" style="display: none;">
-      </div>
-
       <div class="footer-section">
-        <div class="footer-links">
-          <a href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=it" target="_blank" rel="noopener" data-translate="chrome_store_link">Chrome Web Store</a>
-          <br>
-          <span data-translate="developer_label">Developer:</span> <a href="https://paoloronco.it" target="_blank" rel="noopener">Paolo Ronco</a>
-          <br>
-          <a href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener">GitHub</a>
-          <br>
-          <a href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" rel="noopener" data-translate="privacy_policy_link">Privacy Policy</a>
+        <h3 class="footer-title" data-translate="resources_title">Resources</h3>
+        <div class="footer-link-grid">
+          <a class="footer-link-tile" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=it" target="_blank" rel="noopener">
+            <span class="footer-link-name" data-translate="chrome_store_link">Chrome Web Store</span>
+          </a>
+          <a class="footer-link-tile" href="https://paoloronco.it" target="_blank" rel="noopener">
+            <span class="footer-link-kicker" data-translate="developer_label">Developer:</span>
+            <span class="footer-link-name">Paolo Ronco</span>
+          </a>
+          <a class="footer-link-tile" href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener">
+            <span class="footer-link-name">GitHub</span>
+          </a>
+          <a class="footer-link-tile" href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" rel="noopener">
+            <span class="footer-link-name" data-translate="privacy_policy_link">Privacy Policy</span>
+          </a>
         </div>
         <div class="footer-info">
-          <span data-translate="version_label">Version:</span> 7.6.0<br>
-          &copy; 2025 Paolo Ronco<br>
+          <span><span data-translate="version_label">Version:</span> 7.7.0</span>
+          <span>&copy; 2025 Paolo Ronco</span>
           <span data-translate="rights_reserved">All rights reserved</span>
         </div>
       </div>
