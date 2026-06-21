@@ -391,6 +391,25 @@ function configureRestoreButton(button, idleText) {
   button.textContent = idleText;
 }
 
+function bindSessionPreviewToggle(entry, label, previewButton, togglePreview) {
+  entry.addEventListener('click', (event) => {
+    if (event.target?.closest?.('.session-actions, .preview-container')) return;
+    togglePreview();
+  });
+
+  label.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      togglePreview();
+    }
+  });
+
+  previewButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+    togglePreview();
+  });
+}
+
 function setRestoreControlsBusy(isBusy) {
   document.querySelectorAll('button[data-restore-control="true"]').forEach((button) => {
     button.disabled = isBusy;
@@ -735,15 +754,10 @@ function renderPreview(sessionPayload, previewContainer, index, label) {
       return;
     }
     if (restoreRequestInFlight) return;
-    chrome.tabs.query({ active: true, currentWindow: true }, (activeTabs) => {
-      const sourceWindowId = (Array.isArray(activeTabs) && activeTabs[0] && Number.isInteger(activeTabs[0].windowId))
-        ? activeTabs[0].windowId
-        : null;
-      triggerRestoreMessage(
-        { action: 'open_session', session: sessionPayload, sourceWindowId },
-        { emptyMessage: 'This session has no windows to restore.' }
-      );
-    });
+    triggerRestoreMessage(
+      { action: 'open_session', session: sessionPayload },
+      { emptyMessage: 'This session has no windows to restore.' }
+    );
   });
   previewHeader.appendChild(previewSessionRestoreBtn);
   previewContainer.appendChild(previewHeader);
@@ -1434,30 +1448,17 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('This session has no windows to restore.');
             return;
           }
-          // Guard early so a second click during the tabs.query callback is also blocked.
+          // Guard before dispatch so repeated card actions cannot queue another restore.
           if (restoreRequestInFlight) return;
-          chrome.tabs.query({ active: true, currentWindow: true }, (activeTabs) => {
-            const sourceWindowId = (Array.isArray(activeTabs) && activeTabs[0] && Number.isInteger(activeTabs[0].windowId))
-              ? activeTabs[0].windowId
-              : null;
-            triggerRestoreMessage(
-              { action: 'open_session', session: sessionPayload, sourceWindowId },
-              { emptyMessage: 'This session has no windows to restore.' }
-            );
-          });
+          triggerRestoreMessage(
+            { action: 'open_session', session: sessionPayload },
+            { emptyMessage: 'This session has no windows to restore.' }
+          );
         };
 
         restoreBtn.addEventListener('click', (event) => {
           event.stopPropagation();
           triggerRestore();
-        });
-
-        label.addEventListener('click', triggerRestore);
-        label.addEventListener('keydown', (event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            triggerRestore();
-          }
         });
 
         menu.addEventListener('click', (event) => event.stopPropagation());
@@ -1502,9 +1503,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
 
-        previewBtn.addEventListener('click', (event) => {
+        const togglePreview = () => {
           try {
-            event.stopPropagation();
             const isOpen = previewContainer.classList.contains('is-open');
             closeAllMenus({ preservePreviews: true });
             if (isOpen) {
@@ -1523,7 +1523,9 @@ document.addEventListener('DOMContentLoaded', () => {
           } catch (e) {
             console.error('Error in previewBtn click', e);
           }
-        });
+        };
+
+        bindSessionPreviewToggle(entry, label, previewBtn, togglePreview);
 
         entry.appendChild(topRow);
         entry.appendChild(previewContainer);
@@ -1579,9 +1581,20 @@ document.addEventListener('DOMContentLoaded', () => {
   restoreSettings();
   loadSessions();
 
-  // Browser detection: show warning banner and populate the settings support section.
+  // Browser detection: supported Chrome stays silent; unsupported/unknown environments get details.
   window.browserSupport.detectBrowserType().then((browserInfo) => {
+    const supportGroupEl = document.getElementById('browser-support-group');
     const supportInfoEl = document.getElementById('browser-support-info');
+    if (browserInfo.supported === true) {
+      if (supportGroupEl) supportGroupEl.style.display = 'none';
+      if (supportInfoEl) supportInfoEl.textContent = '';
+      return;
+    }
+
+    if (supportGroupEl) {
+      supportGroupEl.style.display = 'flex';
+    }
+
     if (supportInfoEl) {
       supportInfoEl.textContent = '';
 
@@ -1602,12 +1615,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const statusRow = document.createElement('span');
       const statusLabel = document.createTextNode(getTranslation('browser_support_status') + ': ');
       const statusValue = document.createElement('strong');
-      statusValue.textContent = browserInfo.supported === true
-        ? getTranslation('browser_support_supported')
-        : browserInfo.supported === false
-          ? getTranslation('browser_support_not_supported')
-          : getTranslation('browser_support_unknown');
-      if (browserInfo.supported === true) statusValue.className = 'browser-support-status-ok';
+      statusValue.textContent = browserInfo.supported === false
+        ? getTranslation('browser_support_not_supported')
+        : getTranslation('browser_support_unknown');
       if (browserInfo.supported === false) statusValue.className = 'browser-support-status-warn';
       statusRow.appendChild(statusLabel);
       statusRow.appendChild(statusValue);
@@ -1621,22 +1631,20 @@ document.addEventListener('DOMContentLoaded', () => {
       supportInfoEl.appendChild(descriptionRow);
     }
 
-    if (browserInfo.supported !== true) {
-      const warningEl = document.getElementById('browser-warning');
-      const warningTextEl = document.getElementById('browser-warning-text');
-      const dismissedKey = 'browserWarningDismissed_' + (browserInfo.id || 'unknown');
-      if (warningEl && warningTextEl && !localStorage.getItem(dismissedKey)) {
-        warningTextEl.textContent = browserInfo.supported === false
-          ? getTranslation('browser_warning_text')
-          : getTranslation('browser_warning_unknown_text');
-        warningEl.style.display = 'flex';
-        const closeBtn = document.getElementById('browser-warning-close');
-        if (closeBtn) {
-          closeBtn.addEventListener('click', () => {
-            warningEl.style.display = 'none';
-            localStorage.setItem(dismissedKey, '1');
-          });
-        }
+    const warningEl = document.getElementById('browser-warning');
+    const warningTextEl = document.getElementById('browser-warning-text');
+    const dismissedKey = 'browserWarningDismissed_' + (browserInfo.id || 'unknown');
+    if (warningEl && warningTextEl && !localStorage.getItem(dismissedKey)) {
+      warningTextEl.textContent = browserInfo.supported === false
+        ? getTranslation('browser_warning_text')
+        : getTranslation('browser_warning_unknown_text');
+      warningEl.style.display = 'flex';
+      const closeBtn = document.getElementById('browser-warning-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          warningEl.style.display = 'none';
+          localStorage.setItem(dismissedKey, '1');
+        });
       }
     }
   });

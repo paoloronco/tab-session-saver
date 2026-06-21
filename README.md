@@ -13,7 +13,7 @@ Save, manage, restore, export, and import Chrome tab sessions with a local-first
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.4.2-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.5.0-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -101,6 +101,13 @@ The working extension files are in [`Chrome-extension`](./Chrome-extension).
 > When Chrome does not expose reliable desktop or workspace metadata, a standard extension cannot perfectly separate Windows virtual desktops.
 
 ## Changelog
+
+### 7.5.0
+
+- updated extension version to `7.5.0`
+- **improve**: clicking a session card now opens or closes its preview, while the dedicated Restore button remains the only direct full-session restore action
+- **fix**: full and single-window restores now always create new browser windows and never reuse or modify an existing window
+- **test**: added regression coverage for preview interactions and new-window-only multi-window restores
 
 ### 7.4.2
 

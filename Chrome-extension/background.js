@@ -4,13 +4,6 @@ const TAB_GROUP_COLORS = new Set(['grey', 'blue', 'red', 'yellow', 'green', 'cya
 const RESTORE_IN_PROGRESS_ERROR = 'RESTORE_IN_PROGRESS';
 const RESTORE_TAB_BATCH_SIZE = 25;
 const MAX_STORED_STRING_LENGTH = 4096;
-const SAFE_DISPOSABLE_WINDOW_URLS = new Set([
-  'chrome://newtab/',
-  'chrome://new-tab-page/',
-  'about:blank',
-  'about:newtab',
-  ''
-]);
 const SAFE_RESTORE_PROTOCOLS = new Set([
   'http:',
   'https:',
@@ -51,8 +44,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
         case 'open_session': {
           if (!request.session) throw new Error('No session payload provided.');
-          const sourceWindowId = Number.isInteger(request.sourceWindowId) ? request.sourceWindowId : null;
-          const result = await restoreSessionWithLock(request.session, { sourceWindowId });
+          const result = await restoreSessionWithLock(request.session);
           sendResponse(result);
           break;
         }
@@ -573,67 +565,11 @@ function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_N
   return sessionObject;
 }
 
-async function inspectDisposableRestoreSourceWindow(sourceWindowId) {
-  const result = {
-    windowId: sourceWindowId,
-    disposable: false,
-    reason: 'missing-window-id',
-    tabCount: 0,
-    url: null
-  };
-
-  if (!Number.isInteger(sourceWindowId)) {
-    return result;
-  }
-
-  try {
-    const sourceWin = await chrome.windows.get(sourceWindowId, { populate: true });
-    const sourceTabs = Array.isArray(sourceWin.tabs) ? sourceWin.tabs : [];
-    const onlyTab = sourceTabs[0] || null;
-    const url = typeof onlyTab?.url === 'string' ? onlyTab.url : '';
-    const hasPinnedTab = sourceTabs.some((tab) => Boolean(tab.pinned));
-    const isSafeEmptyUrl = SAFE_DISPOSABLE_WINDOW_URLS.has(url);
-
-    result.tabCount = sourceTabs.length;
-    result.url = url;
-
-    if (sourceWin.type !== 'normal') {
-      result.reason = `window-type:${sourceWin.type || 'unknown'}`;
-    } else if (sourceTabs.length !== 1) {
-      result.reason = `tab-count:${sourceTabs.length}`;
-    } else if (hasPinnedTab) {
-      result.reason = 'pinned-tab';
-    } else if (!isSafeEmptyUrl) {
-      result.reason = `non-empty-url:${url || 'unknown'}`;
-    } else {
-      result.disposable = true;
-      result.reason = 'safe-empty-startup-window';
-    }
-  } catch (err) {
-    result.reason = 'inspection-failed';
-    result.error = err?.message || String(err);
-  }
-
-  return result;
-}
-
-async function restoreSessionFromSnapshot(rawSession, options = {}) {
-  const { sourceWindowId = null } = options;
-
-  const sourceWindowInspection = await inspectDisposableRestoreSourceWindow(sourceWindowId);
-  const reuseWindowId = sourceWindowInspection.disposable ? sourceWindowInspection.windowId : null;
-  console.log(
-    '[restore] current window ID:', sourceWindowInspection.windowId,
-    '| disposable:', sourceWindowInspection.disposable,
-    '| reason:', sourceWindowInspection.reason,
-    '| tabs:', sourceWindowInspection.tabCount,
-    '| url:', sourceWindowInspection.url
-  );
-
+async function restoreSessionFromSnapshot(rawSession) {
   const normalized = normalizeSessionForStorage(rawSession, DEFAULT_SESSION_NAME, { includeEmptyWindows: true });
   const windows = Array.isArray(normalized.windows) ? normalized.windows : [];
 
-  console.log('[restore] expected restored window count:', windows.length, '| reuseWindowId:', reuseWindowId);
+  console.log('[restore] expected new window count:', windows.length);
 
   if (windows.length === 0) {
     await chrome.windows.create({ url: ['chrome://newtab/'] });
@@ -643,28 +579,19 @@ async function restoreSessionFromSnapshot(rawSession, options = {}) {
   // Unfocused windows first so the focused window ends up on top.
   const orderedWindows = [...windows].sort((a, b) => Number(a.focused) - Number(b.focused));
 
-  // Reuse the disposable startup window for the first window in the restore order.
-  let reuseForFirst = reuseWindowId;
   let windowsRestored = 0;
-  let windowsReused = 0;
   const restoredWindowIds = [];
-  const reusedWindowIds = [];
   for (const winSnapshot of orderedWindows) {
     try {
-      const restoreResult = await restoreSingleWindow(winSnapshot, { reuseWindowId: reuseForFirst });
+      const restoreResult = await restoreSingleWindow(winSnapshot);
       windowsRestored++;
       if (Number.isInteger(restoreResult?.windowId)) {
         restoredWindowIds.push(restoreResult.windowId);
-      }
-      if (restoreResult?.reused) {
-        windowsReused++;
-        reusedWindowIds.push(restoreResult.windowId);
       }
     } catch (err) {
       // One window failing should not abort the entire restore.
       console.warn('[restore] window restore failed, continuing with remaining windows:', err);
     }
-    reuseForFirst = null; // Only reuse the startup window for the very first window.
   }
   console.log(
     '[restore] completed:',
@@ -672,16 +599,11 @@ async function restoreSessionFromSnapshot(rawSession, options = {}) {
     '/',
     orderedWindows.length,
     'windows restored | actual restored window IDs:',
-    restoredWindowIds.join(',') || 'none',
-    '| reused window IDs:',
-    reusedWindowIds.join(',') || 'none',
-    '| reused count:',
-    windowsReused
+    restoredWindowIds.join(',') || 'none'
   );
 }
 
-async function restoreSingleWindow(windowSnapshot, options = {}) {
-  const { reuseWindowId = null } = options;
+async function restoreSingleWindow(windowSnapshot) {
   const tabs = Array.isArray(windowSnapshot.tabs) ? windowSnapshot.tabs : [];
   const groups = Array.isArray(windowSnapshot.groups) ? windowSnapshot.groups : [];
   const urls = tabs.length > 0 ? tabs.map((tab) => tab.url || 'chrome://newtab/') : ['chrome://newtab/'];
@@ -716,42 +638,12 @@ async function restoreSingleWindow(windowSnapshot, options = {}) {
   }
 
   let createdWindow;
-  let reusedWindow = false;
-
-  if (Number.isInteger(reuseWindowId)) {
-    // Reuse the empty startup window: navigate its tab and append any additional tabs.
-    console.log('[restore] reusing window', reuseWindowId, 'for', urls.length, 'tab(s)');
-    try {
-      const existingTabs = (await chrome.tabs.query({ windowId: reuseWindowId })).sort((a, b) => a.index - b.index);
-      if (existingTabs.length > 0) {
-        await chrome.tabs.update(existingTabs[0].id, { url: urls[0] });
-      } else {
-        await chrome.tabs.create({ windowId: reuseWindowId, url: urls[0] });
-      }
-      await appendTabsInBatches(reuseWindowId, urls, 1);
-      if (shouldFocusWindow) {
-        await chrome.windows.update(reuseWindowId, { focused: true });
-      }
-      createdWindow = { id: reuseWindowId };
-      reusedWindow = true;
-    } catch (err) {
-      console.warn('[restore] reuse window failed, falling back to new window:', err);
-      try {
-        createdWindow = await createWindowWithBatchedTabs(createData, urls);
-      } catch (fallbackErr) {
-        console.warn('[restore] windows.create also failed, retrying without state/bounds', fallbackErr);
-        createdWindow = await createWindowWithBatchedTabs({ url: urls[0], focused: shouldFocusWindow }, urls);
-        desiredState = 'normal';
-      }
-    }
-  } else {
-    try {
-      createdWindow = await createWindowWithBatchedTabs(createData, urls);
-    } catch (err) {
-      console.warn('[background] windows.create failed, retrying without state/bounds', err);
-      createdWindow = await createWindowWithBatchedTabs({ url: urls[0], focused: shouldFocusWindow }, urls);
-      desiredState = 'normal';
-    }
+  try {
+    createdWindow = await createWindowWithBatchedTabs(createData, urls);
+  } catch (err) {
+    console.warn('[background] windows.create failed, retrying without state/bounds', err);
+    createdWindow = await createWindowWithBatchedTabs({ url: urls[0], focused: shouldFocusWindow }, urls);
+    desiredState = 'normal';
   }
 
   const createdTabs = (await chrome.tabs.query({ windowId: createdWindow.id })).sort((a, b) => a.index - b.index);
@@ -847,8 +739,7 @@ async function restoreSingleWindow(windowSnapshot, options = {}) {
   }
 
   return {
-    windowId: createdWindow.id,
-    reused: reusedWindow
+    windowId: createdWindow.id
   };
 }
 
