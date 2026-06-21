@@ -13,7 +13,7 @@ Save, manage, restore, export, and import Chrome tab sessions with a local-first
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.5.0-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.6.0-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -101,6 +101,13 @@ The working extension files are in [`Chrome-extension`](./Chrome-extension).
 > When Chrome does not expose reliable desktop or workspace metadata, a standard extension cannot perfectly separate Windows virtual desktops.
 
 ## Changelog
+
+### 7.6.0
+
+- updated extension version to `7.6.0`
+- **improve**: removed the configurable saved-session limit from Settings and onboarding
+- **change**: saving and importing now preserves every session without pruning older entries, subject only to the browser's normal local storage capacity
+- **test**: added regression coverage for collections larger than the previous ten-session default
 
 ### 7.5.0
 

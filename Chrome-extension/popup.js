@@ -17,7 +17,6 @@ const translations = {
     language_label: "Language",
     dark_mode_label: "Dark mode",
     color_label: "Accent color",
-    sessions_limit_label: "Saved sessions limit",
     color_blue: "Blue",
     color_green: "Green",
     color_yellow: "Yellow",
@@ -74,7 +73,6 @@ const translations = {
     language_label: "Idioma",
     dark_mode_label: "Modo oscuro",
     color_label: "Color de acento",
-    sessions_limit_label: "L\u00EDmite de sesiones guardadas",
     color_blue: "Azul",
     color_green: "Verde",
     color_yellow: "Amarillo",
@@ -131,7 +129,6 @@ const translations = {
     language_label: "Lingua",
     dark_mode_label: "Modalit\u00E0 scura",
     color_label: "Colore di accento",
-    sessions_limit_label: "Limite sessioni salvate",
     color_blue: "Blu",
     color_green: "Verde",
     color_yellow: "Giallo",
@@ -188,7 +185,6 @@ const translations = {
     language_label: "Langue",
     dark_mode_label: "Mode sombre",
     color_label: "Couleur d'accent",
-    sessions_limit_label: "Limite de sessions enregistr\u00E9es",
     color_blue: "Bleu",
     color_green: "Vert",
     color_yellow: "Jaune",
@@ -245,7 +241,6 @@ const translations = {
     language_label: "Sprache",
     dark_mode_label: "Dunkelmodus",
     color_label: "Akzentfarbe",
-    sessions_limit_label: "Grenze gespeicherter Sitzungen",
     color_blue: "Blau",
     color_green: "Gr\u00FCn",
     color_yellow: "Gelb",
@@ -347,16 +342,10 @@ function getTranslation(key) {
     : translations['en'][key] || key;
 }
 
-function getMaxSessionsLimit() {
-  const parsed = Number.parseInt(localStorage.getItem('maxSessions') || '10', 10);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : 10;
-}
-
-function setMaxSessionsLimit(value) {
-  const parsed = Number.parseInt(value, 10);
-  const normalized = Number.isInteger(parsed) && parsed > 0 ? parsed : 10;
-  localStorage.setItem('maxSessions', String(normalized));
-  return normalized;
+function combineSessionCollections(existing, additions) {
+  const currentSessions = Array.isArray(existing) ? existing : [];
+  const newSessions = Array.isArray(additions) ? additions : [];
+  return currentSessions.concat(newSessions);
 }
 
 function renderMetaSegments(container, segments) {
@@ -1029,7 +1018,6 @@ function closeAllMenus(options = {}) {
 document.addEventListener('DOMContentLoaded', () => {
   const accentSelect = document.getElementById('accentColor');
   const darkToggle = document.getElementById('darkMode');
-  const maxSessionsInput = document.getElementById('maxSessions');
   const languageSelect = document.getElementById('language');
 
   document.addEventListener('click', closeAllMenus);
@@ -1053,11 +1041,6 @@ document.addEventListener('DOMContentLoaded', () => {
     translatePage(selectedLang);
     localStorage.setItem('language', selectedLang);
     loadSessions(); // Reload sessions to update button text
-  });
-
-  // LIMITO NUMERO DI SESSIONI
-  maxSessionsInput.addEventListener('change', e => {
-    e.target.value = String(setMaxSessionsLimit(e.target.value));
   });
 
   // EXPORT SESSIONS
@@ -1128,12 +1111,9 @@ document.addEventListener('DOMContentLoaded', () => {
                   throw new Error('No restorable tabs were found in the import file');
                 }
 
-                resultSessions = replace ? importedSessions : resultSessions.concat(importedSessions);
-
-                const max = getMaxSessionsLimit();
-                if (resultSessions.length > max) {
-                  resultSessions = resultSessions.slice(-max);
-                }
+                resultSessions = replace
+                  ? importedSessions
+                  : combineSessionCollections(resultSessions, importedSessions);
 
                 chrome.storage.local.set({ sessions: resultSessions }, () => {
                   try {
@@ -1248,11 +1228,9 @@ document.addEventListener('DOMContentLoaded', () => {
                       return;
                     }
 
-                    const max = getMaxSessionsLimit();
-                    const merged = existing.concat(sessionObject);
-                    const trimmed = merged.slice(-max);
+                    const sessionsToStore = combineSessionCollections(existing, [sessionObject]);
 
-                    chrome.storage.local.set({ sessions: trimmed }, () => {
+                    chrome.storage.local.set({ sessions: sessionsToStore }, () => {
                       try {
                         saveButtonEl.disabled = false;
                         if (chrome.runtime.lastError) {
@@ -1548,7 +1526,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function restoreSettings() {
     const savedAccent = localStorage.getItem('accentColor');
     const savedDark = localStorage.getItem('darkMode');
-    const savedLimit = localStorage.getItem('maxSessions');
     const savedLanguage = localStorage.getItem('language');
 
     if (savedAccent) {
@@ -1566,9 +1543,6 @@ document.addEventListener('DOMContentLoaded', () => {
       darkToggle.checked = true;
       document.body.classList.add('dark-mode');
       document.body.classList.remove('light-mode');
-    }
-    if (savedLimit) {
-      maxSessionsInput.value = String(setMaxSessionsLimit(savedLimit));
     }
     if (savedLanguage) {
       languageSelect.value = savedLanguage;
