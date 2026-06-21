@@ -42,22 +42,32 @@ test('settings controls are grouped by language, appearance, backup, and browser
   assert.match(markup, /id="browser-support-group" class="settings-group-card settings-browser-support"/);
 });
 
-test('settings footer uses four aligned resource tiles and no line-break layout', () => {
+test('settings footer separates extension links from secondary links without resource cards', () => {
   const markup = readExtensionFile('popup.html');
   const footer = markup.match(/<div class="footer-section">([\s\S]*?)<\/div>\s*<\/section>/)?.[1] || '';
 
-  assert.match(footer, /class="footer-link-grid"/);
-  assert.equal((footer.match(/class="footer-link-tile"/g) || []).length, 4);
+  assert.match(footer, /class="extension-primary-links"/);
+  assert.match(footer, /class="footer-secondary-links"/);
+  assert.doesNotMatch(footer, /footer-link-grid|footer-link-tile/);
   assert.doesNotMatch(footer, /<br\s*\/?\s*>/i);
   assert.match(footer, /chromewebstore\.google\.com/);
-  assert.match(footer, /paoloronco\.it/);
   assert.match(footer, /github\.com\/paoloronco\/tab-session-saver/);
+  assert.match(footer, /paoloronco\.it/);
   assert.match(footer, /sites\.google\.com\/view\/pp-tabssessionsaver/);
+  assert.match(footer, /class="footer-version-line"/);
+  assert.match(footer, /class="footer-copyright-line"/);
 });
 
 test('every language translates the new settings group headings', () => {
   const translations = loadTranslations();
-  const keys = ['appearance_title', 'backup_title', 'backup_description', 'resources_title'];
+  const keys = [
+    'appearance_title',
+    'backup_title',
+    'backup_description',
+    'resources_title',
+    'github_link',
+    'developer_website_link'
+  ];
 
   for (const language of ['en', 'es', 'it', 'fr', 'de']) {
     for (const key of keys) {

@@ -771,35 +771,33 @@
       text-transform: uppercase;
     }
 
-    .footer-link-grid {
+    .extension-primary-links {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.5rem;
+      gap: 0.65rem 1rem;
     }
 
-    .footer-link-tile {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+    .extension-primary-link {
+      display: inline-flex;
+      align-items: flex-start;
       min-width: 0;
-      min-height: 3rem;
-      padding: 0.58rem 0.65rem;
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      background: var(--surface-alt);
-      color: var(--text-primary);
-      text-decoration: none;
-      line-height: 1.25;
-      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-    }
-
-    .footer-link-tile:hover {
-      border-color: var(--accent-color);
-      background: var(--surface);
       color: var(--accent-color);
+      font-size: 0.82rem;
+      font-weight: 700;
+      line-height: 1.35;
+      text-decoration-line: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 0.2em;
+      transition: color 0.2s ease, text-decoration-thickness 0.2s ease;
     }
 
-    .footer-link-tile:focus-visible,
+    .extension-primary-link:hover {
+      color: color-mix(in srgb, var(--accent-color) 78%, var(--text-primary));
+      text-decoration-thickness: 2px;
+    }
+
+    .extension-primary-link:focus-visible,
+    .footer-secondary-link:focus-visible,
     .settings-actions button:focus-visible,
     .settings select:focus-visible,
     .toggle-switch input:focus-visible + .slider {
@@ -807,27 +805,35 @@
       outline-offset: 2px;
     }
 
-    .footer-link-kicker {
-      color: var(--text-secondary);
-      font-size: 0.68rem;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
+    .footer-secondary-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem 0.9rem;
+      margin-top: 0.75rem;
+      padding-top: 0.7rem;
+      border-top: 1px solid var(--border-color);
     }
 
-    .footer-link-name {
-      overflow: hidden;
-      font-size: 0.8rem;
-      font-weight: 650;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .footer-secondary-link {
+      color: var(--text-secondary);
+      font-size: 0.76rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer-secondary-link:hover {
+      color: var(--accent-color);
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
     }
 
     .footer-info {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      gap: 0.35rem 0.6rem;
+      gap: 0.2rem;
       margin-top: 0.8rem;
       color: var(--muted-color);
       font-size: 0.72rem;
@@ -835,9 +841,20 @@
       text-align: center;
     }
 
+    .footer-copyright-line {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.25rem;
+    }
+
+    .footer-meta-separator {
+      color: var(--border-color);
+    }
+
     @media (max-width: 380px) {
       .settings-actions,
-      .footer-link-grid {
+      .extension-primary-links {
         grid-template-columns: 1fr;
       }
     }
@@ -1016,26 +1033,26 @@
       </div>
 
       <div class="footer-section">
-        <h3 class="footer-title" data-translate="resources_title">Resources</h3>
-        <div class="footer-link-grid">
-          <a class="footer-link-tile" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=it" target="_blank" rel="noopener">
-            <span class="footer-link-name" data-translate="chrome_store_link">Chrome Web Store</span>
+        <h3 class="footer-title" data-translate="resources_title">Get the extension</h3>
+        <div class="extension-primary-links">
+          <a class="extension-primary-link" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=it" target="_blank" rel="noopener">
+            <span data-translate="chrome_store_link">Install from Chrome Web Store</span>
           </a>
-          <a class="footer-link-tile" href="https://paoloronco.it" target="_blank" rel="noopener">
-            <span class="footer-link-kicker" data-translate="developer_label">Developer:</span>
-            <span class="footer-link-name">Paolo Ronco</span>
-          </a>
-          <a class="footer-link-tile" href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener">
-            <span class="footer-link-name">GitHub</span>
-          </a>
-          <a class="footer-link-tile" href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" rel="noopener">
-            <span class="footer-link-name" data-translate="privacy_policy_link">Privacy Policy</span>
+          <a class="extension-primary-link" href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener">
+            <span data-translate="github_link">Source code on GitHub</span>
           </a>
         </div>
+        <div class="footer-secondary-links">
+          <a class="footer-secondary-link" href="https://paoloronco.it" target="_blank" rel="noopener" data-translate="developer_website_link">Developer website</a>
+          <a class="footer-secondary-link" href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" rel="noopener" data-translate="privacy_policy_link">Privacy Policy</a>
+        </div>
         <div class="footer-info">
-          <span><span data-translate="version_label">Version:</span> 7.7.0</span>
-          <span>&copy; 2025 Paolo Ronco</span>
-          <span data-translate="rights_reserved">All rights reserved</span>
+          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.8.0</div>
+          <div class="footer-copyright-line">
+            <span>&copy; 2025 Paolo Ronco</span>
+            <span class="footer-meta-separator" aria-hidden="true">&middot;</span>
+            <span data-translate="rights_reserved">All rights reserved</span>
+          </div>
         </div>
       </div>
     </section>
