@@ -408,12 +408,14 @@ function configureRestoreButton(button, idleText) {
 function bindSessionPreviewToggle(entry, label, previewButton, togglePreview) {
   entry.addEventListener('click', (event) => {
     if (event.target?.closest?.('.session-actions, .preview-container')) return;
+    event.stopPropagation();
     togglePreview();
   });
 
   label.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
+      event.stopPropagation();
       togglePreview();
     }
   });
