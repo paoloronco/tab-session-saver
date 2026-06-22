@@ -13,7 +13,7 @@ Save, manage, restore, export, and import Chrome tab sessions with a local-first
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.8.0-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.9.0-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -37,7 +37,7 @@ Save, manage, restore, export, and import Chrome tab sessions with a local-first
 
 It stores session data locally with `chrome.storage.local` and supports:
 
-- full session save and restore
+- full session save with configurable restore behavior
 - tab group preservation
 - preview, rename, and delete actions
 - single-tab removal from saved sessions
@@ -57,7 +57,7 @@ It stores session data locally with `chrome.storage.local` and supports:
 | Feature | Details |
 | --- | --- |
 | Save sessions | Capture the current browsing state from the popup |
-| Restore sessions | Reopen saved tabs into new Chrome windows |
+| Restore sessions | Reopen every saved window separately or merge the last one into the current window |
 | Tab groups | Preserve grouped tabs during save and restore |
 | Session management | Rename, delete, preview, and edit saved sessions |
 | Export and import | Move sessions via JSON |
@@ -101,6 +101,14 @@ The working extension files are in [`Chrome-extension`](./Chrome-extension).
 > When Chrome does not expose reliable desktop or workspace metadata, a standard extension cannot perfectly separate Windows virtual desktops.
 
 ## Changelog
+
+### 7.9.0
+
+- updated extension version to `7.9.0`
+- **feature**: added a Restore behavior setting with separate new-window and current-window modes
+- **restore**: current-window mode inserts the last saved window before existing tabs while preserving saved order, groups, pinned tabs, muted tabs, and active tab
+- **consistency**: applied the selected behavior to full-session restore and preview window restore
+- **i18n**: explained both restore modes in English, Spanish, Italian, French, and German
 
 ### 7.8.0
 

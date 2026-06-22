@@ -736,6 +736,53 @@
       line-height: 1.45;
     }
 
+    .restore-mode-options {
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .restore-mode-option {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.7rem;
+      align-items: flex-start;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .restore-mode-option:hover,
+    .restore-mode-option:has(input:checked) {
+      border-color: var(--accent-color);
+      background: color-mix(in srgb, var(--accent-color) 7%, var(--surface));
+    }
+
+    .restore-mode-option input {
+      margin: 0.2rem 0 0;
+      accent-color: var(--accent-color);
+    }
+
+    .restore-mode-copy {
+      display: grid;
+      gap: 0.2rem;
+    }
+
+    .restore-mode-label {
+      color: var(--text-primary);
+      font-size: 0.84rem;
+      font-weight: 650;
+    }
+
+    .restore-mode-detail {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      font-weight: 400;
+      line-height: 1.4;
+    }
+
     .settings-actions {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1044,6 +1091,27 @@
         </div>
       </section>
 
+      <section class="settings-group-card settings-restore" aria-labelledby="restore-behavior-title">
+        <h3 id="restore-behavior-title" class="settings-group-title" data-translate="restore_behavior_title">Restore behavior</h3>
+        <p class="settings-description" data-translate="restore_behavior_description">Choose where the last window of a restored session opens.</p>
+        <div class="restore-mode-options" role="radiogroup" aria-labelledby="restore-behavior-title">
+          <label class="restore-mode-option">
+            <input type="radio" name="restoreMode" value="new_windows">
+            <span class="restore-mode-copy">
+              <span class="restore-mode-label" data-translate="restore_new_windows_label">Restore in new windows</span>
+              <span class="restore-mode-detail" data-translate="restore_new_windows_description">Every saved window opens separately. Your current window stays unchanged.</span>
+            </span>
+          </label>
+          <label class="restore-mode-option">
+            <input type="radio" name="restoreMode" value="current_window">
+            <span class="restore-mode-copy">
+              <span class="restore-mode-label" data-translate="restore_current_window_label">Restore into the current window</span>
+              <span class="restore-mode-detail" data-translate="restore_current_window_description">The last saved window is added before your current tabs. Other saved windows still open separately.</span>
+            </span>
+          </label>
+        </div>
+      </section>
+
       <section class="settings-group-card settings-backup" aria-labelledby="backup-title">
         <h3 id="backup-title" class="settings-group-title" data-translate="backup_title">Backup</h3>
         <p class="settings-description" data-translate="backup_description">Export a backup or import saved sessions.</p>
@@ -1078,7 +1146,7 @@
           <a class="footer-secondary-link" href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" rel="noopener" data-translate="privacy_policy_link">Privacy Policy</a>
         </div>
         <div class="footer-info">
-          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.8.3</div>
+          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.9.0</div>
           <div class="footer-copyright-line">
             <span>&copy; 2025 Paolo Ronco</span>
             <span class="footer-meta-separator" aria-hidden="true">&middot;</span>

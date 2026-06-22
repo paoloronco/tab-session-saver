@@ -2,6 +2,8 @@
 const DEFAULT_SESSION_NAME = 'Session';
 const TAB_GROUP_COLORS = new Set(['grey', 'blue', 'red', 'yellow', 'green', 'cyan', 'orange', 'pink', 'purple']);
 const RESTORE_IN_PROGRESS_ERROR = 'RESTORE_IN_PROGRESS';
+const RESTORE_MODE_NEW_WINDOWS = 'new_windows';
+const RESTORE_MODE_CURRENT_WINDOW = 'current_window';
 const RESTORE_TAB_BATCH_SIZE = 25;
 const MAX_STORED_STRING_LENGTH = 4096;
 const SAFE_RESTORE_PROTOCOLS = new Set([
@@ -44,13 +46,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
         case 'open_session': {
           if (!request.session) throw new Error('No session payload provided.');
-          const result = await restoreSessionWithLock(request.session);
+          const result = await restoreSessionWithLock(request.session, {
+            restoreMode: request.restoreMode,
+            targetWindowId: request.targetWindowId
+          });
           sendResponse(result);
           break;
         }
         case 'restore_window': {
           if (!request.windowSnapshot) throw new Error('No window payload provided.');
-          const result = await restoreWindowWithLock(request.windowSnapshot);
+          const result = await restoreWindowWithLock(request.windowSnapshot, {
+            restoreMode: request.restoreMode,
+            targetWindowId: request.targetWindowId
+          });
           sendResponse(result);
           break;
         }
@@ -85,11 +93,42 @@ async function restoreSessionWithLock(session, options = {}) {
   return runRestoreWithLock(() => restoreSessionFromSnapshot(session, options));
 }
 
-async function restoreWindowWithLock(windowSnapshot) {
+async function restoreWindowWithLock(windowSnapshot, options = {}) {
   return runRestoreWithLock(async () => {
     const normalizedWindow = constructWindowSnapshot(windowSnapshot || {}, {});
+    const restoreOptions = normalizeRestoreOptions(options);
+    if (restoreOptions.restoreMode === RESTORE_MODE_CURRENT_WINDOW) {
+      await validateRestoreTargetWindow(restoreOptions.targetWindowId);
+      await restoreWindowIntoExistingWindow(normalizedWindow, restoreOptions.targetWindowId);
+      return;
+    }
     await restoreSingleWindow(normalizedWindow);
   });
+}
+
+function normalizeRestoreOptions(options = {}) {
+  const restoreMode = options.restoreMode === RESTORE_MODE_CURRENT_WINDOW
+    ? RESTORE_MODE_CURRENT_WINDOW
+    : RESTORE_MODE_NEW_WINDOWS;
+  return {
+    restoreMode,
+    targetWindowId: Number.isInteger(options.targetWindowId) ? options.targetWindowId : null
+  };
+}
+
+async function validateRestoreTargetWindow(targetWindowId) {
+  if (!Number.isInteger(targetWindowId)) {
+    throw new Error('A valid target window is required for this restore mode.');
+  }
+  try {
+    const targetWindow = await chrome.windows.get(targetWindowId);
+    if (!targetWindow || targetWindow.type !== 'normal') {
+      throw new Error('The target window is not a normal browser window.');
+    }
+    return targetWindow;
+  } catch (error) {
+    throw new Error(`The target window is no longer available: ${error?.message || error}`);
+  }
 }
 
 async function runRestoreWithLock(restoreOperation) {
@@ -565,14 +604,31 @@ function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_N
   return sessionObject;
 }
 
-async function restoreSessionFromSnapshot(rawSession) {
+async function restoreSessionFromSnapshot(rawSession, options = {}) {
   const normalized = normalizeSessionForStorage(rawSession, DEFAULT_SESSION_NAME, { includeEmptyWindows: true });
   const windows = Array.isArray(normalized.windows) ? normalized.windows : [];
+  const restoreOptions = normalizeRestoreOptions(options);
 
   console.log('[restore] expected new window count:', windows.length);
 
   if (windows.length === 0) {
     await chrome.windows.create({ url: ['chrome://newtab/'] });
+    return;
+  }
+
+  if (restoreOptions.restoreMode === RESTORE_MODE_CURRENT_WINDOW) {
+    await validateRestoreTargetWindow(restoreOptions.targetWindowId);
+
+    const windowsForNewWindows = windows.slice(0, -1);
+    for (const winSnapshot of windowsForNewWindows) {
+      try {
+        await restoreSingleWindow({ ...winSnapshot, focused: false });
+      } catch (err) {
+        console.warn('[restore] window restore failed, continuing with remaining windows:', err);
+      }
+    }
+
+    await restoreWindowIntoExistingWindow(windows.at(-1), restoreOptions.targetWindowId);
     return;
   }
 
@@ -647,6 +703,76 @@ async function restoreSingleWindow(windowSnapshot) {
   }
 
   const createdTabs = (await chrome.tabs.query({ windowId: createdWindow.id })).sort((a, b) => a.index - b.index);
+  await restoreTabDetails(tabs, groups, createdTabs);
+
+  const tryUpdateState = async (state) => {
+    if (!state || state === 'normal') return;
+    try {
+      await chrome.windows.update(createdWindow.id, { state });
+    } catch (err) {
+      console.warn('[background] windows.update state failed', state, err);
+    }
+  };
+
+  if (hasValidBounds && (!desiredState || desiredState === 'normal')) {
+    try {
+      await chrome.windows.update(createdWindow.id, {
+        left: windowSnapshot.left,
+        top: windowSnapshot.top,
+        width: windowSnapshot.width,
+        height: windowSnapshot.height
+      });
+    } catch (err) {
+      console.warn('[background] windows.update bounds failed', err);
+    }
+  }
+
+  if (desiredState === 'minimized') {
+    await tryUpdateState('minimized');
+  } else if (desiredState === 'maximized' || desiredState === 'fullscreen') {
+    await tryUpdateState(desiredState);
+  }
+
+  return {
+    windowId: createdWindow.id
+  };
+}
+
+async function restoreWindowIntoExistingWindow(windowSnapshot, targetWindowId) {
+  const tabs = Array.isArray(windowSnapshot.tabs) ? windowSnapshot.tabs : [];
+  const groups = Array.isArray(windowSnapshot.groups) ? windowSnapshot.groups : [];
+  const tabsToRestore = tabs.length > 0 ? tabs : [{ url: 'chrome://newtab/', active: true, groupId: -1 }];
+  const createdTabs = [];
+
+  for (let i = 0; i < tabsToRestore.length; i += 1) {
+    const targetTab = tabsToRestore[i];
+    try {
+      createdTabs.push(await chrome.tabs.create({
+        windowId: targetWindowId,
+        url: targetTab.url || 'chrome://newtab/',
+        active: false,
+        index: i
+      }));
+    } catch (err) {
+      console.warn('[restore] tab URL failed, opening new tab placeholder instead:', err);
+      createdTabs.push(await chrome.tabs.create({
+        windowId: targetWindowId,
+        url: 'chrome://newtab/',
+        active: false,
+        index: i
+      }));
+    }
+    if ((i + 1) % RESTORE_TAB_BATCH_SIZE === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  }
+
+  await restoreTabDetails(tabsToRestore, groups, createdTabs);
+  await chrome.windows.update(targetWindowId, { focused: true });
+  return { windowId: targetWindowId };
+}
+
+async function restoreTabDetails(tabs, groups, createdTabs) {
   for (let i = 0; i < tabs.length && i < createdTabs.length; i += 1) {
     const targetTab = tabs[i];
     const actualTab = createdTabs[i];
@@ -709,38 +835,6 @@ async function restoreSingleWindow(windowSnapshot) {
   if (activeIndex >= 0 && activeIndex < createdTabs.length) {
     await chrome.tabs.update(createdTabs[activeIndex].id, { active: true });
   }
-
-  const tryUpdateState = async (state) => {
-    if (!state || state === 'normal') return;
-    try {
-      await chrome.windows.update(createdWindow.id, { state });
-    } catch (err) {
-      console.warn('[background] windows.update state failed', state, err);
-    }
-  };
-
-  if (hasValidBounds && (!desiredState || desiredState === 'normal')) {
-    try {
-      await chrome.windows.update(createdWindow.id, {
-        left: windowSnapshot.left,
-        top: windowSnapshot.top,
-        width: windowSnapshot.width,
-        height: windowSnapshot.height
-      });
-    } catch (err) {
-      console.warn('[background] windows.update bounds failed', err);
-    }
-  }
-
-  if (desiredState === 'minimized') {
-    await tryUpdateState('minimized');
-  } else if (desiredState === 'maximized' || desiredState === 'fullscreen') {
-    await tryUpdateState(desiredState);
-  }
-
-  return {
-    windowId: createdWindow.id
-  };
 }
 
 async function createWindowWithBatchedTabs(createData, urls) {

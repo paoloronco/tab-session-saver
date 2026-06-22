@@ -18,6 +18,12 @@ const translations = {
     dark_mode_label: "Dark mode",
     color_label: "Accent color",
     appearance_title: "Appearance",
+    restore_behavior_title: "Restore behavior",
+    restore_behavior_description: "Choose where the last window of a restored session opens.",
+    restore_new_windows_label: "Restore in new windows",
+    restore_new_windows_description: "Every saved window opens separately. Your current window stays unchanged.",
+    restore_current_window_label: "Restore into the current window",
+    restore_current_window_description: "The last saved window is added before your current tabs. Other saved windows still open separately.",
     backup_title: "Backup",
     backup_description: "Export a backup or import saved sessions.",
     resources_title: "Get the extension",
@@ -79,6 +85,12 @@ const translations = {
     dark_mode_label: "Modo oscuro",
     color_label: "Color de acento",
     appearance_title: "Apariencia",
+    restore_behavior_title: "Comportamiento de restauraci\u00F3n",
+    restore_behavior_description: "Elige d\u00F3nde se abre la \u00FAltima ventana de una sesi\u00F3n restaurada.",
+    restore_new_windows_label: "Restaurar en ventanas nuevas",
+    restore_new_windows_description: "Cada ventana guardada se abre por separado. La ventana actual no cambia.",
+    restore_current_window_label: "Restaurar en la ventana actual",
+    restore_current_window_description: "La \u00FAltima ventana guardada se a\u00F1ade antes de las pesta\u00F1as actuales. Las dem\u00E1s se abren por separado.",
     backup_title: "Copia de seguridad",
     backup_description: "Exporta una copia o importa sesiones guardadas.",
     resources_title: "Obtener la extensión",
@@ -140,6 +152,12 @@ const translations = {
     dark_mode_label: "Modalit\u00E0 scura",
     color_label: "Colore di accento",
     appearance_title: "Aspetto",
+    restore_behavior_title: "Comportamento di ripristino",
+    restore_behavior_description: "Scegli dove aprire l'ultima finestra di una sessione ripristinata.",
+    restore_new_windows_label: "Ripristina in nuove finestre",
+    restore_new_windows_description: "Ogni finestra salvata si apre separatamente. La finestra attuale resta invariata.",
+    restore_current_window_label: "Ripristina nella finestra attuale",
+    restore_current_window_description: "L'ultima finestra salvata viene aggiunta prima delle schede attuali. Le altre si aprono separatamente.",
     backup_title: "Backup",
     backup_description: "Esporta un backup o importa sessioni salvate.",
     resources_title: "Ottieni l'estensione",
@@ -201,6 +219,12 @@ const translations = {
     dark_mode_label: "Mode sombre",
     color_label: "Couleur d'accent",
     appearance_title: "Apparence",
+    restore_behavior_title: "Comportement de restauration",
+    restore_behavior_description: "Choisissez o\u00F9 ouvrir la derni\u00E8re fen\u00EAtre d'une session restaur\u00E9e.",
+    restore_new_windows_label: "Restaurer dans de nouvelles fen\u00EAtres",
+    restore_new_windows_description: "Chaque fen\u00EAtre enregistr\u00E9e s'ouvre s\u00E9par\u00E9ment. La fen\u00EAtre actuelle reste inchang\u00E9e.",
+    restore_current_window_label: "Restaurer dans la fen\u00EAtre actuelle",
+    restore_current_window_description: "La derni\u00E8re fen\u00EAtre enregistr\u00E9e est ajout\u00E9e avant les onglets actuels. Les autres s'ouvrent s\u00E9par\u00E9ment.",
     backup_title: "Sauvegarde",
     backup_description: "Exportez une sauvegarde ou importez des sessions.",
     resources_title: "Obtenir l'extension",
@@ -262,6 +286,12 @@ const translations = {
     dark_mode_label: "Dunkelmodus",
     color_label: "Akzentfarbe",
     appearance_title: "Darstellung",
+    restore_behavior_title: "Wiederherstellungsverhalten",
+    restore_behavior_description: "W\u00E4hlen Sie, wo das letzte Fenster einer Sitzung ge\u00F6ffnet wird.",
+    restore_new_windows_label: "In neuen Fenstern wiederherstellen",
+    restore_new_windows_description: "Jedes gespeicherte Fenster wird separat ge\u00F6ffnet. Das aktuelle Fenster bleibt unver\u00E4ndert.",
+    restore_current_window_label: "Im aktuellen Fenster wiederherstellen",
+    restore_current_window_description: "Das letzte gespeicherte Fenster wird vor den aktuellen Tabs eingef\u00FCgt. Weitere Fenster werden separat ge\u00F6ffnet.",
     backup_title: "Sicherung",
     backup_description: "Sicherung exportieren oder Sitzungen importieren.",
     resources_title: "Erweiterung beziehen",
@@ -408,20 +438,20 @@ function configureRestoreButton(button, idleText) {
 function bindSessionPreviewToggle(entry, label, previewButton, togglePreview) {
   entry.addEventListener('click', (event) => {
     if (event.target?.closest?.('.session-actions, .preview-container')) return;
-    event.stopPropagation();
+    event.stopPropagation?.();
     togglePreview();
   });
 
   label.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      event.stopPropagation();
+      event.stopPropagation?.();
       togglePreview();
     }
   });
 
   previewButton.addEventListener('click', (event) => {
-    event.stopPropagation();
+    event.stopPropagation?.();
     togglePreview();
   });
 }
@@ -433,6 +463,32 @@ function setRestoreControlsBusy(isBusy) {
     button.textContent = isBusy
       ? getTranslation('restore_in_progress')
       : button.dataset.restoreIdleLabel || getTranslation('restore_button');
+  });
+}
+
+function getRestoreMode() {
+  const restoreMode = localStorage.getItem('restoreMode');
+  return restoreMode === 'current_window' ? 'current_window' : 'new_windows';
+}
+
+function triggerConfiguredRestore(message, options = {}) {
+  if (restoreRequestInFlight) return;
+  const restoreMode = getRestoreMode();
+
+  chrome.tabs.query({ active: true, currentWindow: true }, (activeTabs) => {
+    if (chrome.runtime.lastError) {
+      console.error('Unable to determine the current window', chrome.runtime.lastError);
+      alert('Unable to determine the current browser window.');
+      return;
+    }
+
+    const targetWindowId = activeTabs?.[0]?.windowId;
+    if (restoreMode === 'current_window' && !Number.isInteger(targetWindowId)) {
+      alert('Unable to determine the current browser window.');
+      return;
+    }
+
+    triggerRestoreMessage({ ...message, restoreMode, targetWindowId }, options);
   });
 }
 
@@ -770,7 +826,7 @@ function renderPreview(sessionPayload, previewContainer, index, label) {
       return;
     }
     if (restoreRequestInFlight) return;
-    triggerRestoreMessage(
+    triggerConfiguredRestore(
       { action: 'open_session', session: sessionPayload },
       { emptyMessage: 'This session has no windows to restore.' }
     );
@@ -824,7 +880,7 @@ function renderPreview(sessionPayload, previewContainer, index, label) {
     configureRestoreButton(restoreWindowBtn, getTranslation('restore_window_button'));
     restoreWindowBtn.addEventListener('click', (event) => {
       event.stopPropagation();
-      triggerRestoreMessage(
+      triggerConfiguredRestore(
         { action: 'restore_window', windowSnapshot: winSnapshot },
         {
           emptyMessage: 'This window cannot be restored.',
@@ -1046,6 +1102,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const accentSelect = document.getElementById('accentColor');
   const darkToggle = document.getElementById('darkMode');
   const languageSelect = document.getElementById('language');
+  const restoreModeInputs = document.querySelectorAll('input[name="restoreMode"]');
 
   document.addEventListener('click', closeAllMenus);
 
@@ -1068,6 +1125,14 @@ document.addEventListener('DOMContentLoaded', () => {
     translatePage(selectedLang);
     localStorage.setItem('language', selectedLang);
     loadSessions(); // Reload sessions to update button text
+  });
+
+  restoreModeInputs.forEach((input) => {
+    input.addEventListener('change', (event) => {
+      if (event.target.checked) {
+        localStorage.setItem('restoreMode', event.target.value);
+      }
+    });
   });
 
   // EXPORT SESSIONS
@@ -1455,7 +1520,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           // Guard before dispatch so repeated card actions cannot queue another restore.
           if (restoreRequestInFlight) return;
-          triggerRestoreMessage(
+          triggerConfiguredRestore(
             { action: 'open_session', session: sessionPayload },
             { emptyMessage: 'This session has no windows to restore.' }
           );
@@ -1554,6 +1619,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedAccent = localStorage.getItem('accentColor');
     const savedDark = localStorage.getItem('darkMode');
     const savedLanguage = localStorage.getItem('language');
+    const restoreMode = getRestoreMode();
 
     if (savedAccent) {
       const hasOption = Array.from(accentSelect.options).some(option => option.value === savedAccent);
@@ -1577,6 +1643,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       translatePage('en');
     }
+    restoreModeInputs.forEach((input) => {
+      input.checked = input.value === restoreMode;
+    });
   }
 
   restoreSettings();
