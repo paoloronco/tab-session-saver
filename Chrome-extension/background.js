@@ -703,7 +703,7 @@ async function restoreSingleWindow(windowSnapshot) {
   }
 
   const createdTabs = (await chrome.tabs.query({ windowId: createdWindow.id })).sort((a, b) => a.index - b.index);
-  await restoreTabDetails(tabs, groups, createdTabs);
+  await restoreTabDetails(tabs, groups, createdTabs, createdWindow.id);
 
   const tryUpdateState = async (state) => {
     if (!state || state === 'normal') return;
@@ -767,12 +767,12 @@ async function restoreWindowIntoExistingWindow(windowSnapshot, targetWindowId) {
     }
   }
 
-  await restoreTabDetails(tabsToRestore, groups, createdTabs);
+  await restoreTabDetails(tabsToRestore, groups, createdTabs, targetWindowId);
   await chrome.windows.update(targetWindowId, { focused: true });
   return { windowId: targetWindowId };
 }
 
-async function restoreTabDetails(tabs, groups, createdTabs) {
+async function restoreTabDetails(tabs, groups, createdTabs, targetWindowId) {
   for (let i = 0; i < tabs.length && i < createdTabs.length; i += 1) {
     const targetTab = tabs[i];
     const actualTab = createdTabs[i];
@@ -815,7 +815,10 @@ async function restoreTabDetails(tabs, groups, createdTabs) {
         if (groupData && groupData.tabIds.length > 0) {
           try {
             // Group the tabs
-            const groupId = await chrome.tabs.group({ tabIds: groupData.tabIds });
+            const groupId = await chrome.tabs.group({
+              tabIds: groupData.tabIds,
+              createProperties: { windowId: targetWindowId }
+            });
             // Update group properties
             const updatePayload = buildTabGroupUpdatePayload(groupData);
             if (Object.keys(updatePayload).length > 0) {

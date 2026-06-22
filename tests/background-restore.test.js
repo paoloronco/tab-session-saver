@@ -40,6 +40,7 @@ function createChromeHarness() {
     createdWindows: [],
     createdTabs: [],
     groupedTabs: [],
+    groupRequests: [],
     groupUpdates: [],
     windowGets: [],
     windowUpdates: []
@@ -105,8 +106,10 @@ function createChromeHarness() {
         ));
         return tab;
       },
-      group: async ({ tabIds }) => {
+      group: async (options) => {
+        const { tabIds } = options;
         calls.groupedTabs.push([...tabIds]);
+        calls.groupRequests.push(options);
         return nextGroupId++;
       }
     },
@@ -184,6 +187,38 @@ test('new-window mode creates every saved window without changing the current wi
   assert.equal(calls.windowGets.length, 0);
   assert.equal(calls.createdWindows.length, 2);
   assert.deepEqual(windows.get(42).tabs.map((tab) => tab.url), ['https://example.com/current']);
+});
+
+test('new-window mode creates each tab group in its restored window', async () => {
+  const { chrome, calls } = createChromeHarness();
+  const { restoreSessionFromSnapshot } = loadBackground(chrome);
+  const session = {
+    name: 'Grouped windows',
+    timestamp: Date.now(),
+    windows: [
+      {
+        focused: false,
+        state: 'normal',
+        tabs: [
+          { url: 'https://example.com/a-one', groupId: 3, active: true },
+          { url: 'https://example.com/a-two', groupId: 3, active: false }
+        ],
+        groups: [{ id: 3, title: 'Window A', color: 'green', collapsed: false }]
+      },
+      {
+        focused: true,
+        state: 'normal',
+        tabs: [{ url: 'https://example.com/b', groupId: -1, active: true }],
+        groups: []
+      }
+    ]
+  };
+
+  await restoreSessionFromSnapshot(session, { restoreMode: 'new_windows' });
+
+  assert.equal(calls.createdWindows.length, 2);
+  assert.equal(calls.groupRequests.length, 1);
+  assert.equal(calls.groupRequests[0].createProperties.windowId, calls.createdWindows[0].id);
 });
 
 test('current-window mode creates A separately and inserts B before existing C', async () => {
