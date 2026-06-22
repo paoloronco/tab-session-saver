@@ -6,6 +6,11 @@ const translations = {
     title: "Tab Session Saver",
     subtitle: "Keep your workspaces ready in one click.",
     save_button: "Save current tabs",
+    search_sessions_label: "Search saved sessions",
+    search_sessions_placeholder: "Search sessions, tabs, or sites",
+    close_search_label: "Close search",
+    search_no_results_title: "No matching sessions",
+    search_no_results_description: "Try a different session name, tab title, or website.",
     restore_button: "Restore",
     restore_session_button: "Restore entire session",
     restore_window_button: "Restore window",
@@ -73,6 +78,11 @@ const translations = {
     title: "Guardador de pesta\u00F1as",
     subtitle: "Mant\u00E9n tus espacios de trabajo listos con un clic.",
     save_button: "Guardar pesta\u00F1as actuales",
+    search_sessions_label: "Buscar sesiones guardadas",
+    search_sessions_placeholder: "Buscar sesiones, pesta\u00F1as o sitios",
+    close_search_label: "Cerrar b\u00FAsqueda",
+    search_no_results_title: "No hay sesiones coincidentes",
+    search_no_results_description: "Prueba con otro nombre de sesi\u00F3n, t\u00EDtulo de pesta\u00F1a o sitio web.",
     restore_button: "Restaurar",
     restore_session_button: "Restaurar toda la sesi\u00F3n",
     restore_window_button: "Restaurar ventana",
@@ -140,6 +150,11 @@ const translations = {
     title: "Salva schede",
     subtitle: "Tieni i tuoi spazi di lavoro pronti con un clic.",
     save_button: "Salva le schede correnti",
+    search_sessions_label: "Cerca nelle sessioni salvate",
+    search_sessions_placeholder: "Cerca sessioni, schede o siti",
+    close_search_label: "Chiudi ricerca",
+    search_no_results_title: "Nessuna sessione trovata",
+    search_no_results_description: "Prova un altro nome sessione, titolo di scheda o sito web.",
     restore_button: "Ripristina",
     restore_session_button: "Ripristina l'intera sessione",
     restore_window_button: "Ripristina finestra",
@@ -207,6 +222,11 @@ const translations = {
     title: "Sauvegarde d'onglets",
     subtitle: "Gardez vos espaces de travail pr\u00EAts en un clic.",
     save_button: "Enregistrer les onglets en cours",
+    search_sessions_label: "Rechercher dans les sessions enregistr\u00E9es",
+    search_sessions_placeholder: "Rechercher sessions, onglets ou sites",
+    close_search_label: "Fermer la recherche",
+    search_no_results_title: "Aucune session correspondante",
+    search_no_results_description: "Essayez un autre nom de session, titre d'onglet ou site web.",
     restore_button: "Restaurer",
     restore_session_button: "Restaurer toute la session",
     restore_window_button: "Restaurer la fen\u00EAtre",
@@ -274,6 +294,11 @@ const translations = {
     title: "Tab-Sitzungsspeicher",
     subtitle: "Halte deine Arbeitsbereiche mit einem Klick bereit.",
     save_button: "Aktuelle Tabs speichern",
+    search_sessions_label: "Gespeicherte Sitzungen durchsuchen",
+    search_sessions_placeholder: "Sitzungen, Tabs oder Websites suchen",
+    close_search_label: "Suche schlie\u00DFen",
+    search_no_results_title: "Keine passenden Sitzungen",
+    search_no_results_description: "Versuchen Sie einen anderen Sitzungsnamen, Tabtitel oder eine andere Website.",
     restore_button: "Wiederherstellen",
     restore_session_button: "Gesamte Sitzung wiederherstellen",
     restore_window_button: "Fenster wiederherstellen",
@@ -375,6 +400,20 @@ function translatePage(lang) {
     const key = element.getAttribute('data-translate');
     if (translations[lang] && translations[lang][key]) {
       element.textContent = translations[lang][key];
+    }
+  });
+
+  document.querySelectorAll('[data-translate-placeholder]').forEach((element) => {
+    const key = element.getAttribute('data-translate-placeholder');
+    if (translations[lang] && translations[lang][key]) {
+      element.setAttribute('placeholder', translations[lang][key]);
+    }
+  });
+
+  document.querySelectorAll('[data-translate-aria-label]').forEach((element) => {
+    const key = element.getAttribute('data-translate-aria-label');
+    if (translations[lang] && translations[lang][key]) {
+      element.setAttribute('aria-label', translations[lang][key]);
     }
   });
   
@@ -490,6 +529,7 @@ function triggerConfiguredRestore(message, options = {}) {
 
     triggerRestoreMessage({ ...message, restoreMode, targetWindowId }, options);
   });
+
 }
 
 function triggerRestoreMessage(message, options = {}) {
@@ -1026,6 +1066,31 @@ function normalizeSessionSnapshot(raw) {
 
 }
 
+function normalizeSearchValue(value) {
+  return typeof value === 'string' ? value.trim().toLocaleLowerCase() : '';
+}
+
+function sessionMatchesQuery(session, query) {
+  const normalizedQuery = normalizeSearchValue(query);
+  if (!normalizedQuery) return true;
+
+  const searchableValues = [session?.name];
+  const windows = Array.isArray(session?.windows) ? session.windows : [];
+  windows.forEach((browserWindow) => {
+    const tabs = Array.isArray(browserWindow?.tabs) ? browserWindow.tabs : [];
+    tabs.forEach((tab) => searchableValues.push(tab?.title, tab?.url));
+  });
+
+  return searchableValues.some((value) => normalizeSearchValue(value).includes(normalizedQuery));
+}
+
+function getMatchingSessions(sessions, query) {
+  const source = Array.isArray(sessions) ? sessions : [];
+  return source
+    .map((sessionData, originalIndex) => ({ sessionData, originalIndex }))
+    .filter(({ sessionData }) => sessionMatchesQuery(sessionData, query));
+}
+
 function computeSessionCounts(session) {
   const windows = Array.isArray(session?.windows) ? session.windows : [];
   const windowsCount = windows.length;
@@ -1103,8 +1168,37 @@ document.addEventListener('DOMContentLoaded', () => {
   const darkToggle = document.getElementById('darkMode');
   const languageSelect = document.getElementById('language');
   const restoreModeInputs = document.querySelectorAll('input[name="restoreMode"]');
+  const searchToolbar = document.querySelector('.session-toolbar');
+  const searchToggle = document.getElementById('session-search-toggle');
+  const searchInput = document.getElementById('session-search-input');
+  const searchClose = document.getElementById('session-search-close');
+  let latestSessions = [];
 
   document.addEventListener('click', closeAllMenus);
+
+  function setSessionSearchOpen(isOpen) {
+    searchToolbar?.classList.toggle('search-open', isOpen);
+    searchToggle?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    if (isOpen) {
+      searchInput?.focus();
+      return;
+    }
+    if (searchInput) searchInput.value = '';
+    renderSessionList(latestSessions, '');
+    searchToggle?.focus();
+  }
+
+  searchToggle?.addEventListener('click', () => setSessionSearchOpen(true));
+  searchClose?.addEventListener('click', () => setSessionSearchOpen(false));
+  searchInput?.addEventListener('input', (event) => {
+    renderSessionList(latestSessions, event.target.value);
+  });
+  searchInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setSessionSearchOpen(false);
+    }
+  });
 
   // ACCENT COLOR
   accentSelect.addEventListener('change', e => {
@@ -1395,12 +1489,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function loadSessions() {
-    loadSessionsFromStorageWithRetry().then((sessionsRaw) => {
+  function renderSessionList(sessionsRaw, query = '') {
       const container = document.getElementById('sessions');
       const emptyState = document.getElementById('empty-state');
+      const searchEmptyState = document.getElementById('search-empty-state');
 
-      if (!container || !emptyState) {
+      if (!container || !emptyState || !searchEmptyState) {
         return;
       }
 
@@ -1408,15 +1502,18 @@ document.addEventListener('DOMContentLoaded', () => {
       resetPreviewStates();
 
       const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : [];
+      const normalizedSessions = sessions.map((session) => normalizeSessionSnapshot(session));
       if (sessions.length === 0) {
         emptyState.style.display = 'block';
+        searchEmptyState.style.display = 'none';
         return;
       }
 
       emptyState.style.display = 'none';
+      const matchingSessions = getMatchingSessions(normalizedSessions, query);
+      searchEmptyState.style.display = matchingSessions.length === 0 ? 'block' : 'none';
 
-      sessions.forEach((sessionData, index) => {
-        const normalized = normalizeSessionSnapshot(sessionData);
+      matchingSessions.forEach(({ sessionData: normalized, originalIndex: index }) => {
         const entry = document.createElement('div');
         entry.className = 'session-entry';
         entry.setAttribute('role', 'listitem');
@@ -1601,13 +1698,21 @@ document.addEventListener('DOMContentLoaded', () => {
         entry.appendChild(previewContainer);
         container.appendChild(entry);
       });
+  }
+
+  function loadSessions() {
+    loadSessionsFromStorageWithRetry().then((sessionsRaw) => {
+      latestSessions = Array.isArray(sessionsRaw) ? sessionsRaw : [];
+      renderSessionList(latestSessions, searchInput?.value || '');
     }).catch((err) => {
       console.error('[popup] Failed to load sessions:', err);
       const container = document.getElementById('sessions');
       const emptyState = document.getElementById('empty-state');
-      if (container && emptyState) {
+      const searchEmptyState = document.getElementById('search-empty-state');
+      if (container && emptyState && searchEmptyState) {
         container.replaceChildren();
         emptyState.style.display = 'block';
+        searchEmptyState.style.display = 'none';
       }
     });
   }

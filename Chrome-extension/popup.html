@@ -171,8 +171,18 @@
       display: none;
     }
 
+    .session-toolbar {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 44px;
+      gap: 0.55rem;
+      margin-bottom: 1rem;
+    }
+
     .primary-btn {
-      width: 100%;
+      width: auto;
+      min-width: 0;
+      min-height: 44px;
       padding: 0.75rem;
       border-radius: 12px;
       border: none;
@@ -181,8 +191,8 @@
       cursor: pointer;
       background: linear-gradient(135deg, var(--accent-color), #6f85ff);
       color: #ffffff;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      margin-bottom: 1rem;
+      transition: opacity 0.18s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      margin: 0;
     }
 
     .primary-btn:hover {
@@ -736,6 +746,137 @@
       line-height: 1.45;
     }
 
+    .session-search {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .session-search-toggle,
+    .session-search-close {
+      border: 1px solid var(--border-color);
+      background: var(--surface);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .session-search-toggle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 44px;
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      pointer-events: auto;
+      transition: opacity 0.14s ease, transform 0.18s ease, border-color 0.18s ease;
+    }
+
+    .session-search-toggle:hover {
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    .session-search-toggle svg {
+      width: 19px;
+      height: 19px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+    }
+
+    .session-search-panel {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 38px;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.2rem 0.25rem 0.2rem 0.8rem;
+      border: 1px solid var(--accent-color);
+      border-radius: 12px;
+      background: var(--surface);
+      box-shadow: 0 8px 18px rgba(28, 35, 51, 0.12);
+      opacity: 0;
+      transform: scaleX(0.12);
+      transform-origin: right center;
+      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.14s ease;
+    }
+
+    .session-search-input {
+      width: 100%;
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text-primary);
+      font: inherit;
+      font-size: 0.86rem;
+    }
+
+    .session-search-input::placeholder {
+      color: var(--muted-color);
+    }
+
+    .session-search-close {
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-color: transparent;
+      border-radius: 9px;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .session-search-close:hover {
+      background: var(--surface-alt);
+      color: var(--accent-color);
+    }
+
+    .session-toolbar.search-open .primary-btn {
+      opacity: 0;
+      transform: translateX(-8px);
+      pointer-events: none;
+    }
+
+    .session-toolbar.search-open .session-search-toggle {
+      opacity: 0;
+      transform: scale(0.84);
+      pointer-events: none;
+    }
+
+    .session-toolbar.search-open .session-search {
+      pointer-events: auto;
+    }
+
+    .session-toolbar.search-open .session-search-panel {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+
+    .session-search-toggle:focus-visible,
+    .session-search-close:focus-visible,
+    .session-search-input:focus-visible {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+
+    .search-empty-state {
+      display: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .primary-btn,
+      .session-search-toggle,
+      .session-search-panel {
+        transition: none;
+      }
+    }
+
     .restore-mode-options {
       display: grid;
       gap: 0.55rem;
@@ -1046,13 +1187,32 @@
         <button id="browser-warning-close" class="browser-warning-close" aria-label="Dismiss warning">&times;</button>
       </div>
 
-      <button id="save" class="primary-btn" data-translate="save_button">Save current tabs</button>
+      <div class="session-toolbar">
+        <button id="save" class="primary-btn" data-translate="save_button">Save current tabs</button>
+        <div class="session-search">
+          <button id="session-search-toggle" class="session-search-toggle" type="button" aria-expanded="false" aria-controls="session-search-panel" aria-label="Search saved sessions" data-translate-aria-label="search_sessions_label">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="10.8" cy="10.8" r="6.3"></circle>
+              <path d="m15.6 15.6 4.1 4.1" stroke-linecap="round"></path>
+            </svg>
+          </button>
+          <div id="session-search-panel" class="session-search-panel">
+            <input id="session-search-input" type="search" class="session-search-input" placeholder="Search sessions, tabs, or sites" aria-label="Search saved sessions" data-translate-placeholder="search_sessions_placeholder" data-translate-aria-label="search_sessions_label" autocomplete="off" spellcheck="false">
+            <button id="session-search-close" class="session-search-close" type="button" aria-label="Close search" data-translate-aria-label="close_search_label">&times;</button>
+          </div>
+        </div>
+      </div>
 
       <div id="sessions" class="session-list" role="list"></div>
 
       <div id="empty-state" class="empty-state">
         <h2 data-translate="empty_state_title">No sessions saved yet</h2>
         <p data-translate="empty_state_description">Save your current window to build your collection and reopen everything instantly.</p>
+      </div>
+
+      <div id="search-empty-state" class="empty-state search-empty-state" aria-live="polite">
+        <h2 data-translate="search_no_results_title">No matching sessions</h2>
+        <p data-translate="search_no_results_description">Try a different session name, tab title, or website.</p>
       </div>
     </main>
 
@@ -1146,7 +1306,7 @@
           <a class="footer-secondary-link" href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" rel="noopener" data-translate="privacy_policy_link">Privacy Policy</a>
         </div>
         <div class="footer-info">
-          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.9.0</div>
+          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.10.0</div>
           <div class="footer-copyright-line">
             <span>&copy; 2025 Paolo Ronco</span>
             <span class="footer-meta-separator" aria-hidden="true">&middot;</span>
