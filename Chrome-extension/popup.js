@@ -31,6 +31,13 @@ const translations = {
     restore_current_window_description: "The last saved window is added before your current tabs. Other saved windows still open separately.",
     backup_title: "Backup",
     backup_description: "Export a backup or import saved sessions.",
+    auto_save_title: "Auto Save",
+    auto_save_description: "Automatically capture the current session on a schedule.",
+    auto_save_toggle_label: "Enable Auto Save",
+    auto_save_interval_label: "Save every",
+    auto_save_interval_unit: "minutes",
+    manual_sessions_tab: "Manually Saved",
+    auto_sessions_tab: "Auto Saved",
     resources_title: "Get the extension",
     color_blue: "Blue",
     color_green: "Green",
@@ -103,6 +110,13 @@ const translations = {
     restore_current_window_description: "La \u00FAltima ventana guardada se a\u00F1ade antes de las pesta\u00F1as actuales. Las dem\u00E1s se abren por separado.",
     backup_title: "Copia de seguridad",
     backup_description: "Exporta una copia o importa sesiones guardadas.",
+    auto_save_title: "Guardado autom\u00E1tico",
+    auto_save_description: "Captura autom\u00E1ticamente la sesi\u00F3n actual seg\u00FAn un intervalo.",
+    auto_save_toggle_label: "Activar guardado autom\u00E1tico",
+    auto_save_interval_label: "Guardar cada",
+    auto_save_interval_unit: "minutos",
+    manual_sessions_tab: "Guardadas manualmente",
+    auto_sessions_tab: "Guardadas autom\u00E1ticamente",
     resources_title: "Obtener la extensión",
     color_blue: "Azul",
     color_green: "Verde",
@@ -175,6 +189,13 @@ const translations = {
     restore_current_window_description: "L'ultima finestra salvata viene aggiunta prima delle schede attuali. Le altre si aprono separatamente.",
     backup_title: "Backup",
     backup_description: "Esporta un backup o importa sessioni salvate.",
+    auto_save_title: "Auto Save",
+    auto_save_description: "Salva automaticamente la sessione corrente con un intervallo programmato.",
+    auto_save_toggle_label: "Abilita Auto Save",
+    auto_save_interval_label: "Salva ogni",
+    auto_save_interval_unit: "minuti",
+    manual_sessions_tab: "Salvate manualmente",
+    auto_sessions_tab: "Salvate automaticamente",
     resources_title: "Ottieni l'estensione",
     color_blue: "Blu",
     color_green: "Verde",
@@ -247,6 +268,13 @@ const translations = {
     restore_current_window_description: "La derni\u00E8re fen\u00EAtre enregistr\u00E9e est ajout\u00E9e avant les onglets actuels. Les autres s'ouvrent s\u00E9par\u00E9ment.",
     backup_title: "Sauvegarde",
     backup_description: "Exportez une sauvegarde ou importez des sessions.",
+    auto_save_title: "Enregistrement automatique",
+    auto_save_description: "Capture automatiquement la session actuelle selon un intervalle.",
+    auto_save_toggle_label: "Activer l'enregistrement automatique",
+    auto_save_interval_label: "Enregistrer toutes les",
+    auto_save_interval_unit: "minutes",
+    manual_sessions_tab: "Enregistr\u00E9es manuellement",
+    auto_sessions_tab: "Enregistr\u00E9es automatiquement",
     resources_title: "Obtenir l'extension",
     color_blue: "Bleu",
     color_green: "Vert",
@@ -319,6 +347,13 @@ const translations = {
     restore_current_window_description: "Das letzte gespeicherte Fenster wird vor den aktuellen Tabs eingef\u00FCgt. Weitere Fenster werden separat ge\u00F6ffnet.",
     backup_title: "Sicherung",
     backup_description: "Sicherung exportieren oder Sitzungen importieren.",
+    auto_save_title: "Automatisch speichern",
+    auto_save_description: "Speichert die aktuelle Sitzung automatisch in einem festen Intervall.",
+    auto_save_toggle_label: "Automatisches Speichern aktivieren",
+    auto_save_interval_label: "Speichern alle",
+    auto_save_interval_unit: "Minuten",
+    manual_sessions_tab: "Manuell gespeichert",
+    auto_sessions_tab: "Automatisch gespeichert",
     resources_title: "Erweiterung beziehen",
     color_blue: "Blau",
     color_green: "Gr\u00FCn",
@@ -388,6 +423,11 @@ const localeMap = {
   de: 'de-DE'
 };
 
+const AUTO_SAVE_MIN_INTERVAL_MINUTES = 10;
+const AUTO_SAVE_SETTINGS_KEY = 'autoSaveSettings';
+const SAVE_TYPE_AUTO = 'auto';
+const SAVE_TYPE_MANUAL = 'manual';
+
 let currentLanguage = 'en';
 let reloadSessions = () => {};
 let restoreRequestInFlight = false;
@@ -440,6 +480,34 @@ function combineSessionCollections(existing, additions) {
   const currentSessions = Array.isArray(existing) ? existing : [];
   const newSessions = Array.isArray(additions) ? additions : [];
   return currentSessions.concat(newSessions);
+}
+
+function normalizeAutoSaveSettings(rawSettings = {}) {
+  const settings = rawSettings && typeof rawSettings === 'object' ? rawSettings : {};
+  const parsedInterval = Number.parseInt(settings.intervalMinutes, 10);
+  const intervalMinutes = Number.isFinite(parsedInterval)
+    ? Math.max(AUTO_SAVE_MIN_INTERVAL_MINUTES, parsedInterval)
+    : AUTO_SAVE_MIN_INTERVAL_MINUTES;
+
+  return {
+    enabled: settings.enabled === true,
+    intervalMinutes
+  };
+}
+
+function getSessionSaveType(session) {
+  const metadataType = session?.metadata?.saveType;
+  const topLevelType = session?.saveType;
+  return topLevelType === SAVE_TYPE_AUTO || metadataType === SAVE_TYPE_AUTO
+    ? SAVE_TYPE_AUTO
+    : SAVE_TYPE_MANUAL;
+}
+
+function getSessionsBySaveType(sessions, saveType) {
+  const targetType = saveType === SAVE_TYPE_AUTO ? SAVE_TYPE_AUTO : SAVE_TYPE_MANUAL;
+  return (Array.isArray(sessions) ? sessions : []).filter((session) =>
+    getSessionSaveType(session) === targetType
+  );
 }
 
 function renderMetaSegments(container, segments) {
@@ -1012,6 +1080,7 @@ function normalizeSessionSnapshot(raw) {
   const sanitizedWindows = windowsSource.map((win) => sanitizeWindowForClient(win));
   const metadata =
     base.metadata && typeof base.metadata === 'object' ? { ...base.metadata } : {};
+  const saveType = getSessionSaveType(base);
   let desktopStrategy = base.desktopStrategy ?? metadata.desktopStrategy ?? null;
   if (desktopStrategy === 'unknown' || desktopStrategy === 'best-effort' || desktopStrategy === 'global') {
     desktopStrategy = null;
@@ -1031,6 +1100,7 @@ function normalizeSessionSnapshot(raw) {
   if (typeof desktopKey !== 'undefined') {
     metadataForClient.desktopKey = desktopKey;
   }
+  metadataForClient.saveType = saveType;
   if (platform) {
     metadataForClient.platform = platform;
   } else {
@@ -1055,7 +1125,8 @@ function normalizeSessionSnapshot(raw) {
     windows: sanitizedWindows,
     metadata: metadataForClient,
     desktopKey,
-    platform
+    platform,
+    saveType
   };
 
   if (desktopStrategy) {
@@ -1168,11 +1239,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const darkToggle = document.getElementById('darkMode');
   const languageSelect = document.getElementById('language');
   const restoreModeInputs = document.querySelectorAll('input[name="restoreMode"]');
+  const autoSaveEnabledToggle = document.getElementById('autoSaveEnabled');
+  const autoSaveIntervalInput = document.getElementById('autoSaveInterval');
+  const autoSaveIntervalGroup = document.getElementById('autoSaveIntervalGroup');
+  const sessionCategoryTabs = document.querySelectorAll('[data-session-category]');
   const searchToolbar = document.querySelector('.session-toolbar');
   const searchToggle = document.getElementById('session-search-toggle');
   const searchInput = document.getElementById('session-search-input');
   const searchClose = document.getElementById('session-search-close');
   let latestSessions = [];
+  let activeSessionCategory = SAVE_TYPE_MANUAL;
 
   document.addEventListener('click', closeAllMenus);
 
@@ -1199,6 +1275,50 @@ document.addEventListener('DOMContentLoaded', () => {
       setSessionSearchOpen(false);
     }
   });
+
+  function setActiveSessionCategory(category) {
+    activeSessionCategory = category === SAVE_TYPE_AUTO ? SAVE_TYPE_AUTO : SAVE_TYPE_MANUAL;
+    sessionCategoryTabs.forEach((tab) => {
+      const isActive = tab.getAttribute('data-session-category') === activeSessionCategory;
+      tab.classList.toggle('is-active', isActive);
+      tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    renderSessionList(latestSessions, searchInput?.value || '');
+  }
+
+  sessionCategoryTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      setActiveSessionCategory(tab.getAttribute('data-session-category'));
+    });
+  });
+
+  function updateAutoSaveIntervalVisibility(settings) {
+    const normalized = normalizeAutoSaveSettings(settings);
+    if (autoSaveEnabledToggle) autoSaveEnabledToggle.checked = normalized.enabled;
+    if (autoSaveIntervalInput) autoSaveIntervalInput.value = String(normalized.intervalMinutes);
+    autoSaveIntervalGroup?.classList.toggle('is-visible', normalized.enabled);
+  }
+
+  function persistAutoSaveSettings() {
+    const settings = normalizeAutoSaveSettings({
+      enabled: autoSaveEnabledToggle?.checked === true,
+      intervalMinutes: autoSaveIntervalInput?.value
+    });
+    updateAutoSaveIntervalVisibility(settings);
+
+    chrome.runtime.sendMessage(
+      { action: 'update_auto_save_settings', settings },
+      (response) => {
+        if (chrome.runtime.lastError || !response?.success) {
+          console.error('Unable to update Auto Save settings', chrome.runtime.lastError || response?.error);
+        }
+      }
+    );
+  }
+
+  autoSaveEnabledToggle?.addEventListener('change', persistAutoSaveSettings);
+  autoSaveIntervalInput?.addEventListener('change', persistAutoSaveSettings);
+  autoSaveIntervalInput?.addEventListener('blur', persistAutoSaveSettings);
 
   // ACCENT COLOR
   accentSelect.addEventListener('change', e => {
@@ -1397,6 +1517,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const metadata = {
                       desktopKey: snapshot.desktopKey ?? null,
+                      saveType: SAVE_TYPE_MANUAL,
                       ...(snapshot.desktopStrategy ? { desktopStrategy: snapshot.desktopStrategy } : {}),
                       ...(snapshot.heuristics ? { heuristics: snapshot.heuristics } : {})
                     };
@@ -1405,7 +1526,8 @@ document.addEventListener('DOMContentLoaded', () => {
                       timestamp,
                       windows: snapshot.windows,
                       metadata,
-                      platform: snapshot.platform ?? null
+                      platform: snapshot.platform ?? null,
+                      saveType: SAVE_TYPE_MANUAL
                     });
 
                     if (!sessionObject.windows.length) {
@@ -1510,7 +1632,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       emptyState.style.display = 'none';
-      const matchingSessions = getMatchingSessions(normalizedSessions, query);
+      const categorizedSessions = normalizedSessions
+        .map((sessionData, originalIndex) => ({ sessionData, originalIndex }))
+        .filter(({ sessionData }) => getSessionSaveType(sessionData) === activeSessionCategory);
+      const matchingSessions = categorizedSessions
+        .filter(({ sessionData }) => sessionMatchesQuery(sessionData, query));
       searchEmptyState.style.display = matchingSessions.length === 0 ? 'block' : 'none';
 
       matchingSessions.forEach(({ sessionData: normalized, originalIndex: index }) => {
@@ -1750,6 +1876,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     restoreModeInputs.forEach((input) => {
       input.checked = input.value === restoreMode;
+    });
+    chrome.runtime.sendMessage({ action: 'get_auto_save_settings' }, (response) => {
+      if (chrome.runtime.lastError || !response?.success) {
+        updateAutoSaveIntervalVisibility(normalizeAutoSaveSettings());
+        return;
+      }
+      updateAutoSaveIntervalVisibility(response.settings);
     });
   }
 

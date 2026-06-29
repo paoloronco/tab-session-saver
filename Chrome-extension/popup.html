@@ -206,6 +206,43 @@
       gap: 0.75rem;
     }
 
+    .session-category-tabs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.4rem;
+      margin: 0 0 0.85rem;
+      padding: 0.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      background: var(--surface-alt);
+    }
+
+    .session-category-tab {
+      min-width: 0;
+      min-height: 36px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 700;
+      line-height: 1.2;
+      padding: 0.45rem 0.55rem;
+      transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .session-category-tab.is-active {
+      background: var(--surface);
+      color: var(--accent-color);
+      box-shadow: 0 4px 10px rgba(28, 35, 51, 0.08);
+    }
+
+    .session-category-tab:focus-visible {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+
     .session-entry {
       position: relative;
       background: var(--surface);
@@ -694,6 +731,31 @@
       border-bottom: 1px solid var(--border-color);
     }
 
+    .auto-save-interval {
+      display: none;
+      grid-template-columns: minmax(0, 1fr) 92px auto;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .auto-save-interval.is-visible {
+      display: grid;
+    }
+
+    .auto-save-interval label {
+      color: var(--text-secondary);
+    }
+
+    .auto-save-interval input {
+      text-align: right;
+    }
+
+    .settings-inline-unit {
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
     .toggle-switch {
       position: relative;
       width: 44px;
@@ -872,7 +934,8 @@
     @media (prefers-reduced-motion: reduce) {
       .primary-btn,
       .session-search-toggle,
-      .session-search-panel {
+      .session-search-panel,
+      .session-category-tab {
         transition: none;
       }
     }
@@ -1203,6 +1266,11 @@
         </div>
       </div>
 
+      <div class="session-category-tabs" role="tablist" aria-label="Saved session type">
+        <button id="session-category-manual" class="session-category-tab is-active" type="button" role="tab" aria-selected="true" data-session-category="manual" data-translate="manual_sessions_tab">Manually Saved</button>
+        <button id="session-category-auto" class="session-category-tab" type="button" role="tab" aria-selected="false" data-session-category="auto" data-translate="auto_sessions_tab">Auto Saved</button>
+      </div>
+
       <div id="sessions" class="session-list" role="list"></div>
 
       <div id="empty-state" class="empty-state">
@@ -1269,6 +1337,23 @@
               <span class="restore-mode-detail" data-translate="restore_current_window_description">The last saved window is added before your current tabs. Other saved windows still open separately.</span>
             </span>
           </label>
+        </div>
+      </section>
+
+      <section class="settings-group-card settings-autosave" aria-labelledby="auto-save-title">
+        <h3 id="auto-save-title" class="settings-group-title" data-translate="auto_save_title">Auto Save</h3>
+        <p class="settings-description" data-translate="auto_save_description">Automatically capture the current session on a schedule.</p>
+        <div class="toggle-container">
+          <span data-translate="auto_save_toggle_label">Enable Auto Save</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="autoSaveEnabled">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div id="autoSaveIntervalGroup" class="auto-save-interval">
+          <label for="autoSaveInterval" data-translate="auto_save_interval_label">Save every</label>
+          <input id="autoSaveInterval" type="number" min="10" step="1" value="10" inputmode="numeric">
+          <span class="settings-inline-unit" data-translate="auto_save_interval_unit">minutes</span>
         </div>
       </section>
 
