@@ -3,7 +3,7 @@
     "name": "Tabs Session Saver",
     "version": "7.10.2",
     "description": "Save and restore your tabs sessions easily",
-    "permissions": ["tabs", "storage", "windows", "tabGroups"],
+    "permissions": ["tabs", "storage", "windows", "tabGroups", "alarms"],
     "icons": {
       "16": "img-1616.png",
       "32": "img-3232.png",

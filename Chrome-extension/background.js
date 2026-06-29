@@ -5,6 +5,11 @@ const RESTORE_IN_PROGRESS_ERROR = 'RESTORE_IN_PROGRESS';
 const RESTORE_MODE_NEW_WINDOWS = 'new_windows';
 const RESTORE_MODE_CURRENT_WINDOW = 'current_window';
 const RESTORE_TAB_BATCH_SIZE = 25;
+const AUTO_SAVE_ALARM_NAME = 'auto-save-session';
+const AUTO_SAVE_SETTINGS_KEY = 'autoSaveSettings';
+const AUTO_SAVE_MIN_INTERVAL_MINUTES = 10;
+const SAVE_TYPE_AUTO = 'auto';
+const SAVE_TYPE_MANUAL = 'manual';
 const MAX_STORED_STRING_LENGTH = 4096;
 const SAFE_RESTORE_PROTOCOLS = new Set([
   'http:',
@@ -19,6 +24,7 @@ const SAFE_RESTORE_PROTOCOLS = new Set([
 ]);
 
 let activeRestoreToken = null;
+let activeAutoSaveSettings = null;
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
@@ -26,7 +32,36 @@ chrome.runtime.onInstalled.addListener((details) => {
     const url = chrome.runtime.getURL('welcome.html');
     chrome.tabs.create({ url });
   }
+  initializeAutoSaveSchedule().catch((error) => {
+    console.warn('[background] auto save schedule initialization failed:', error);
+  });
 });
+
+if (chrome.runtime.onStartup) {
+  chrome.runtime.onStartup.addListener(() => {
+    initializeAutoSaveSchedule().catch((error) => {
+      console.warn('[background] auto save startup scheduling failed:', error);
+    });
+  });
+}
+
+if (chrome.alarms?.onAlarm) {
+  chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm?.name !== AUTO_SAVE_ALARM_NAME) return;
+    runAutoSaveNow().catch((error) => {
+      console.warn('[background] auto save failed:', error);
+    });
+  });
+}
+
+if (chrome.storage?.onChanged) {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'local' || !changes[AUTO_SAVE_SETTINGS_KEY]) return;
+    applyAutoSaveSchedule(changes[AUTO_SAVE_SETTINGS_KEY].newValue).catch((error) => {
+      console.warn('[background] auto save reschedule failed:', error);
+    });
+  });
+}
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   (async () => {
@@ -42,6 +77,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         case 'get_sessions': {
           const sessions = await loadSessionsFromStorage();
           sendResponse(sessions);
+          break;
+        }
+        case 'get_auto_save_settings': {
+          const settings = await loadAutoSaveSettings();
+          sendResponse({ success: true, settings });
+          break;
+        }
+        case 'update_auto_save_settings': {
+          const settings = normalizeAutoSaveSettings(request.settings);
+          await chrome.storage.local.set({ [AUTO_SAVE_SETTINGS_KEY]: settings });
+          await applyAutoSaveSchedule(settings);
+          sendResponse({ success: true, settings });
           break;
         }
         case 'open_session': {
@@ -485,6 +532,101 @@ function sanitizeTabSnapshot(tab) {
     groupId: Number.isInteger(tab.groupId) ? tab.groupId : -1
   };
 }
+
+function normalizeAutoSaveSettings(rawSettings = {}) {
+  const settings = rawSettings && typeof rawSettings === 'object' ? rawSettings : {};
+  const parsedInterval = Number.parseInt(settings.intervalMinutes, 10);
+  const intervalMinutes = Number.isFinite(parsedInterval)
+    ? Math.max(AUTO_SAVE_MIN_INTERVAL_MINUTES, parsedInterval)
+    : AUTO_SAVE_MIN_INTERVAL_MINUTES;
+
+  return {
+    enabled: settings.enabled === true,
+    intervalMinutes
+  };
+}
+
+async function loadAutoSaveSettings() {
+  if (!chrome.storage?.local) {
+    return activeAutoSaveSettings || normalizeAutoSaveSettings();
+  }
+  const stored = await chrome.storage.local.get(AUTO_SAVE_SETTINGS_KEY);
+  return stored[AUTO_SAVE_SETTINGS_KEY]
+    ? normalizeAutoSaveSettings(stored[AUTO_SAVE_SETTINGS_KEY])
+    : activeAutoSaveSettings || normalizeAutoSaveSettings();
+}
+
+async function initializeAutoSaveSchedule() {
+  if (!chrome.alarms || !chrome.storage?.local) return;
+  const settings = await loadAutoSaveSettings();
+  await applyAutoSaveSchedule(settings);
+}
+
+async function applyAutoSaveSchedule(rawSettings = {}) {
+  if (!chrome.alarms) return normalizeAutoSaveSettings(rawSettings);
+
+  const settings = normalizeAutoSaveSettings(rawSettings);
+  activeAutoSaveSettings = settings;
+  await chrome.alarms.clear(AUTO_SAVE_ALARM_NAME);
+  if (settings.enabled) {
+    await chrome.alarms.create(AUTO_SAVE_ALARM_NAME, {
+      delayInMinutes: settings.intervalMinutes,
+      periodInMinutes: settings.intervalMinutes
+    });
+  }
+  return settings;
+}
+
+function getSessionSaveType(session) {
+  const metadataType = session?.metadata?.saveType;
+  const topLevelType = session?.saveType;
+  return topLevelType === SAVE_TYPE_AUTO || metadataType === SAVE_TYPE_AUTO
+    ? SAVE_TYPE_AUTO
+    : SAVE_TYPE_MANUAL;
+}
+
+async function runAutoSaveNow() {
+  const settings = await loadAutoSaveSettings();
+  if (!settings.enabled) {
+    return { success: false, skipped: true, reason: 'disabled' };
+  }
+
+  const snapshot = await captureCurrentDesktopSnapshot({});
+  const hasTabs = Array.isArray(snapshot.windows) && snapshot.windows.some((win) =>
+    Array.isArray(win.tabs) && win.tabs.length > 0
+  );
+  if (!hasTabs) {
+    return { success: false, skipped: true, reason: 'empty' };
+  }
+
+  const sessions = await loadSessionsFromStorage();
+  const autoSaveCount = sessions.filter((session) => getSessionSaveType(session) === SAVE_TYPE_AUTO).length;
+  const timestamp = new Date().toISOString();
+  const metadata = {
+    desktopKey: snapshot.desktopKey ?? null,
+    saveType: SAVE_TYPE_AUTO,
+    ...(snapshot.desktopStrategy ? { desktopStrategy: snapshot.desktopStrategy } : {}),
+    ...(snapshot.heuristics ? { heuristics: snapshot.heuristics } : {})
+  };
+  const autoSession = normalizeSessionForStorage({
+    name: `Auto Save ${autoSaveCount + 1}`,
+    timestamp,
+    windows: snapshot.windows,
+    metadata,
+    desktopKey: snapshot.desktopKey ?? null,
+    desktopStrategy: snapshot.desktopStrategy ?? null,
+    platform: snapshot.platform ?? null,
+    saveType: SAVE_TYPE_AUTO
+  });
+
+  if (!autoSession.windows.length) {
+    return { success: false, skipped: true, reason: 'empty' };
+  }
+
+  await chrome.storage.local.set({ sessions: sessions.concat(autoSession) });
+  return { success: true, session: autoSession };
+}
+
 async function loadSessionsFromStorage() {
   const stored = await chrome.storage.local.get({ sessions: [] });
   const sessions = Array.isArray(stored.sessions) ? stored.sessions : [];
@@ -549,6 +691,7 @@ function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_N
 
   const metadata =
     base.metadata && typeof base.metadata === 'object' ? { ...base.metadata } : {};
+  const saveType = getSessionSaveType(base);
 
   const desktopKey =
     base.desktopKey ??
@@ -582,7 +725,8 @@ function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_N
 
   const metadataForStorage = {
     ...metadata,
-    desktopKey
+    desktopKey,
+    saveType
   };
   if (desktopStrategy) {
     metadataForStorage.desktopStrategy = desktopStrategy;
@@ -594,7 +738,8 @@ function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_N
     windows: normalizedWindows,
     metadata: metadataForStorage,
     desktopKey,
-    platform: base.platform ?? metadata.platform ?? null
+    platform: base.platform ?? metadata.platform ?? null,
+    saveType
   };
 
   if (desktopStrategy) {
