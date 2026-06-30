@@ -77,6 +77,10 @@ test('settings footer separates extension links from secondary links without res
   assert.match(footer, /sites\.google\.com\/view\/pp-tabssessionsaver/);
   assert.match(footer, /class="footer-version-line"/);
   assert.match(footer, /class="footer-copyright-line"/);
+  assert.ok(
+    footer.indexOf('class="footer-version-line"') < footer.indexOf('class="footer-secondary-links"'),
+    'expected paoloronco.it and Privacy Policy links to appear below the version line'
+  );
 });
 
 test('every language translates the new settings group headings', () => {
