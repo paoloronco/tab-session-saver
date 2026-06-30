@@ -109,7 +109,7 @@ function createAutoSaveChromeHarness() {
     }
   };
 
-  return { chrome, alarmCalls, storageData };
+  return { chrome, alarmCalls, storageData, windows };
 }
 
 test('auto save settings default off, clamp to ten minutes, and classify sessions', () => {
@@ -235,5 +235,30 @@ test('background stores an exit auto save from the last persistent snapshot', as
   assert.deepEqual(
     storageData.sessions[0].windows[0].tabs.map((tab) => tab.url),
     ['https://example.com/work']
+  );
+});
+
+test('background keeps an exit save session persisted before Chrome closes', async () => {
+  const { chrome, storageData, windows } = createAutoSaveChromeHarness();
+  storageData.autoSaveSettings = { enabled: false, intervalMinutes: 10, exitEnabled: true };
+  const { refreshAutoSaveExitSnapshot } = loadBackgroundAutoSaveBindings(chrome);
+
+  await refreshAutoSaveExitSnapshot();
+
+  assert.equal(storageData.sessions.length, 1);
+  assert.equal(storageData.sessions[0].metadata.saveTrigger, 'exit');
+  assert.deepEqual(
+    storageData.sessions[0].windows[0].tabs.map((tab) => tab.url),
+    ['https://example.com/work']
+  );
+
+  windows[0].tabs[0].url = 'https://example.com/updated';
+  windows[0].tabs[0].title = 'Updated';
+  await refreshAutoSaveExitSnapshot();
+
+  assert.equal(storageData.sessions.length, 1);
+  assert.deepEqual(
+    storageData.sessions[0].windows[0].tabs.map((tab) => tab.url),
+    ['https://example.com/updated']
   );
 });

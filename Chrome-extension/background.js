@@ -13,6 +13,7 @@ const SAVE_TYPE_AUTO = 'auto';
 const SAVE_TYPE_MANUAL = 'manual';
 const AUTO_SAVE_TRIGGER_SCHEDULED = 'scheduled';
 const AUTO_SAVE_TRIGGER_EXIT = 'exit';
+const AUTO_SAVE_EXIT_SESSION_MARKER = 'rolling-exit-snapshot';
 const AUTO_SAVE_EXIT_DEBOUNCE_MS = 1000;
 const MAX_STORED_STRING_LENGTH = 4096;
 const SAFE_RESTORE_PROTOCOLS = new Set([
@@ -667,7 +668,9 @@ async function refreshAutoSaveExitSnapshot() {
   }
 
   await chrome.storage.local.set({ [AUTO_SAVE_EXIT_SNAPSHOT_KEY]: snapshot });
-  return { success: true, snapshot };
+  return storeAutoSaveSessionFromSnapshot(snapshot, AUTO_SAVE_TRIGGER_EXIT, {
+    upsertExitSnapshot: true
+  });
 }
 
 function scheduleAutoSaveExitSnapshotRefresh() {
@@ -711,7 +714,9 @@ async function runAutoSaveOnExit() {
     ? await chrome.storage.local.get(AUTO_SAVE_EXIT_SNAPSHOT_KEY)
     : {};
   const snapshot = stored[AUTO_SAVE_EXIT_SNAPSHOT_KEY] || await captureCurrentDesktopSnapshot({});
-  const result = await storeAutoSaveSessionFromSnapshot(snapshot, AUTO_SAVE_TRIGGER_EXIT);
+  const result = await storeAutoSaveSessionFromSnapshot(snapshot, AUTO_SAVE_TRIGGER_EXIT, {
+    upsertExitSnapshot: true
+  });
   if (result.success && chrome.storage?.local) {
     await chrome.storage.local.set({ [AUTO_SAVE_EXIT_SNAPSHOT_KEY]: null });
   }
@@ -724,25 +729,34 @@ function snapshotHasTabs(snapshot) {
   );
 }
 
-async function storeAutoSaveSessionFromSnapshot(snapshot, trigger) {
+async function storeAutoSaveSessionFromSnapshot(snapshot, trigger, options = {}) {
   const hasTabs = snapshotHasTabs(snapshot);
   if (!hasTabs) {
     return { success: false, skipped: true, reason: 'empty' };
   }
 
   const sessions = await loadSessionsFromStorage();
-  const autoSaveCount = sessions.filter((session) => getSessionSaveType(session) === SAVE_TYPE_AUTO).length;
+  const { upsertExitSnapshot = false } = options;
   const timestamp = new Date().toISOString();
   const saveTrigger = trigger === AUTO_SAVE_TRIGGER_EXIT ? AUTO_SAVE_TRIGGER_EXIT : AUTO_SAVE_TRIGGER_SCHEDULED;
+  const existingExitIndex =
+    upsertExitSnapshot && saveTrigger === AUTO_SAVE_TRIGGER_EXIT
+      ? findRollingExitSessionIndex(sessions)
+      : -1;
+  const autoSaveCount = sessions.filter((session) => getSessionSaveType(session) === SAVE_TYPE_AUTO).length;
+  const existingExitSession = existingExitIndex >= 0 ? sessions[existingExitIndex] : null;
   const metadata = {
     desktopKey: snapshot.desktopKey ?? null,
     saveType: SAVE_TYPE_AUTO,
     saveTrigger,
+    ...(upsertExitSnapshot && saveTrigger === AUTO_SAVE_TRIGGER_EXIT ? { snapshotRole: AUTO_SAVE_EXIT_SESSION_MARKER } : {}),
     ...(snapshot.desktopStrategy ? { desktopStrategy: snapshot.desktopStrategy } : {}),
     ...(snapshot.heuristics ? { heuristics: snapshot.heuristics } : {})
   };
   const autoSession = normalizeSessionForStorage({
-    name: `${saveTrigger === AUTO_SAVE_TRIGGER_EXIT ? 'Exit Save' : 'Auto Save'} ${autoSaveCount + 1}`,
+    name:
+      existingExitSession?.name ||
+      `${saveTrigger === AUTO_SAVE_TRIGGER_EXIT ? 'Exit Save' : 'Auto Save'} ${autoSaveCount + 1}`,
     timestamp,
     windows: snapshot.windows,
     metadata,
@@ -756,8 +770,21 @@ async function storeAutoSaveSessionFromSnapshot(snapshot, trigger) {
     return { success: false, skipped: true, reason: 'empty' };
   }
 
-  await chrome.storage.local.set({ sessions: sessions.concat(autoSession) });
+  if (existingExitIndex >= 0) {
+    sessions[existingExitIndex] = autoSession;
+  } else {
+    sessions.push(autoSession);
+  }
+  await chrome.storage.local.set({ sessions });
   return { success: true, session: autoSession };
+}
+
+function findRollingExitSessionIndex(sessions) {
+  return (Array.isArray(sessions) ? sessions : []).findIndex((session) =>
+    getSessionSaveType(session) === SAVE_TYPE_AUTO &&
+    session?.metadata?.saveTrigger === AUTO_SAVE_TRIGGER_EXIT &&
+    session?.metadata?.snapshotRole === AUTO_SAVE_EXIT_SESSION_MARKER
+  );
 }
 
 async function loadSessionsFromStorage() {
