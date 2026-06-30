@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Tabs Session Saver",
-    "version": "7.12.5",
+    "version": "7.12.6",
     "description": "Save and restore your tabs sessions easily",
     "permissions": ["tabs", "storage", "windows", "tabGroups", "alarms"],
     "icons": {

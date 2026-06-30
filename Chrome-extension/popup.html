@@ -1172,6 +1172,37 @@
       text-align: center;
     }
 
+    .footer-contact-line {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      margin-top: 0.15rem;
+      padding: 0.35rem 0.7rem;
+      border: 1px solid rgba(76, 110, 245, 0.16);
+      border-radius: 999px;
+      background: rgba(76, 110, 245, 0.06);
+      color: var(--text-secondary);
+      font-size: 0.74rem;
+      font-weight: 600;
+    }
+
+    .footer-contact-line a {
+      color: var(--accent-color);
+      text-decoration: none;
+    }
+
+    .footer-contact-line a:hover {
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+
+    .footer-contact-line a:focus-visible {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+
     .footer-copyright-line {
       display: flex;
       flex-wrap: wrap;
@@ -1454,6 +1485,10 @@
           <div class="footer-secondary-links">
             <a class="footer-secondary-link" href="https://paoloronco.it" target="_blank" rel="noopener">paoloronco.it</a>
             <a class="footer-secondary-link" href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" rel="noopener" data-translate="privacy_policy_link">Privacy Policy</a>
+          </div>
+          <div class="footer-contact-line">
+            <span>Email</span>
+            <a href="mailto:info@paoloronco.it">info@paoloronco.it</a>
           </div>
           <div class="footer-copyright-line">
             <span>&copy; 2025 Paolo Ronco</span>
