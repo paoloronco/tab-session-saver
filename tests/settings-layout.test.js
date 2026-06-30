@@ -52,6 +52,17 @@ test('auto saved sessions expose scheduled and on-exit filters', () => {
   assert.match(markup, /data-translate="auto_save_filter_exit"/);
 });
 
+test('auto save on exit toggle uses the same simple layout as the main auto save toggle', () => {
+  const markup = readExtensionFile('popup.html');
+  const exitToggle = markup.match(
+    /<div class="toggle-container">\s*<span data-translate="auto_save_on_exit_toggle_label">[\s\S]*?<input type="checkbox" id="autoSaveOnExitEnabled">[\s\S]*?<\/div>/
+  )?.[0] || '';
+
+  assert.ok(exitToggle, 'expected a simple label-plus-switch auto save on exit toggle');
+  assert.doesNotMatch(exitToggle, /settings-description/);
+  assert.doesNotMatch(exitToggle, /auto_save_on_exit_description/);
+});
+
 test('settings footer separates extension links from secondary links without resource cards', () => {
   const markup = readExtensionFile('popup.html');
   const footer = markup.match(/<div class="footer-section">([\s\S]*?)<\/div>\s*<\/section>/)?.[1] || '';
@@ -78,7 +89,6 @@ test('every language translates the new settings group headings', () => {
     'github_link',
     'developer_website_link',
     'auto_save_on_exit_toggle_label',
-    'auto_save_on_exit_description',
     'auto_save_filter_group_label',
     'auto_save_filter_all',
     'auto_save_filter_scheduled',
