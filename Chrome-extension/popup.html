@@ -243,6 +243,43 @@
       outline-offset: 2px;
     }
 
+    .auto-save-trigger-filters {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.35rem;
+      margin: -0.45rem 0 0.85rem;
+    }
+
+    .auto-save-trigger-filters[hidden] {
+      display: none;
+    }
+
+    .auto-save-trigger-filter {
+      min-width: 0;
+      min-height: 32px;
+      border: 1px solid var(--border-color);
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.74rem;
+      font-weight: 700;
+      line-height: 1.15;
+      padding: 0.35rem 0.45rem;
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .auto-save-trigger-filter.is-active {
+      border-color: var(--accent-color);
+      background: rgba(76, 110, 245, 0.08);
+      color: var(--accent-color);
+    }
+
+    .auto-save-trigger-filter:focus-visible {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+
     .session-entry {
       position: relative;
       background: var(--surface);
@@ -935,7 +972,8 @@
       .primary-btn,
       .session-search-toggle,
       .session-search-panel,
-      .session-category-tab {
+      .session-category-tab,
+      .auto-save-trigger-filter {
         transition: none;
       }
     }
@@ -1270,6 +1308,11 @@
         <button id="session-category-manual" class="session-category-tab is-active" type="button" role="tab" aria-selected="true" data-session-category="manual" data-translate="manual_sessions_tab">Manually Saved</button>
         <button id="session-category-auto" class="session-category-tab" type="button" role="tab" aria-selected="false" data-session-category="auto" data-translate="auto_sessions_tab">Auto Saved</button>
       </div>
+      <div id="auto-save-trigger-filters" class="auto-save-trigger-filters" role="group" aria-label="Auto saved session source" data-translate-aria-label="auto_save_filter_group_label" hidden>
+        <button class="auto-save-trigger-filter is-active" type="button" aria-pressed="true" data-auto-save-trigger="all" data-translate="auto_save_filter_all">All</button>
+        <button class="auto-save-trigger-filter" type="button" aria-pressed="false" data-auto-save-trigger="scheduled" data-translate="auto_save_filter_scheduled">Scheduled</button>
+        <button class="auto-save-trigger-filter" type="button" aria-pressed="false" data-auto-save-trigger="exit" data-translate="auto_save_filter_exit">On Exit</button>
+      </div>
 
       <div id="sessions" class="session-list" role="list"></div>
 
@@ -1350,6 +1393,16 @@
             <span class="slider"></span>
           </label>
         </div>
+        <div class="toggle-container">
+          <span>
+            <span data-translate="auto_save_on_exit_toggle_label">Save when Chrome closes</span>
+            <span class="settings-description" data-translate="auto_save_on_exit_description">Keeps a last known exit snapshot when browser windows close.</span>
+          </span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="autoSaveOnExitEnabled">
+            <span class="slider"></span>
+          </label>
+        </div>
         <div id="autoSaveIntervalGroup" class="auto-save-interval">
           <label for="autoSaveInterval" data-translate="auto_save_interval_label">Save every</label>
           <input id="autoSaveInterval" type="number" min="10" step="1" value="10" inputmode="numeric">
@@ -1391,7 +1444,7 @@
           <a class="footer-secondary-link" href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" rel="noopener" data-translate="privacy_policy_link">Privacy Policy</a>
         </div>
         <div class="footer-info">
-          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.11.1</div>
+          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.12.0</div>
           <div class="footer-copyright-line">
             <span>&copy; 2025 Paolo Ronco</span>
             <span class="footer-meta-separator" aria-hidden="true">&middot;</span>

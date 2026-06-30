@@ -7,9 +7,13 @@ const RESTORE_MODE_CURRENT_WINDOW = 'current_window';
 const RESTORE_TAB_BATCH_SIZE = 25;
 const AUTO_SAVE_ALARM_NAME = 'auto-save-session';
 const AUTO_SAVE_SETTINGS_KEY = 'autoSaveSettings';
+const AUTO_SAVE_EXIT_SNAPSHOT_KEY = 'autoSaveExitSnapshot';
 const AUTO_SAVE_MIN_INTERVAL_MINUTES = 10;
 const SAVE_TYPE_AUTO = 'auto';
 const SAVE_TYPE_MANUAL = 'manual';
+const AUTO_SAVE_TRIGGER_SCHEDULED = 'scheduled';
+const AUTO_SAVE_TRIGGER_EXIT = 'exit';
+const AUTO_SAVE_EXIT_DEBOUNCE_MS = 1000;
 const MAX_STORED_STRING_LENGTH = 4096;
 const SAFE_RESTORE_PROTOCOLS = new Set([
   'http:',
@@ -25,6 +29,7 @@ const SAFE_RESTORE_PROTOCOLS = new Set([
 
 let activeRestoreToken = null;
 let activeAutoSaveSettings = null;
+let exitSnapshotRefreshTimer = null;
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
@@ -52,6 +57,53 @@ if (chrome.alarms?.onAlarm) {
       console.warn('[background] auto save failed:', error);
     });
   });
+}
+
+if (chrome.tabs) {
+  [
+    'onCreated',
+    'onUpdated',
+    'onAttached',
+    'onDetached',
+    'onMoved',
+    'onReplaced'
+  ].forEach((eventName) => {
+    const event = chrome.tabs[eventName];
+    if (event?.addListener) {
+      event.addListener(() => {
+        scheduleAutoSaveExitSnapshotRefresh();
+      });
+    }
+  });
+  if (chrome.tabs.onRemoved?.addListener) {
+    chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+      if (!removeInfo?.isWindowClosing) {
+        scheduleAutoSaveExitSnapshotRefresh();
+      }
+    });
+  }
+}
+
+if (chrome.windows) {
+  [
+    'onCreated',
+    'onFocusChanged',
+    'onBoundsChanged'
+  ].forEach((eventName) => {
+    const event = chrome.windows[eventName];
+    if (event?.addListener) {
+      event.addListener(() => {
+        scheduleAutoSaveExitSnapshotRefresh();
+      });
+    }
+  });
+  if (chrome.windows.onRemoved?.addListener) {
+    chrome.windows.onRemoved.addListener(() => {
+      handleWindowRemovedForAutoSaveExit().catch((error) => {
+        console.warn('[background] exit auto save failed:', error);
+      });
+    });
+  }
 }
 
 if (chrome.storage?.onChanged) {
@@ -542,7 +594,8 @@ function normalizeAutoSaveSettings(rawSettings = {}) {
 
   return {
     enabled: settings.enabled === true,
-    intervalMinutes
+    intervalMinutes,
+    exitEnabled: settings.exitEnabled === true
   };
 }
 
@@ -574,6 +627,9 @@ async function applyAutoSaveSchedule(rawSettings = {}) {
       periodInMinutes: settings.intervalMinutes
     });
   }
+  if (settings.exitEnabled) {
+    await refreshAutoSaveExitSnapshot();
+  }
   return settings;
 }
 
@@ -592,9 +648,84 @@ async function runAutoSaveNow() {
   }
 
   const snapshot = await captureCurrentDesktopSnapshot({});
-  const hasTabs = Array.isArray(snapshot.windows) && snapshot.windows.some((win) =>
+  return storeAutoSaveSessionFromSnapshot(snapshot, AUTO_SAVE_TRIGGER_SCHEDULED);
+}
+
+async function refreshAutoSaveExitSnapshot() {
+  if (!chrome.storage?.local) {
+    return { success: false, skipped: true, reason: 'storage_unavailable' };
+  }
+  const settings = await loadAutoSaveSettings();
+  if (!settings.exitEnabled) {
+    return { success: false, skipped: true, reason: 'disabled' };
+  }
+
+  const snapshot = await captureCurrentDesktopSnapshot({});
+  const hasTabs = snapshotHasTabs(snapshot);
+  if (!hasTabs) {
+    return { success: false, skipped: true, reason: 'empty' };
+  }
+
+  await chrome.storage.local.set({ [AUTO_SAVE_EXIT_SNAPSHOT_KEY]: snapshot });
+  return { success: true, snapshot };
+}
+
+function scheduleAutoSaveExitSnapshotRefresh() {
+  if (!chrome.storage?.local) return;
+  if (exitSnapshotRefreshTimer) clearTimeout(exitSnapshotRefreshTimer);
+  exitSnapshotRefreshTimer = setTimeout(() => {
+    exitSnapshotRefreshTimer = null;
+    refreshAutoSaveExitSnapshot().catch((error) => {
+      console.warn('[background] exit snapshot refresh failed:', error);
+    });
+  }, AUTO_SAVE_EXIT_DEBOUNCE_MS);
+}
+
+async function handleWindowRemovedForAutoSaveExit() {
+  const settings = await loadAutoSaveSettings();
+  if (!settings.exitEnabled) {
+    return { success: false, skipped: true, reason: 'disabled' };
+  }
+
+  const remainingWindows = chrome.windows?.getAll
+    ? await chrome.windows.getAll({ populate: true, windowTypes: ['normal'] })
+    : [];
+  const hasRemainingNormalWindows = remainingWindows.some((win) =>
+    (!win.type || win.type === 'normal') && Array.isArray(win.tabs) && win.tabs.length > 0
+  );
+  if (hasRemainingNormalWindows) {
+    scheduleAutoSaveExitSnapshotRefresh();
+    return { success: false, skipped: true, reason: 'windows_remaining' };
+  }
+
+  return runAutoSaveOnExit();
+}
+
+async function runAutoSaveOnExit() {
+  const settings = await loadAutoSaveSettings();
+  if (!settings.exitEnabled) {
+    return { success: false, skipped: true, reason: 'disabled' };
+  }
+
+  const stored = chrome.storage?.local
+    ? await chrome.storage.local.get(AUTO_SAVE_EXIT_SNAPSHOT_KEY)
+    : {};
+  const snapshot = stored[AUTO_SAVE_EXIT_SNAPSHOT_KEY] || await captureCurrentDesktopSnapshot({});
+  const result = await storeAutoSaveSessionFromSnapshot(snapshot, AUTO_SAVE_TRIGGER_EXIT);
+  if (result.success && chrome.storage?.local) {
+    await chrome.storage.local.set({ [AUTO_SAVE_EXIT_SNAPSHOT_KEY]: null });
+  }
+  return result;
+}
+
+function snapshotHasTabs(snapshot) {
+  return Array.isArray(snapshot?.windows) && snapshot.windows.some((win) =>
     Array.isArray(win.tabs) && win.tabs.length > 0
   );
+}
+
+async function storeAutoSaveSessionFromSnapshot(snapshot, trigger) {
+  const hasTabs = snapshotHasTabs(snapshot);
   if (!hasTabs) {
     return { success: false, skipped: true, reason: 'empty' };
   }
@@ -602,14 +733,16 @@ async function runAutoSaveNow() {
   const sessions = await loadSessionsFromStorage();
   const autoSaveCount = sessions.filter((session) => getSessionSaveType(session) === SAVE_TYPE_AUTO).length;
   const timestamp = new Date().toISOString();
+  const saveTrigger = trigger === AUTO_SAVE_TRIGGER_EXIT ? AUTO_SAVE_TRIGGER_EXIT : AUTO_SAVE_TRIGGER_SCHEDULED;
   const metadata = {
     desktopKey: snapshot.desktopKey ?? null,
     saveType: SAVE_TYPE_AUTO,
+    saveTrigger,
     ...(snapshot.desktopStrategy ? { desktopStrategy: snapshot.desktopStrategy } : {}),
     ...(snapshot.heuristics ? { heuristics: snapshot.heuristics } : {})
   };
   const autoSession = normalizeSessionForStorage({
-    name: `Auto Save ${autoSaveCount + 1}`,
+    name: `${saveTrigger === AUTO_SAVE_TRIGGER_EXIT ? 'Exit Save' : 'Auto Save'} ${autoSaveCount + 1}`,
     timestamp,
     windows: snapshot.windows,
     metadata,
@@ -728,6 +861,12 @@ function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_N
     desktopKey,
     saveType
   };
+  if (saveType === SAVE_TYPE_AUTO) {
+    metadataForStorage.saveTrigger =
+      metadata.saveTrigger === AUTO_SAVE_TRIGGER_EXIT ? AUTO_SAVE_TRIGGER_EXIT : AUTO_SAVE_TRIGGER_SCHEDULED;
+  } else {
+    delete metadataForStorage.saveTrigger;
+  }
   if (desktopStrategy) {
     metadataForStorage.desktopStrategy = desktopStrategy;
   }

@@ -34,8 +34,14 @@ const translations = {
     auto_save_title: "Auto Save",
     auto_save_description: "Automatically capture the current session on a schedule.",
     auto_save_toggle_label: "Enable Auto Save",
+    auto_save_on_exit_toggle_label: "Save when Chrome closes",
+    auto_save_on_exit_description: "Keeps a last known exit snapshot when browser windows close.",
     auto_save_interval_label: "Save every",
     auto_save_interval_unit: "minutes",
+    auto_save_filter_group_label: "Auto saved session source",
+    auto_save_filter_all: "All",
+    auto_save_filter_scheduled: "Scheduled",
+    auto_save_filter_exit: "On Exit",
     manual_sessions_tab: "Manually Saved",
     auto_sessions_tab: "Auto Saved",
     resources_title: "Get the extension",
@@ -113,8 +119,14 @@ const translations = {
     auto_save_title: "Guardado autom\u00E1tico",
     auto_save_description: "Captura autom\u00E1ticamente la sesi\u00F3n actual seg\u00FAn un intervalo.",
     auto_save_toggle_label: "Activar guardado autom\u00E1tico",
+    auto_save_on_exit_toggle_label: "Guardar al cerrar Chrome",
+    auto_save_on_exit_description: "Conserva una instant\u00E1nea de salida cuando se cierran las ventanas del navegador.",
     auto_save_interval_label: "Guardar cada",
     auto_save_interval_unit: "minutos",
+    auto_save_filter_group_label: "Origen de sesiones autom\u00E1ticas",
+    auto_save_filter_all: "Todas",
+    auto_save_filter_scheduled: "Programadas",
+    auto_save_filter_exit: "Al salir",
     manual_sessions_tab: "Guardadas manualmente",
     auto_sessions_tab: "Guardadas autom\u00E1ticamente",
     resources_title: "Obtener la extensión",
@@ -192,8 +204,14 @@ const translations = {
     auto_save_title: "Auto Save",
     auto_save_description: "Salva automaticamente la sessione corrente con un intervallo programmato.",
     auto_save_toggle_label: "Abilita Auto Save",
+    auto_save_on_exit_toggle_label: "Salva alla chiusura di Chrome",
+    auto_save_on_exit_description: "Mantiene un'istantanea di uscita quando le finestre del browser vengono chiuse.",
     auto_save_interval_label: "Salva ogni",
     auto_save_interval_unit: "minuti",
+    auto_save_filter_group_label: "Origine sessioni automatiche",
+    auto_save_filter_all: "Tutte",
+    auto_save_filter_scheduled: "Programmate",
+    auto_save_filter_exit: "Alla chiusura",
     manual_sessions_tab: "Salvate manualmente",
     auto_sessions_tab: "Salvate automaticamente",
     resources_title: "Ottieni l'estensione",
@@ -271,8 +289,14 @@ const translations = {
     auto_save_title: "Enregistrement automatique",
     auto_save_description: "Capture automatiquement la session actuelle selon un intervalle.",
     auto_save_toggle_label: "Activer l'enregistrement automatique",
+    auto_save_on_exit_toggle_label: "Enregistrer \u00E0 la fermeture de Chrome",
+    auto_save_on_exit_description: "Conserve un instantan\u00E9 de sortie lorsque les fen\u00EAtres du navigateur se ferment.",
     auto_save_interval_label: "Enregistrer toutes les",
     auto_save_interval_unit: "minutes",
+    auto_save_filter_group_label: "Source des sessions automatiques",
+    auto_save_filter_all: "Toutes",
+    auto_save_filter_scheduled: "Planifi\u00E9es",
+    auto_save_filter_exit: "\u00C0 la fermeture",
     manual_sessions_tab: "Enregistr\u00E9es manuellement",
     auto_sessions_tab: "Enregistr\u00E9es automatiquement",
     resources_title: "Obtenir l'extension",
@@ -350,8 +374,14 @@ const translations = {
     auto_save_title: "Automatisch speichern",
     auto_save_description: "Speichert die aktuelle Sitzung automatisch in einem festen Intervall.",
     auto_save_toggle_label: "Automatisches Speichern aktivieren",
+    auto_save_on_exit_toggle_label: "Beim Schlie\u00DFen von Chrome speichern",
+    auto_save_on_exit_description: "Beh\u00E4lt einen letzten Schnappschuss, wenn Browserfenster geschlossen werden.",
     auto_save_interval_label: "Speichern alle",
     auto_save_interval_unit: "Minuten",
+    auto_save_filter_group_label: "Quelle automatisch gespeicherter Sitzungen",
+    auto_save_filter_all: "Alle",
+    auto_save_filter_scheduled: "Geplant",
+    auto_save_filter_exit: "Beim Schlie\u00DFen",
     manual_sessions_tab: "Manuell gespeichert",
     auto_sessions_tab: "Automatisch gespeichert",
     resources_title: "Erweiterung beziehen",
@@ -426,6 +456,9 @@ const localeMap = {
 const AUTO_SAVE_MIN_INTERVAL_MINUTES = 10;
 const SAVE_TYPE_AUTO = 'auto';
 const SAVE_TYPE_MANUAL = 'manual';
+const AUTO_SAVE_TRIGGER_ALL = 'all';
+const AUTO_SAVE_TRIGGER_SCHEDULED = 'scheduled';
+const AUTO_SAVE_TRIGGER_EXIT = 'exit';
 
 let currentLanguage = 'en';
 let reloadSessions = () => {};
@@ -490,7 +523,8 @@ function normalizeAutoSaveSettings(rawSettings = {}) {
 
   return {
     enabled: settings.enabled === true,
-    intervalMinutes
+    intervalMinutes,
+    exitEnabled: settings.exitEnabled === true
   };
 }
 
@@ -507,6 +541,22 @@ function getSessionsBySaveType(sessions, saveType) {
   return (Array.isArray(sessions) ? sessions : []).filter((session) =>
     getSessionSaveType(session) === targetType
   );
+}
+
+function getSessionSaveTrigger(session) {
+  if (getSessionSaveType(session) !== SAVE_TYPE_AUTO) {
+    return SAVE_TYPE_MANUAL;
+  }
+  const trigger = session?.saveTrigger ?? session?.metadata?.saveTrigger;
+  return trigger === AUTO_SAVE_TRIGGER_EXIT ? AUTO_SAVE_TRIGGER_EXIT : AUTO_SAVE_TRIGGER_SCHEDULED;
+}
+
+function getSessionsByAutoSaveTrigger(sessions, trigger) {
+  const autoSessions = getSessionsBySaveType(sessions, SAVE_TYPE_AUTO);
+  if (trigger !== AUTO_SAVE_TRIGGER_SCHEDULED && trigger !== AUTO_SAVE_TRIGGER_EXIT) {
+    return autoSessions;
+  }
+  return autoSessions.filter((session) => getSessionSaveTrigger(session) === trigger);
 }
 
 function renderMetaSegments(container, segments) {
@@ -1096,10 +1146,16 @@ function normalizeSessionSnapshot(raw) {
       : null;
 
   const metadataForClient = { ...metadata };
+  const saveTrigger = getSessionSaveTrigger({ ...base, metadata: metadataForClient, saveType });
   if (typeof desktopKey !== 'undefined') {
     metadataForClient.desktopKey = desktopKey;
   }
   metadataForClient.saveType = saveType;
+  if (saveType === SAVE_TYPE_AUTO) {
+    metadataForClient.saveTrigger = saveTrigger;
+  } else {
+    delete metadataForClient.saveTrigger;
+  }
   if (platform) {
     metadataForClient.platform = platform;
   } else {
@@ -1239,15 +1295,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const languageSelect = document.getElementById('language');
   const restoreModeInputs = document.querySelectorAll('input[name="restoreMode"]');
   const autoSaveEnabledToggle = document.getElementById('autoSaveEnabled');
+  const autoSaveOnExitEnabledToggle = document.getElementById('autoSaveOnExitEnabled');
   const autoSaveIntervalInput = document.getElementById('autoSaveInterval');
   const autoSaveIntervalGroup = document.getElementById('autoSaveIntervalGroup');
   const sessionCategoryTabs = document.querySelectorAll('[data-session-category]');
+  const autoSaveTriggerFilters = document.getElementById('auto-save-trigger-filters');
+  const autoSaveTriggerButtons = document.querySelectorAll('[data-auto-save-trigger]');
   const searchToolbar = document.querySelector('.session-toolbar');
   const searchToggle = document.getElementById('session-search-toggle');
   const searchInput = document.getElementById('session-search-input');
   const searchClose = document.getElementById('session-search-close');
   let latestSessions = [];
   let activeSessionCategory = SAVE_TYPE_MANUAL;
+  let activeAutoSaveTrigger = AUTO_SAVE_TRIGGER_ALL;
 
   document.addEventListener('click', closeAllMenus);
 
@@ -1282,6 +1342,26 @@ document.addEventListener('DOMContentLoaded', () => {
       tab.classList.toggle('is-active', isActive);
       tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
+    updateAutoSaveTriggerVisibility();
+    renderSessionList(latestSessions, searchInput?.value || '');
+  }
+
+  function updateAutoSaveTriggerVisibility() {
+    if (!autoSaveTriggerFilters) return;
+    const isVisible = activeSessionCategory === SAVE_TYPE_AUTO;
+    autoSaveTriggerFilters.hidden = !isVisible;
+  }
+
+  function setAutoSaveTriggerFilter(trigger) {
+    activeAutoSaveTrigger =
+      trigger === AUTO_SAVE_TRIGGER_SCHEDULED || trigger === AUTO_SAVE_TRIGGER_EXIT
+        ? trigger
+        : AUTO_SAVE_TRIGGER_ALL;
+    autoSaveTriggerButtons.forEach((button) => {
+      const isActive = button.getAttribute('data-auto-save-trigger') === activeAutoSaveTrigger;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
     renderSessionList(latestSessions, searchInput?.value || '');
   }
 
@@ -1291,9 +1371,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  autoSaveTriggerButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      setAutoSaveTriggerFilter(button.getAttribute('data-auto-save-trigger'));
+    });
+  });
+
   function updateAutoSaveIntervalVisibility(settings) {
     const normalized = normalizeAutoSaveSettings(settings);
     if (autoSaveEnabledToggle) autoSaveEnabledToggle.checked = normalized.enabled;
+    if (autoSaveOnExitEnabledToggle) autoSaveOnExitEnabledToggle.checked = normalized.exitEnabled;
     if (autoSaveIntervalInput) autoSaveIntervalInput.value = String(normalized.intervalMinutes);
     autoSaveIntervalGroup?.classList.toggle('is-visible', normalized.enabled);
   }
@@ -1301,7 +1388,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function persistAutoSaveSettings() {
     const settings = normalizeAutoSaveSettings({
       enabled: autoSaveEnabledToggle?.checked === true,
-      intervalMinutes: autoSaveIntervalInput?.value
+      intervalMinutes: autoSaveIntervalInput?.value,
+      exitEnabled: autoSaveOnExitEnabledToggle?.checked === true
     });
     updateAutoSaveIntervalVisibility(settings);
 
@@ -1316,6 +1404,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   autoSaveEnabledToggle?.addEventListener('change', persistAutoSaveSettings);
+  autoSaveOnExitEnabledToggle?.addEventListener('change', persistAutoSaveSettings);
   autoSaveIntervalInput?.addEventListener('change', persistAutoSaveSettings);
   autoSaveIntervalInput?.addEventListener('blur', persistAutoSaveSettings);
 
@@ -1632,9 +1721,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       emptyState.style.display = 'none';
       const activeSessions = new Set(getSessionsBySaveType(normalizedSessions, activeSessionCategory));
-      const categorizedSessions = normalizedSessions
+      let categorizedSessions = normalizedSessions
         .map((sessionData, originalIndex) => ({ sessionData, originalIndex }))
         .filter(({ sessionData }) => activeSessions.has(sessionData));
+      if (activeSessionCategory === SAVE_TYPE_AUTO && activeAutoSaveTrigger !== AUTO_SAVE_TRIGGER_ALL) {
+        const triggerSessions = new Set(getSessionsByAutoSaveTrigger(
+          categorizedSessions.map(({ sessionData }) => sessionData),
+          activeAutoSaveTrigger
+        ));
+        categorizedSessions = categorizedSessions.filter(({ sessionData }) => triggerSessions.has(sessionData));
+      }
       const matchingSessions = getMatchingSessions(
         categorizedSessions.map(({ sessionData }) => sessionData),
         query

@@ -38,8 +38,18 @@ test('settings controls are grouped by language, appearance, backup, and browser
 
   assert.match(markup, /class="settings-group-card settings-language"[\s\S]*?id="language"[\s\S]*?<\/div>/);
   assert.match(markup, /class="settings-group-card settings-appearance"[\s\S]*?id="darkMode"[\s\S]*?id="accentColor"[\s\S]*?<\/section>/);
+  assert.match(markup, /class="settings-group-card settings-autosave"[\s\S]*?id="autoSaveEnabled"[\s\S]*?id="autoSaveOnExitEnabled"[\s\S]*?id="autoSaveInterval"[\s\S]*?<\/section>/);
   assert.match(markup, /class="settings-group-card settings-backup"[\s\S]*?id="exportSessions"[\s\S]*?id="importSessions"[\s\S]*?<\/section>/);
   assert.match(markup, /id="browser-support-group" class="settings-group-card settings-browser-support"/);
+});
+
+test('auto saved sessions expose scheduled and on-exit filters', () => {
+  const markup = readExtensionFile('popup.html');
+
+  assert.match(markup, /id="auto-save-trigger-filters"[\s\S]*?data-auto-save-trigger="all"[\s\S]*?data-auto-save-trigger="scheduled"[\s\S]*?data-auto-save-trigger="exit"/);
+  assert.match(markup, /data-translate="auto_save_filter_all"/);
+  assert.match(markup, /data-translate="auto_save_filter_scheduled"/);
+  assert.match(markup, /data-translate="auto_save_filter_exit"/);
 });
 
 test('settings footer separates extension links from secondary links without resource cards', () => {
@@ -66,7 +76,13 @@ test('every language translates the new settings group headings', () => {
     'backup_description',
     'resources_title',
     'github_link',
-    'developer_website_link'
+    'developer_website_link',
+    'auto_save_on_exit_toggle_label',
+    'auto_save_on_exit_description',
+    'auto_save_filter_group_label',
+    'auto_save_filter_all',
+    'auto_save_filter_scheduled',
+    'auto_save_filter_exit'
   ];
 
   for (const language of ['en', 'es', 'it', 'fr', 'de']) {
