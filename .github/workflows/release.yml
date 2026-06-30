@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.server_url == 'https://github.com'
+    name: Create versioned release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read extension version
+        id: version
+        shell: bash
+        run: |
+          VERSION="$(node -p "require('./Chrome-extension/manifest.json').version")"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid manifest version: $VERSION"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Verify release tag is new
+        shell: bash
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::Tag $TAG already exists. Bump Chrome-extension/manifest.json before pushing a release."
+            exit 1
+          fi
+
+      - name: Package Chrome extension
+        shell: bash
+        run: |
+          mkdir -p dist
+          (cd Chrome-extension && zip -r "../dist/tab-session-saver-chrome-extension.zip" . -x "*.DS_Store")
+          unzip -t dist/tab-session-saver-chrome-extension.zip
+          unzip -l dist/tab-session-saver-chrome-extension.zip | grep -q "manifest.json"
+
+      - name: Create GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          cat > release-notes.md <<EOF
+          Automated release for Tabs Session Saver $VERSION.
+
+          Assets:
+          - tab-session-saver-chrome-extension.zip: installable Chrome extension package.
+
+          GitHub automatically provides Source code (zip) and Source code (tar.gz) for this tag.
+          EOF
+
+          gh release create "$TAG" \
+            dist/tab-session-saver-chrome-extension.zip \
+            --target "$GITHUB_SHA" \
+            --title "Tabs Session Saver $TAG" \
+            --notes-file release-notes.md
