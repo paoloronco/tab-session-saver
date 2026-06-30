@@ -424,7 +424,6 @@ const localeMap = {
 };
 
 const AUTO_SAVE_MIN_INTERVAL_MINUTES = 10;
-const AUTO_SAVE_SETTINGS_KEY = 'autoSaveSettings';
 const SAVE_TYPE_AUTO = 'auto';
 const SAVE_TYPE_MANUAL = 'manual';
 
@@ -1632,11 +1631,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       emptyState.style.display = 'none';
+      const activeSessions = new Set(getSessionsBySaveType(normalizedSessions, activeSessionCategory));
       const categorizedSessions = normalizedSessions
         .map((sessionData, originalIndex) => ({ sessionData, originalIndex }))
-        .filter(({ sessionData }) => getSessionSaveType(sessionData) === activeSessionCategory);
-      const matchingSessions = categorizedSessions
-        .filter(({ sessionData }) => sessionMatchesQuery(sessionData, query));
+        .filter(({ sessionData }) => activeSessions.has(sessionData));
+      const matchingSessions = getMatchingSessions(
+        categorizedSessions.map(({ sessionData }) => sessionData),
+        query
+      ).map(({ sessionData, originalIndex }) => ({
+        sessionData,
+        originalIndex: categorizedSessions[originalIndex].originalIndex
+      }));
       searchEmptyState.style.display = matchingSessions.length === 0 ? 'block' : 'none';
 
       matchingSessions.forEach(({ sessionData: normalized, originalIndex: index }) => {
