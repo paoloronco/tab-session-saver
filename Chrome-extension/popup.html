@@ -377,8 +377,7 @@
       box-shadow: none;
     }
 
-    .restore-window-btn,
-    .preview-session-restore-btn {
+    .restore-window-btn {
       padding: 0.35rem 0.55rem;
       font-size: 0.72rem;
       white-space: nowrap;
@@ -508,7 +507,7 @@
     .preview-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       gap: 0.5rem;
       font-size: 0.75rem;
       font-weight: 600;
@@ -528,6 +527,15 @@
       background: var(--surface);
       font-size: 0.7rem;
       color: var(--text-secondary);
+      line-height: 1.35;
+      white-space: nowrap;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .preview-count-summary {
+      justify-content: flex-start;
+      margin-left: auto;
     }
 
     .preview-items {
@@ -1444,7 +1452,7 @@
           <a class="footer-secondary-link" href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" rel="noopener" data-translate="privacy_policy_link">Privacy Policy</a>
         </div>
         <div class="footer-info">
-          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.12.0</div>
+          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.12.1</div>
           <div class="footer-copyright-line">
             <span>&copy; 2025 Paolo Ronco</span>
             <span class="footer-meta-separator" aria-hidden="true">&middot;</span>

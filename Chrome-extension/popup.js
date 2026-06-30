@@ -965,30 +965,12 @@ function renderPreview(sessionPayload, previewContainer, index, label) {
   previewTitle.textContent = getTranslation('preview_title');
 
   const previewCount = document.createElement('span');
-  previewCount.className = 'preview-count';
+  previewCount.className = 'preview-count preview-count-summary';
   previewCount.textContent = formatCountSummary(countInfo);
 
   previewTitleWrap.appendChild(previewTitle);
   previewTitleWrap.appendChild(previewCount);
   previewHeader.appendChild(previewTitleWrap);
-
-  const previewSessionRestoreBtn = document.createElement('button');
-  previewSessionRestoreBtn.className = 'restore-btn preview-session-restore-btn';
-  previewSessionRestoreBtn.type = 'button';
-  configureRestoreButton(previewSessionRestoreBtn, getTranslation('restore_session_button'));
-  previewSessionRestoreBtn.addEventListener('click', (event) => {
-    event.stopPropagation();
-    if (!sessionPayload.windows || sessionPayload.windows.length === 0) {
-      alert('This session has no windows to restore.');
-      return;
-    }
-    if (restoreRequestInFlight) return;
-    triggerConfiguredRestore(
-      { action: 'open_session', session: sessionPayload },
-      { emptyMessage: 'This session has no windows to restore.' }
-    );
-  });
-  previewHeader.appendChild(previewSessionRestoreBtn);
   previewContainer.appendChild(previewHeader);
 
   const previewWindowsWrapper = document.createElement('div');
