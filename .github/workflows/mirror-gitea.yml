@@ -1,0 +1,21 @@
+name: Mirror to Gitea
+
+on:
+  push:
+    branches: ["**"]
+  delete:
+    branches: ["**"]
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push mirror to Gitea
+        run: |
+          git remote add gitea https://paoloronco:${{ secrets.GITEA_TOKEN }}@gitea.com/paoloronco/tab-session-saver.git
+          git push gitea --mirror
