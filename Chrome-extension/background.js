@@ -8,6 +8,7 @@ const RESTORE_TAB_BATCH_SIZE = 25;
 const AUTO_SAVE_ALARM_NAME = 'auto-save-session';
 const AUTO_SAVE_SETTINGS_KEY = 'autoSaveSettings';
 const AUTO_SAVE_EXIT_SNAPSHOT_KEY = 'autoSaveExitSnapshot';
+const AUTO_SAVE_RUN_ID_KEY = 'autoSaveRunId';
 const AUTO_SAVE_MIN_INTERVAL_MINUTES = 10;
 const SAVE_TYPE_AUTO = 'auto';
 const SAVE_TYPE_MANUAL = 'manual';
@@ -45,7 +46,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 if (chrome.runtime.onStartup) {
   chrome.runtime.onStartup.addListener(() => {
-    initializeAutoSaveSchedule().catch((error) => {
+    resetAutoSaveRunId().then(() => initializeAutoSaveSchedule()).catch((error) => {
       console.warn('[background] auto save startup scheduling failed:', error);
     });
   });
@@ -642,6 +643,59 @@ function getSessionSaveType(session) {
     : SAVE_TYPE_MANUAL;
 }
 
+function createAutoSaveRunId() {
+  return `run-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+async function resetAutoSaveRunId() {
+  if (!chrome.storage?.local) return null;
+  const runId = createAutoSaveRunId();
+  await chrome.storage.local.set({ [AUTO_SAVE_RUN_ID_KEY]: runId });
+  return runId;
+}
+
+async function getCurrentAutoSaveRunId() {
+  if (!chrome.storage?.local) return createAutoSaveRunId();
+  const stored = await chrome.storage.local.get(AUTO_SAVE_RUN_ID_KEY);
+  const existing = stored[AUTO_SAVE_RUN_ID_KEY];
+  if (typeof existing === 'string' && existing.trim()) {
+    return existing.trim();
+  }
+  return resetAutoSaveRunId();
+}
+
+function getAutoSaveBaseDomain(url) {
+  if (typeof url !== 'string') return '';
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./i, '').toLowerCase();
+    if (!hostname) return '';
+    if (hostname === 'localhost' || /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname)) {
+      return hostname;
+    }
+    const parts = hostname.split('.').filter(Boolean);
+    return parts.length > 2 ? parts.slice(-2).join('.') : hostname;
+  } catch (_) {
+    return '';
+  }
+}
+
+function getAutoSaveTopicSignature(snapshot) {
+  const counts = new Map();
+  const windows = Array.isArray(snapshot?.windows) ? snapshot.windows : [];
+  windows.forEach((browserWindow) => {
+    const tabs = Array.isArray(browserWindow?.tabs) ? browserWindow.tabs : [];
+    tabs.forEach((tab) => {
+      const domain = getAutoSaveBaseDomain(tab?.url);
+      if (!domain) return;
+      counts.set(domain, (counts.get(domain) || 0) + 1);
+    });
+  });
+
+  if (!counts.size) return null;
+  return Array.from(counts.entries())
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0][0];
+}
+
 async function runAutoSaveNow() {
   const settings = await loadAutoSaveSettings();
   if (!settings.enabled) {
@@ -739,6 +793,8 @@ async function storeAutoSaveSessionFromSnapshot(snapshot, trigger, options = {})
   const { upsertExitSnapshot = false } = options;
   const timestamp = new Date().toISOString();
   const saveTrigger = trigger === AUTO_SAVE_TRIGGER_EXIT ? AUTO_SAVE_TRIGGER_EXIT : AUTO_SAVE_TRIGGER_SCHEDULED;
+  const autoSaveRunId = await getCurrentAutoSaveRunId();
+  const autoSaveTopicSignature = getAutoSaveTopicSignature(snapshot);
   const existingExitIndex =
     upsertExitSnapshot && saveTrigger === AUTO_SAVE_TRIGGER_EXIT
       ? findRollingExitSessionIndex(sessions)
@@ -749,6 +805,8 @@ async function storeAutoSaveSessionFromSnapshot(snapshot, trigger, options = {})
     desktopKey: snapshot.desktopKey ?? null,
     saveType: SAVE_TYPE_AUTO,
     saveTrigger,
+    autoSaveRunId,
+    ...(autoSaveTopicSignature ? { autoSaveTopicSignature } : {}),
     ...(upsertExitSnapshot && saveTrigger === AUTO_SAVE_TRIGGER_EXIT ? { snapshotRole: AUTO_SAVE_EXIT_SESSION_MARKER } : {}),
     ...(snapshot.desktopStrategy ? { desktopStrategy: snapshot.desktopStrategy } : {}),
     ...(snapshot.heuristics ? { heuristics: snapshot.heuristics } : {})

@@ -41,6 +41,15 @@ const translations = {
     auto_save_filter_all: "All",
     auto_save_filter_scheduled: "Scheduled",
     auto_save_filter_exit: "On Exit",
+    auto_save_group_mode_label: "Auto Save grouping",
+    auto_save_group_mode_smart: "Smart",
+    auto_save_group_mode_day: "By day",
+    auto_save_group_mode_session: "By browser session",
+    auto_save_group_mode_none: "No grouping",
+    auto_save_group_browser_title: "Current browser session",
+    auto_save_group_day_title: "{date}",
+    auto_save_group_topic_title: "{topic} workspace",
+    auto_save_group_count: "{count} auto saves",
     manual_sessions_tab: "Manually Saved",
     auto_sessions_tab: "Auto Saved",
     resources_title: "Get the extension",
@@ -129,6 +138,15 @@ const translations = {
     auto_save_filter_all: "Todas",
     auto_save_filter_scheduled: "Programadas",
     auto_save_filter_exit: "Al salir",
+    auto_save_group_mode_label: "Agrupar Auto Save",
+    auto_save_group_mode_smart: "Inteligente",
+    auto_save_group_mode_day: "Por d\u00EDa",
+    auto_save_group_mode_session: "Por sesi\u00F3n del navegador",
+    auto_save_group_mode_none: "Sin agrupar",
+    auto_save_group_browser_title: "Sesi\u00F3n actual del navegador",
+    auto_save_group_day_title: "{date}",
+    auto_save_group_topic_title: "Espacio {topic}",
+    auto_save_group_count: "{count} guardados autom\u00E1ticos",
     manual_sessions_tab: "Guardadas manualmente",
     auto_sessions_tab: "Guardadas autom\u00E1ticamente",
     resources_title: "Obtener la extensión",
@@ -217,6 +235,15 @@ const translations = {
     auto_save_filter_all: "Tutte",
     auto_save_filter_scheduled: "Programmate",
     auto_save_filter_exit: "Alla chiusura",
+    auto_save_group_mode_label: "Raggruppamento Auto Save",
+    auto_save_group_mode_smart: "Intelligente",
+    auto_save_group_mode_day: "Per giorno",
+    auto_save_group_mode_session: "Per sessione browser",
+    auto_save_group_mode_none: "Nessun raggruppamento",
+    auto_save_group_browser_title: "Sessione browser corrente",
+    auto_save_group_day_title: "{date}",
+    auto_save_group_topic_title: "Area {topic}",
+    auto_save_group_count: "{count} auto-save",
     manual_sessions_tab: "Salvate manualmente",
     auto_sessions_tab: "Salvate automaticamente",
     resources_title: "Ottieni l'estensione",
@@ -305,6 +332,15 @@ const translations = {
     auto_save_filter_all: "Toutes",
     auto_save_filter_scheduled: "Planifi\u00E9es",
     auto_save_filter_exit: "\u00C0 la fermeture",
+    auto_save_group_mode_label: "Regroupement Auto Save",
+    auto_save_group_mode_smart: "Intelligent",
+    auto_save_group_mode_day: "Par jour",
+    auto_save_group_mode_session: "Par session navigateur",
+    auto_save_group_mode_none: "Aucun regroupement",
+    auto_save_group_browser_title: "Session actuelle du navigateur",
+    auto_save_group_day_title: "{date}",
+    auto_save_group_topic_title: "Espace {topic}",
+    auto_save_group_count: "{count} sauvegardes auto",
     manual_sessions_tab: "Enregistr\u00E9es manuellement",
     auto_sessions_tab: "Enregistr\u00E9es automatiquement",
     resources_title: "Obtenir l'extension",
@@ -393,6 +429,15 @@ const translations = {
     auto_save_filter_all: "Alle",
     auto_save_filter_scheduled: "Geplant",
     auto_save_filter_exit: "Beim Schlie\u00DFen",
+    auto_save_group_mode_label: "Auto-Save gruppieren",
+    auto_save_group_mode_smart: "Intelligent",
+    auto_save_group_mode_day: "Nach Tag",
+    auto_save_group_mode_session: "Nach Browsersitzung",
+    auto_save_group_mode_none: "Nicht gruppieren",
+    auto_save_group_browser_title: "Aktuelle Browsersitzung",
+    auto_save_group_day_title: "{date}",
+    auto_save_group_topic_title: "{topic}-Arbeitsbereich",
+    auto_save_group_count: "{count} Auto-Sicherungen",
     manual_sessions_tab: "Manuell gespeichert",
     auto_sessions_tab: "Automatisch gespeichert",
     resources_title: "Erweiterung beziehen",
@@ -474,6 +519,17 @@ const SAVE_TYPE_MANUAL = 'manual';
 const AUTO_SAVE_TRIGGER_ALL = 'all';
 const AUTO_SAVE_TRIGGER_SCHEDULED = 'scheduled';
 const AUTO_SAVE_TRIGGER_EXIT = 'exit';
+const AUTO_SAVE_GROUP_MODE_KEY = 'autoSaveGroupMode';
+const AUTO_SAVE_GROUP_MODE_SMART = 'smart';
+const AUTO_SAVE_GROUP_MODE_DAY = 'day';
+const AUTO_SAVE_GROUP_MODE_SESSION = 'session';
+const AUTO_SAVE_GROUP_MODE_NONE = 'none';
+const AUTO_SAVE_GROUP_MODES = new Set([
+  AUTO_SAVE_GROUP_MODE_SMART,
+  AUTO_SAVE_GROUP_MODE_DAY,
+  AUTO_SAVE_GROUP_MODE_SESSION,
+  AUTO_SAVE_GROUP_MODE_NONE
+]);
 
 let currentLanguage = 'en';
 let reloadSessions = () => {};
@@ -572,6 +628,181 @@ function getSessionsByAutoSaveTrigger(sessions, trigger) {
     return autoSessions;
   }
   return autoSessions.filter((session) => getSessionSaveTrigger(session) === trigger);
+}
+
+function getAutoSaveBaseDomain(url) {
+  if (typeof url !== 'string') return '';
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./i, '').toLowerCase();
+    if (!hostname) return '';
+    if (hostname === 'localhost' || /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname)) {
+      return hostname;
+    }
+    const parts = hostname.split('.').filter(Boolean);
+    return parts.length > 2 ? parts.slice(-2).join('.') : hostname;
+  } catch (_) {
+    return '';
+  }
+}
+
+function getAutoSaveTopicSignature(session) {
+  const storedSignature = session?.metadata?.autoSaveTopicSignature;
+  if (typeof storedSignature === 'string' && storedSignature.trim()) {
+    return storedSignature.trim().toLowerCase();
+  }
+
+  const counts = new Map();
+  const windows = Array.isArray(session?.windows) ? session.windows : [];
+  windows.forEach((browserWindow) => {
+    const tabs = Array.isArray(browserWindow?.tabs) ? browserWindow.tabs : [];
+    tabs.forEach((tab) => {
+      const domain = getAutoSaveBaseDomain(tab?.url);
+      if (!domain) return;
+      counts.set(domain, (counts.get(domain) || 0) + 1);
+    });
+  });
+
+  if (!counts.size) return '';
+  return Array.from(counts.entries())
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0][0];
+}
+
+function normalizeAutoSaveGroupMode(value) {
+  return AUTO_SAVE_GROUP_MODES.has(value) ? value : AUTO_SAVE_GROUP_MODE_SMART;
+}
+
+function getAutoSaveGroupMode() {
+  return normalizeAutoSaveGroupMode(localStorage.getItem(AUTO_SAVE_GROUP_MODE_KEY));
+}
+
+function getAutoSaveDayKey(session) {
+  const timestamp = typeof session?.timestamp === 'string' ? session.timestamp : '';
+  if (/^\d{4}-\d{2}-\d{2}/.test(timestamp)) {
+    return timestamp.slice(0, 10);
+  }
+  const time = new Date(timestamp).getTime();
+  if (!Number.isFinite(time)) return '';
+  return new Date(time).toISOString().slice(0, 10);
+}
+
+function getAutoSaveGroupDescriptor(session, fallbackIndex = 0, mode = AUTO_SAVE_GROUP_MODE_SMART) {
+  const groupMode = normalizeAutoSaveGroupMode(mode);
+  if (groupMode === AUTO_SAVE_GROUP_MODE_NONE) {
+    return {
+      key: `single:${session?.timestamp || fallbackIndex}`,
+      reason: 'single',
+      topic: ''
+    };
+  }
+
+  if (groupMode === AUTO_SAVE_GROUP_MODE_DAY) {
+    const dayKey = getAutoSaveDayKey(session);
+    return {
+      key: dayKey ? `day:${dayKey}` : `single:${session?.timestamp || fallbackIndex}`,
+      reason: dayKey ? 'day' : 'single',
+      topic: dayKey
+    };
+  }
+
+  const runId = session?.metadata?.autoSaveRunId;
+  if (typeof runId === 'string' && runId.trim()) {
+    return {
+      key: `browser:${runId.trim()}`,
+      reason: 'browser',
+      topic: getAutoSaveTopicSignature(session)
+    };
+  }
+
+  if (groupMode === AUTO_SAVE_GROUP_MODE_SESSION) {
+    return {
+      key: `single:${session?.timestamp || fallbackIndex}`,
+      reason: 'single',
+      topic: ''
+    };
+  }
+
+  const topic = getAutoSaveTopicSignature(session);
+  if (topic) {
+    return {
+      key: `topic:${topic}`,
+      reason: 'topic',
+      topic
+    };
+  }
+
+  return {
+    key: `single:${session?.timestamp || fallbackIndex}`,
+    reason: 'single',
+    topic: ''
+  };
+}
+
+function getAutoSaveGroupTimestamp(group) {
+  return Math.max(...group.sessions.map(({ sessionData }) => {
+    const time = new Date(sessionData?.timestamp || 0).getTime();
+    return Number.isFinite(time) ? time : 0;
+  }));
+}
+
+function groupAutoSavedSessionsForDisplay(sessionMatches, mode = AUTO_SAVE_GROUP_MODE_SMART) {
+  const groupsByKey = new Map();
+  (Array.isArray(sessionMatches) ? sessionMatches : []).forEach((match, fallbackIndex) => {
+    const descriptor = getAutoSaveGroupDescriptor(match?.sessionData, fallbackIndex, mode);
+    if (!groupsByKey.has(descriptor.key)) {
+      groupsByKey.set(descriptor.key, {
+        ...descriptor,
+        sessions: []
+      });
+    }
+    groupsByKey.get(descriptor.key).sessions.push(match);
+  });
+
+  return Array.from(groupsByKey.values())
+    .map((group) => ({
+      ...group,
+      sessions: group.sessions.sort((left, right) => {
+        const leftTime = new Date(left.sessionData?.timestamp || 0).getTime();
+        const rightTime = new Date(right.sessionData?.timestamp || 0).getTime();
+        return rightTime - leftTime;
+      })
+    }))
+    .sort((left, right) => getAutoSaveGroupTimestamp(right) - getAutoSaveGroupTimestamp(left));
+}
+
+function createAutoSaveGroupShell(group) {
+  const wrapper = document.createElement('details');
+  wrapper.className = 'auto-save-folder';
+  wrapper.open = true;
+
+  const summary = document.createElement('summary');
+  summary.className = 'auto-save-folder-summary';
+
+  const title = document.createElement('span');
+  title.className = 'auto-save-folder-title';
+  const topic = group.topic || 'Auto Save';
+  if (group.reason === 'browser') {
+    const baseTitle = getTranslation('auto_save_group_browser_title');
+    title.textContent = group.topic ? `${baseTitle} - ${group.topic}` : baseTitle;
+  } else if (group.reason === 'day') {
+    const dateLabel = formatTimestamp(group.topic).date;
+    title.textContent = getTranslation('auto_save_group_day_title').replace('{date}', dateLabel);
+  } else {
+    title.textContent = getTranslation('auto_save_group_topic_title').replace('{topic}', topic);
+  }
+
+  const count = document.createElement('span');
+  count.className = 'auto-save-folder-count';
+  count.textContent = getTranslation('auto_save_group_count').replace('{count}', group.sessions.length);
+
+  summary.appendChild(title);
+  summary.appendChild(count);
+
+  const body = document.createElement('div');
+  body.className = 'auto-save-folder-sessions';
+
+  wrapper.appendChild(summary);
+  wrapper.appendChild(body);
+  return { wrapper, body };
 }
 
 function renderMetaSegments(container, segments) {
@@ -1360,6 +1591,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const autoSaveOnExitEnabledToggle = document.getElementById('autoSaveOnExitEnabled');
   const autoSaveIntervalInput = document.getElementById('autoSaveInterval');
   const autoSaveIntervalGroup = document.getElementById('autoSaveIntervalGroup');
+  const autoSaveGroupModeSelect = document.getElementById('autoSaveGroupMode');
   const sessionCategoryTabs = document.querySelectorAll('[data-session-category]');
   const autoSaveTriggerFilters = document.getElementById('auto-save-trigger-filters');
   const autoSaveTriggerButtons = document.querySelectorAll('[data-auto-save-trigger]');
@@ -1469,6 +1701,12 @@ document.addEventListener('DOMContentLoaded', () => {
   autoSaveOnExitEnabledToggle?.addEventListener('change', persistAutoSaveSettings);
   autoSaveIntervalInput?.addEventListener('change', persistAutoSaveSettings);
   autoSaveIntervalInput?.addEventListener('blur', persistAutoSaveSettings);
+  autoSaveGroupModeSelect?.addEventListener('change', () => {
+    const mode = normalizeAutoSaveGroupMode(autoSaveGroupModeSelect.value);
+    localStorage.setItem(AUTO_SAVE_GROUP_MODE_KEY, mode);
+    autoSaveGroupModeSelect.value = mode;
+    renderSessionList(latestSessions, searchInput?.value || '');
+  });
 
   // ACCENT COLOR
   accentSelect.addEventListener('change', e => {
@@ -1826,7 +2064,30 @@ document.addEventListener('DOMContentLoaded', () => {
       }));
       searchEmptyState.style.display = matchingSessions.length === 0 ? 'block' : 'none';
 
-      matchingSessions.forEach(({ sessionData: normalized, originalIndex: index }) => {
+      const sessionTargets = new Map();
+      let sessionsToRender = matchingSessions;
+      if (activeSessionCategory === SAVE_TYPE_AUTO) {
+        const autoSaveGroups = groupAutoSavedSessionsForDisplay(matchingSessions, getAutoSaveGroupMode());
+        sessionsToRender = autoSaveGroups.flatMap((group) => group.sessions);
+        autoSaveGroups.forEach((group) => {
+          if (group.sessions.length < 2) {
+            const slot = document.createElement('div');
+            slot.className = 'auto-save-single-slot';
+            container.appendChild(slot);
+            group.sessions.forEach(({ originalIndex }) => {
+              sessionTargets.set(originalIndex, slot);
+            });
+            return;
+          }
+          const { wrapper, body } = createAutoSaveGroupShell(group);
+          container.appendChild(wrapper);
+          group.sessions.forEach(({ originalIndex }) => {
+            sessionTargets.set(originalIndex, body);
+          });
+        });
+      }
+
+      sessionsToRender.forEach(({ sessionData: normalized, originalIndex: index }) => {
         const entry = document.createElement('div');
         entry.className = 'session-entry';
         entry.setAttribute('role', 'listitem');
@@ -2019,7 +2280,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         entry.appendChild(topRow);
         entry.appendChild(previewContainer);
-        container.appendChild(entry);
+        const targetContainer = sessionTargets.get(index) || container;
+        targetContainer.appendChild(entry);
       });
   }
 
@@ -2074,6 +2336,9 @@ document.addEventListener('DOMContentLoaded', () => {
     restoreModeInputs.forEach((input) => {
       input.checked = input.value === restoreMode;
     });
+    if (autoSaveGroupModeSelect) {
+      autoSaveGroupModeSelect.value = getAutoSaveGroupMode();
+    }
     chrome.runtime.sendMessage({ action: 'get_auto_save_settings' }, (response) => {
       if (chrome.runtime.lastError || !response?.success) {
         updateAutoSaveIntervalVisibility(normalizeAutoSaveSettings());
