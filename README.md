@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.12.7-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.12.8-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -44,7 +44,7 @@ Sessions are saved directly on your device using Chrome's built-in storage. No a
 - Auto Save on a schedule or automatically when Chrome closes
 - Live search across session names, tab titles, URLs, and domains
 - Preview a session before restoring it, restore individual windows
-- Remove single tabs from saved sessions
+- Add custom URLs to saved sessions and remove single tabs from saved sessions
 - Rename, delete, and reorder sessions
 - Export and import sessions as JSON for backup or transfer
 - Preserves Chrome tab groups (colors and names) during save and restore
@@ -115,6 +115,10 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 7.12.8
+- added the ability to append a custom URL to an existing saved session
+- updated extension version to `7.12.8`
 
 ### 7.12.7
 - added an automated GitHub release workflow with a packaged Chrome extension zip

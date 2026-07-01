@@ -58,6 +58,10 @@ const translations = {
     preview_empty: "No tabs captured in this session",
     session_menu_label: "Session menu",
     session_default_name: "Session",
+    add_url_button: "Add URL",
+    add_url_prompt: "Add a URL to this saved session:",
+    add_url_invalid: "Enter a valid URL. You can type example.com and the extension will use https:// automatically.",
+    add_url_failed: "Unable to add this URL to the session. Please try again.",
     rename_prompt: "Enter a new name for this session:",
     chrome_store_link: "Install from Chrome Web Store",
     github_link: "Source code on GitHub",
@@ -142,6 +146,10 @@ const translations = {
     preview_empty: "No hay pesta\u00F1as en esta sesi\u00F3n",
     session_menu_label: "Men\u00FA de sesi\u00F3n",
     session_default_name: "Sesi\u00F3n",
+    add_url_button: "A\u00F1adir URL",
+    add_url_prompt: "A\u00F1ade una URL a esta sesi\u00F3n guardada:",
+    add_url_invalid: "Introduce una URL v\u00E1lida. Puedes escribir example.com y la extensi\u00F3n usar\u00E1 https:// autom\u00E1ticamente.",
+    add_url_failed: "No se pudo a\u00F1adir esta URL a la sesi\u00F3n. Int\u00E9ntalo de nuevo.",
     rename_prompt: "Introduce un nuevo nombre para esta sesi\u00F3n:",
     chrome_store_link: "Instalar desde Chrome Web Store",
     github_link: "Código fuente en GitHub",
@@ -226,6 +234,10 @@ const translations = {
     preview_empty: "Nessuna scheda in questa sessione",
     session_menu_label: "Menu sessione",
     session_default_name: "Sessione",
+    add_url_button: "Aggiungi URL",
+    add_url_prompt: "Aggiungi un URL a questa sessione salvata:",
+    add_url_invalid: "Inserisci un URL valido. Puoi scrivere example.com e l'estensione user\u00E0 https:// automaticamente.",
+    add_url_failed: "Impossibile aggiungere questo URL alla sessione. Riprova.",
     rename_prompt: "Inserisci un nuovo nome per questa sessione:",
     chrome_store_link: "Installa dal Chrome Web Store",
     github_link: "Codice sorgente su GitHub",
@@ -310,6 +322,10 @@ const translations = {
     preview_empty: "Aucun onglet dans cette session",
     session_menu_label: "Menu de session",
     session_default_name: "Session",
+    add_url_button: "Ajouter une URL",
+    add_url_prompt: "Ajoutez une URL \u00E0 cette session enregistr\u00E9e :",
+    add_url_invalid: "Saisissez une URL valide. Vous pouvez \u00E9crire example.com et l'extension utilisera https:// automatiquement.",
+    add_url_failed: "Impossible d'ajouter cette URL \u00E0 la session. R\u00E9essayez.",
     rename_prompt: "Entrez un nouveau nom pour cette session :",
     chrome_store_link: "Installer depuis le Chrome Web Store",
     github_link: "Code source sur GitHub",
@@ -394,6 +410,10 @@ const translations = {
     preview_empty: "Keine Tabs in dieser Sitzung",
     session_menu_label: "Sitzungsmen\u00FC",
     session_default_name: "Sitzung",
+    add_url_button: "URL hinzuf\u00FCgen",
+    add_url_prompt: "F\u00FCge dieser gespeicherten Sitzung eine URL hinzu:",
+    add_url_invalid: "Gib eine g\u00FCltige URL ein. Du kannst example.com eingeben, dann verwendet die Erweiterung automatisch https://.",
+    add_url_failed: "Diese URL konnte der Sitzung nicht hinzugef\u00FCgt werden. Bitte versuche es erneut.",
     rename_prompt: "Gib einen neuen Namen f\u00FCr diese Sitzung ein:",
     chrome_store_link: "Aus dem Chrome Web Store installieren",
     github_link: "Quellcode auf GitHub",
@@ -738,6 +758,71 @@ function normalizeRestorableUrl(value) {
   } catch (_) {
     return null;
   }
+}
+
+function normalizeCustomUrlInput(value) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const directUrl = normalizeRestorableUrl(trimmed);
+  if (directUrl) return directUrl;
+
+  const hasSchemePrefix = /^[a-z][a-z\d+.-]*:/i.test(trimmed);
+  const isLikelyHostWithPort = /^[\w.-]+:\d+(?:[/?#]|$)/.test(trimmed);
+  const hasExplicitScheme = hasSchemePrefix && !isLikelyHostWithPort;
+  if (hasExplicitScheme) return null;
+
+  return normalizeRestorableUrl(`https://${trimmed}`);
+}
+
+function getCustomUrlTabFromInput(value) {
+  const url = normalizeCustomUrlInput(value);
+  if (!url) return null;
+  const title = clampString(typeof value === 'string' && value.trim() ? value.trim() : url, 256);
+  return {
+    title,
+    url,
+    pinned: false,
+    active: false,
+    muted: false,
+    favIconUrl: null,
+    audible: false,
+    discarded: false,
+    index: null,
+    groupId: -1
+  };
+}
+
+function addCustomUrlToSession(session, value) {
+  const customTab = getCustomUrlTabFromInput(value);
+  if (!customTab) return null;
+
+  const nextSession = normalizeSessionSnapshot(session);
+  if (!Array.isArray(nextSession.windows)) {
+    nextSession.windows = [];
+  }
+  if (nextSession.windows.length === 0) {
+    nextSession.windows.push({
+      state: 'normal',
+      focused: false,
+      left: null,
+      top: null,
+      width: null,
+      height: null,
+      incognito: false,
+      alwaysOnTop: false,
+      tabs: [],
+      groups: []
+    });
+  }
+
+  const targetWindow = nextSession.windows[nextSession.windows.length - 1];
+  if (!Array.isArray(targetWindow.tabs)) {
+    targetWindow.tabs = [];
+  }
+  targetWindow.tabs.push(customTab);
+  return nextSession;
 }
 
 function sanitizeFaviconUrl(value) {
@@ -1652,6 +1737,30 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   }
 
+  function addCustomUrlToSavedSession(index, session, inputValue) {
+    const updatedSession = addCustomUrlToSession(session, inputValue);
+    if (!updatedSession) {
+      alert(getTranslation('add_url_invalid'));
+      return;
+    }
+
+    chrome.runtime.sendMessage(
+      {
+        action: 'update_session',
+        index,
+        session: updatedSession
+      },
+      (res) => {
+        if (res && res.success) {
+          loadSessions();
+          return;
+        }
+        console.error('Failed to add custom URL to session', res && res.error);
+        alert(getTranslation('add_url_failed'));
+      }
+    );
+  }
+
   async function loadSessionsFromStorageWithRetry(retries = 2) {
     for (let i = 0; i <= retries; i++) {
       try {
@@ -1773,6 +1882,15 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
 
+        const addUrlBtn = document.createElement('button');
+        addUrlBtn.textContent = getTranslation('add_url_button');
+        addUrlBtn.addEventListener('click', () => {
+          closeAllMenus();
+          const urlValue = prompt(getTranslation('add_url_prompt'), '');
+          if (urlValue === null) return;
+          addCustomUrlToSavedSession(index, sessionPayload, urlValue);
+        });
+
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = getTranslation('delete_button');
         deleteBtn.addEventListener('click', () => {
@@ -1783,6 +1901,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         menu.appendChild(previewBtn);
+        menu.appendChild(addUrlBtn);
         menu.appendChild(renameBtn);
         menu.appendChild(deleteBtn);
 
