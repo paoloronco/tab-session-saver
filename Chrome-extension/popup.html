@@ -33,6 +33,35 @@
       overflow: hidden;
     }
 
+    html.size-small {
+      width: 340px;
+      min-width: 340px;
+      max-width: 340px;
+      height: 480px;
+      min-height: 480px;
+      max-height: 480px;
+    }
+
+    html.size-large {
+      width: 520px;
+      min-width: 520px;
+      max-width: 520px;
+      height: 740px;
+      min-height: 740px;
+      max-height: 740px;
+    }
+
+    /* Huge: full tab, no fixed dimensions */
+    html.size-huge {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      height: 100%;
+      min-height: 0;
+      max-height: 100%;
+      overflow: hidden;
+    }
+
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 0;
@@ -46,6 +75,35 @@
       background: linear-gradient(180deg, #f7f9ff 0%, #eef1f9 100%);
       color: var(--text-primary);
       transition: background-color 0.3s ease, color 0.3s ease;
+      overflow: hidden;
+    }
+
+    body.size-small {
+      width: 340px;
+      min-width: 340px;
+      max-width: 340px;
+      height: 480px;
+      min-height: 480px;
+      max-height: 480px;
+    }
+
+    body.size-large {
+      width: 520px;
+      min-width: 520px;
+      max-width: 520px;
+      height: 740px;
+      min-height: 740px;
+      max-height: 740px;
+    }
+
+    /* Huge: fill the entire browser tab */
+    body.size-huge {
+      width: 100vw;
+      min-width: 0;
+      max-width: 100vw;
+      height: 100vh;
+      min-height: 0;
+      max-height: 100vh;
       overflow: hidden;
     }
 
@@ -84,6 +142,169 @@
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior: contain;
+    }
+
+    body.size-small .popup {
+      width: 340px;
+      min-width: 340px;
+      max-width: 340px;
+      height: 480px;
+      max-height: 480px;
+    }
+
+    body.size-large .popup {
+      width: 520px;
+      min-width: 520px;
+      max-width: 520px;
+      height: 740px;
+      max-height: 740px;
+    }
+
+    /* =============================================
+       HUGE MODE — full sidebar layout
+       Left column: main sessions panel
+       Right column: settings panel (always visible)
+       ============================================= */
+    body.size-huge .popup {
+      width: 100vw;
+      min-width: 0;
+      max-width: 100vw;
+      height: 100vh;
+      max-height: 100vh;
+      padding: 0;
+      gap: 0;
+      overflow: hidden;
+      /* Sidebar grid: header top-bar + two side-by-side panels below */
+      display: grid;
+      grid-template-rows: auto 1fr;
+      grid-template-columns: 1fr;
+    }
+
+    /* Top header bar spanning full width */
+    body.size-huge header {
+      grid-row: 1;
+      grid-column: 1;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--surface);
+      padding: 0.9rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex: none;
+      box-shadow: 0 2px 8px rgba(28, 35, 51, 0.06);
+      z-index: 10;
+    }
+
+    /* Content area below header: sessions + settings side by side */
+    body.size-huge .huge-content-area {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* Main sessions panel — left side */
+    body.size-huge #main-section {
+      display: flex !important;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1.25rem 1.5rem 1.5rem;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      border-right: 1px solid var(--border-color);
+      height: 100%;
+      min-height: 0;
+      border-radius: 0;
+      box-shadow: none;
+      border-top: none;
+      border-left: none;
+      border-bottom: none;
+      background: var(--surface-alt);
+    }
+
+    /* Sessions grid in huge mode — multiple columns */
+    body.size-huge #sessions {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 0.85rem;
+      align-content: start;
+    }
+
+    /* Settings panel — right sidebar */
+    body.size-huge #settings-section {
+      display: flex !important;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1.25rem 1.25rem 1.5rem;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      height: 100%;
+      min-height: 0;
+      border-radius: 0;
+      box-shadow: none;
+      border: none;
+      border-left: 1px solid var(--border-color);
+      background: var(--surface);
+    }
+
+    /* In huge mode settings title and gear button adapt */
+    body.size-huge #settings-icon {
+      display: none;
+    }
+
+    body.size-huge .huge-settings-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0 0 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Hide huge label in normal popup modes */
+    .huge-settings-label {
+      display: none;
+    }
+
+    /* Hide h2 title in huge mode (label replaces it) */
+    body.size-huge .settings > h2 {
+      display: none;
+    }
+
+    /* Responsive: stack vertically on narrow viewports */
+    @media (max-width: 780px) {
+      body.size-huge .huge-content-area {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr auto;
+      }
+
+      body.size-huge #settings-section {
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+        max-height: 45vh;
+      }
+
+      body.size-huge #sessions {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (min-width: 1400px) {
+      body.size-huge #sessions {
+        grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      }
+
+      body.size-huge .huge-content-area {
+        grid-template-columns: 1fr 380px;
+      }
     }
 
     .card {
@@ -1399,6 +1620,8 @@
       </button>
     </header>
 
+    <div class="huge-content-area">
+
     <main id="main-section" class="card">
       <div id="browser-warning" class="browser-warning" style="display:none;">
         <span aria-hidden="true">&#9888;</span>
@@ -1446,6 +1669,14 @@
     </main>
 
     <section id="settings-section" class="card settings">
+      <!-- Label visible only in Huge sidebar mode -->
+      <div class="huge-settings-label" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path>
+          <path d="M19.4 9.5a7.97 7.97 0 0 1 0 5l2 3.46-2.8 2.8-3.46-2a7.97 7.97 0 0 1-5 0l-3.46 2-2.8-2.8 2-3.46a7.97 7.97 0 0 1 0-5l-2-3.46 2.8-2.8 3.46 2a7.97 7.97 0 0 1 5 0l3.46-2 2.8 2.8-2 3.46z"></path>
+        </svg>
+        <span data-translate="settings_title">Settings</span>
+      </div>
       <h2 data-translate="settings_title">Settings</h2>
 
       <div class="settings-group-card settings-language">
@@ -1461,6 +1692,15 @@
 
       <section class="settings-group-card settings-appearance" aria-labelledby="appearance-title">
         <h3 id="appearance-title" class="settings-group-title" data-translate="appearance_title">Appearance</h3>
+        <div class="setting-group">
+          <label for="popupSize" data-translate="popup_size_label">Popup size</label>
+          <select id="popupSize">
+            <option value="small" data-translate="popup_size_small">Small</option>
+            <option value="medium" data-translate="popup_size_medium">Medium</option>
+            <option value="large" data-translate="popup_size_large">Large</option>
+            <option value="huge" data-translate="popup_size_huge">Huge (Full tab)</option>
+          </select>
+        </div>
         <div class="toggle-container">
           <span data-translate="dark_mode_label">Dark mode</span>
           <label class="toggle-switch">
@@ -1564,7 +1804,7 @@
           </div>
         </div>
         <div class="footer-info">
-          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.12.9</div>
+          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.13.0</div>
           <div class="footer-secondary-links">
             <a class="footer-secondary-link" href="https://paoloronco.it" target="_blank" rel="noopener">paoloronco.it</a>
             <a class="footer-secondary-link" href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" rel="noopener" data-translate="privacy_policy_link">Privacy Policy</a>
@@ -1581,6 +1821,7 @@
         </div>
       </div>
     </section>
-  </div>
+    </div><!-- /.huge-content-area -->
+  </div><!-- /.popup -->
 </body>
 </html>

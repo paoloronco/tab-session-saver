@@ -22,6 +22,11 @@ const translations = {
     language_label: "Language",
     dark_mode_label: "Dark mode",
     color_label: "Accent color",
+    popup_size_label: "Popup size",
+    popup_size_small: "Small",
+    popup_size_medium: "Medium",
+    popup_size_large: "Large",
+    popup_size_huge: "Huge (Full tab)",
     appearance_title: "Appearance",
     restore_behavior_title: "Restore behavior",
     restore_behavior_description: "Choose where the last window of a restored session opens.",
@@ -119,6 +124,11 @@ const translations = {
     language_label: "Idioma",
     dark_mode_label: "Modo oscuro",
     color_label: "Color de acento",
+    popup_size_label: "Tamaño del popup",
+    popup_size_small: "Pequeño",
+    popup_size_medium: "Mediano",
+    popup_size_large: "Grande",
+    popup_size_huge: "Enorme (pestaña completa)",
     appearance_title: "Apariencia",
     restore_behavior_title: "Comportamiento de restauraci\u00F3n",
     restore_behavior_description: "Elige d\u00F3nde se abre la \u00FAltima ventana de una sesi\u00F3n restaurada.",
@@ -216,6 +226,11 @@ const translations = {
     language_label: "Lingua",
     dark_mode_label: "Modalit\u00E0 scura",
     color_label: "Colore di accento",
+    popup_size_label: "Dimensioni popup",
+    popup_size_small: "Piccole",
+    popup_size_medium: "Medie",
+    popup_size_large: "Grandi",
+    popup_size_huge: "Enormi (scheda intera)",
     appearance_title: "Aspetto",
     restore_behavior_title: "Comportamento di ripristino",
     restore_behavior_description: "Scegli dove aprire l'ultima finestra di una sessione ripristinata.",
@@ -313,6 +328,11 @@ const translations = {
     language_label: "Langue",
     dark_mode_label: "Mode sombre",
     color_label: "Couleur d'accent",
+    popup_size_label: "Taille du popup",
+    popup_size_small: "Petite",
+    popup_size_medium: "Moyenne",
+    popup_size_large: "Grande",
+    popup_size_huge: "Énorme (onglet complet)",
     appearance_title: "Apparence",
     restore_behavior_title: "Comportement de restauration",
     restore_behavior_description: "Choisissez o\u00F9 ouvrir la derni\u00E8re fen\u00EAtre d'une session restaur\u00E9e.",
@@ -410,6 +430,11 @@ const translations = {
     language_label: "Sprache",
     dark_mode_label: "Dunkelmodus",
     color_label: "Akzentfarbe",
+    popup_size_label: "Popup-Gr\u00F6\u00DFe",
+    popup_size_small: "Klein",
+    popup_size_medium: "Mittel",
+    popup_size_large: "Gro\u00DF",
+    popup_size_huge: "Riesig (ganzer Tab)",
     appearance_title: "Darstellung",
     restore_behavior_title: "Wiederherstellungsverhalten",
     restore_behavior_description: "W\u00E4hlen Sie, wo das letzte Fenster einer Sitzung ge\u00F6ffnet wird.",
@@ -1586,6 +1611,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const accentSelect = document.getElementById('accentColor');
   const darkToggle = document.getElementById('darkMode');
   const languageSelect = document.getElementById('language');
+  const popupSizeSelect = document.getElementById('popupSize');
   const restoreModeInputs = document.querySelectorAll('input[name="restoreMode"]');
   const autoSaveEnabledToggle = document.getElementById('autoSaveEnabled');
   const autoSaveOnExitEnabledToggle = document.getElementById('autoSaveOnExitEnabled');
@@ -1721,6 +1747,66 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('darkMode', e.target.checked);
   });
 
+  // POPUP SIZE
+  const POPUP_SIZES = new Set(['small', 'medium', 'large', 'huge']);
+
+  function applyPopupSize(size) {
+    const validSize = POPUP_SIZES.has(size) ? size : 'medium';
+    document.documentElement.classList.remove('size-small', 'size-medium', 'size-large', 'size-huge');
+    document.body.classList.remove('size-small', 'size-medium', 'size-large', 'size-huge');
+    if (validSize !== 'medium') {
+      document.documentElement.classList.add(`size-${validSize}`);
+      document.body.classList.add(`size-${validSize}`);
+    }
+
+    // In huge mode: show both panels side-by-side, hide settings toggle
+    const main = document.getElementById('main-section');
+    const settings = document.getElementById('settings-section');
+    const settingsBtn = document.getElementById('settings-icon');
+    const settingsTitleH2 = settings && settings.querySelector('h2[data-translate="settings_title"]');
+
+    if (validSize === 'huge') {
+      if (main) main.style.display = '';
+      if (settings) settings.style.display = '';
+      if (settingsBtn) settingsBtn.style.display = 'none';
+      if (settingsTitleH2) settingsTitleH2.style.display = 'none';
+    } else {
+      // Restore normal toggle behavior: main visible, settings hidden
+      if (main) main.style.display = 'block';
+      if (settings) settings.style.display = 'none';
+      if (settingsBtn) { settingsBtn.style.display = ''; settingsBtn.setAttribute('aria-expanded', 'false'); }
+      if (settingsTitleH2) settingsTitleH2.style.display = '';
+    }
+
+    // Resize the popup window for small/large (Chrome honors window.resizeTo in extension popups)
+    const sizeMap = {
+      small: { w: 340, h: 480 },
+      medium: { w: 420, h: 600 },
+      large: { w: 520, h: 740 }
+    };
+    if (validSize !== 'huge' && sizeMap[validSize]) {
+      try {
+        window.resizeTo(sizeMap[validSize].w, sizeMap[validSize].h);
+      } catch (_) { /* noop if not supported */ }
+    }
+  }
+
+  function openHugeTab() {
+    const hugeUrl = chrome.runtime.getURL('popup.html') + '?size=huge';
+    chrome.tabs.create({ url: hugeUrl });
+    window.close();
+  }
+
+  popupSizeSelect?.addEventListener('change', e => {
+    const size = e.target.value;
+    localStorage.setItem('popupSize', size);
+    if (size === 'huge') {
+      openHugeTab();
+      return;
+    }
+    applyPopupSize(size);
+  });
+
   // LANGUAGE SELECTION
   languageSelect.addEventListener('change', e => {
     const selectedLang = e.target.value;
@@ -1843,6 +1929,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const settingsBtn = document.getElementById('settings-icon');
   if (settingsBtn) {
     settingsBtn.addEventListener('click', () => {
+      // In huge mode both panels are always visible — gear button is hidden anyway
+      if (document.body.classList.contains('size-huge')) return;
       closeAllMenus();
       const main = document.getElementById('main-section');
       const settings = document.getElementById('settings-section');
@@ -2309,6 +2397,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedAccent = localStorage.getItem('accentColor');
     const savedDark = localStorage.getItem('darkMode');
     const savedLanguage = localStorage.getItem('language');
+    const savedPopupSize = localStorage.getItem('popupSize');
     const restoreMode = getRestoreMode();
 
     if (savedAccent) {
@@ -2333,6 +2422,26 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       translatePage('en');
     }
+    
+    // Check if we're in a huge tab via URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSize = urlParams.get('size');
+    if (urlSize === 'huge') {
+      // We ARE in the huge tab — apply huge layout
+      if (popupSizeSelect) popupSizeSelect.value = 'huge';
+      applyPopupSize('huge');
+    } else if (savedPopupSize === 'huge') {
+      // User had huge selected — open the tab and close this popup immediately
+      if (popupSizeSelect) popupSizeSelect.value = 'huge';
+      openHugeTab();
+    } else if (savedPopupSize && POPUP_SIZES.has(savedPopupSize)) {
+      if (popupSizeSelect) popupSizeSelect.value = savedPopupSize;
+      applyPopupSize(savedPopupSize);
+    } else {
+      if (popupSizeSelect) popupSizeSelect.value = 'medium';
+      applyPopupSize('medium');
+    }
+    
     restoreModeInputs.forEach((input) => {
       input.checked = input.value === restoreMode;
     });
