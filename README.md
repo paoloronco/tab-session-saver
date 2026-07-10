@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.13.0-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.14.0-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -115,6 +115,10 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 7.14.0
+- added Newsletter signup in extension settings through a secure server-side proxy
+- updated extension version to `7.14.0`
 
 ### 7.13.0
 - added configurable popup size: Small (340×480), Medium (420×600, default), Large (520×740), Huge (full browser tab with sidebar layout)
