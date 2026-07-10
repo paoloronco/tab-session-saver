@@ -1045,6 +1045,7 @@
     }
 
     select,
+    input[type="email"],
     input[type="number"] {
       width: 100%;
       padding: 0.55rem;
@@ -1056,6 +1057,7 @@
     }
 
     select:focus,
+    input[type="email"]:focus,
     input[type="number"]:focus {
       outline: none;
       border-color: var(--accent-color);
@@ -1151,6 +1153,60 @@
       color: var(--text-secondary);
       font-size: 0.78rem;
       line-height: 1.45;
+    }
+
+    .newsletter-form {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .newsletter-actions button {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: 10px;
+      padding: 0.65rem 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      line-height: 1.25;
+      min-height: 2.8rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+    }
+
+    .newsletter-actions button:hover:not(:disabled) {
+      background: var(--surface-alt);
+      border-color: var(--accent-color);
+    }
+
+    .newsletter-actions button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .newsletter-status {
+      min-height: 1rem;
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 0.76rem;
+      line-height: 1.4;
+    }
+
+    .newsletter-status.is-success {
+      color: #228b22;
+    }
+
+    .newsletter-status.is-error {
+      color: #c2410c;
+    }
+
+    body.dark-mode .newsletter-status.is-success {
+      color: #6fcf6f;
+    }
+
+    body.dark-mode .newsletter-status.is-error {
+      color: #ffb37a;
     }
 
     .session-search {
@@ -1772,6 +1828,21 @@
             <option value="none" data-translate="auto_save_group_mode_none">No grouping</option>
           </select>
         </div>
+      </section>
+
+      <section class="settings-group-card settings-newsletter" aria-labelledby="newsletter-title">
+        <h3 id="newsletter-title" class="settings-group-title" data-translate="newsletter_title">Newsletter</h3>
+        <p class="settings-description" data-translate="newsletter_description">Get updates about new Tab Session Saver features.</p>
+        <form id="newsletter-form" class="newsletter-form" novalidate>
+          <div class="setting-group">
+            <label for="newsletterEmail" data-translate="newsletter_email_label">Email address</label>
+            <input id="newsletterEmail" type="email" autocomplete="email" spellcheck="false" placeholder="you@example.com" data-translate-placeholder="newsletter_email_placeholder">
+          </div>
+          <div class="newsletter-actions">
+            <button id="newsletterSubmit" type="submit" data-translate="newsletter_subscribe_button">Subscribe</button>
+          </div>
+          <p id="newsletterStatus" class="newsletter-status" role="status" aria-live="polite"></p>
+        </form>
       </section>
 
       <section class="settings-group-card settings-backup" aria-labelledby="backup-title">

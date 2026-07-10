@@ -36,6 +36,17 @@ const translations = {
     restore_current_window_description: "The last saved window is added before your current tabs. Other saved windows still open separately.",
     backup_title: "Backup",
     backup_description: "Export a backup or import saved sessions.",
+    newsletter_title: "Newsletter",
+    newsletter_description: "Get updates about new Tab Session Saver features.",
+    newsletter_email_label: "Email address",
+    newsletter_email_placeholder: "you@example.com",
+    newsletter_subscribe_button: "Subscribe",
+    newsletter_subscribed_status: "Subscribed as {email}.",
+    newsletter_duplicate_status: "This email is already subscribed.",
+    newsletter_invalid_email: "Enter a valid email address.",
+    newsletter_subscribe_loading: "Subscribing...",
+    newsletter_configuration_error: "Newsletter service is not configured yet.",
+    newsletter_request_error: "Unable to update newsletter subscription. Please try again.",
     auto_save_title: "Auto Save",
     auto_save_description: "Automatically capture the current session on a schedule.",
     auto_save_toggle_label: "Enable Auto Save",
@@ -138,6 +149,17 @@ const translations = {
     restore_current_window_description: "La \u00FAltima ventana guardada se a\u00F1ade antes de las pesta\u00F1as actuales. Las dem\u00E1s se abren por separado.",
     backup_title: "Copia de seguridad",
     backup_description: "Exporta una copia o importa sesiones guardadas.",
+    newsletter_title: "Newsletter",
+    newsletter_description: "Recibe novedades sobre las funciones de Tab Session Saver.",
+    newsletter_email_label: "Correo electr\u00F3nico",
+    newsletter_email_placeholder: "tu@email.com",
+    newsletter_subscribe_button: "Suscribirse",
+    newsletter_subscribed_status: "Suscrito como {email}.",
+    newsletter_duplicate_status: "Este correo ya est\u00E1 suscrito.",
+    newsletter_invalid_email: "Introduce un correo electr\u00F3nico v\u00E1lido.",
+    newsletter_subscribe_loading: "Suscribiendo...",
+    newsletter_configuration_error: "El servicio de newsletter a\u00FAn no est\u00E1 configurado.",
+    newsletter_request_error: "No se pudo actualizar la suscripci\u00F3n. Int\u00E9ntalo de nuevo.",
     auto_save_title: "Guardado autom\u00E1tico",
     auto_save_description: "Captura autom\u00E1ticamente la sesi\u00F3n actual seg\u00FAn un intervalo.",
     auto_save_toggle_label: "Activar guardado autom\u00E1tico",
@@ -240,6 +262,17 @@ const translations = {
     restore_current_window_description: "L'ultima finestra salvata viene aggiunta prima delle schede attuali. Le altre si aprono separatamente.",
     backup_title: "Backup",
     backup_description: "Esporta un backup o importa sessioni salvate.",
+    newsletter_title: "Newsletter",
+    newsletter_description: "Ricevi aggiornamenti su novit\u00E0 e nuove funzioni di Tab Session Saver.",
+    newsletter_email_label: "Indirizzo email",
+    newsletter_email_placeholder: "nome@email.com",
+    newsletter_subscribe_button: "Iscriviti",
+    newsletter_subscribed_status: "Iscritto come {email}.",
+    newsletter_duplicate_status: "Questa email risulta gi\u00E0 iscritta.",
+    newsletter_invalid_email: "Inserisci un indirizzo email valido.",
+    newsletter_subscribe_loading: "Iscrizione in corso...",
+    newsletter_configuration_error: "Il servizio newsletter non \u00E8 ancora configurato.",
+    newsletter_request_error: "Impossibile aggiornare l'iscrizione. Riprova.",
     auto_save_title: "Auto Save",
     auto_save_description: "Salva automaticamente la sessione corrente con un intervallo programmato.",
     auto_save_toggle_label: "Abilita Auto Save",
@@ -342,6 +375,17 @@ const translations = {
     restore_current_window_description: "La derni\u00E8re fen\u00EAtre enregistr\u00E9e est ajout\u00E9e avant les onglets actuels. Les autres s'ouvrent s\u00E9par\u00E9ment.",
     backup_title: "Sauvegarde",
     backup_description: "Exportez une sauvegarde ou importez des sessions.",
+    newsletter_title: "Newsletter",
+    newsletter_description: "Recevez les nouveaut\u00E9s de Tab Session Saver.",
+    newsletter_email_label: "Adresse e-mail",
+    newsletter_email_placeholder: "vous@example.com",
+    newsletter_subscribe_button: "S'abonner",
+    newsletter_subscribed_status: "Abonn\u00E9 avec {email}.",
+    newsletter_duplicate_status: "Cette adresse est d\u00E9j\u00E0 abonn\u00E9e.",
+    newsletter_invalid_email: "Saisissez une adresse e-mail valide.",
+    newsletter_subscribe_loading: "Abonnement...",
+    newsletter_configuration_error: "Le service newsletter n'est pas encore configur\u00E9.",
+    newsletter_request_error: "Impossible de mettre \u00E0 jour l'abonnement. R\u00E9essayez.",
     auto_save_title: "Enregistrement automatique",
     auto_save_description: "Capture automatiquement la session actuelle selon un intervalle.",
     auto_save_toggle_label: "Activer l'enregistrement automatique",
@@ -444,6 +488,17 @@ const translations = {
     restore_current_window_description: "Das letzte gespeicherte Fenster wird vor den aktuellen Tabs eingef\u00FCgt. Weitere Fenster werden separat ge\u00F6ffnet.",
     backup_title: "Sicherung",
     backup_description: "Sicherung exportieren oder Sitzungen importieren.",
+    newsletter_title: "Newsletter",
+    newsletter_description: "Erhalte Neuigkeiten zu Tab Session Saver-Funktionen.",
+    newsletter_email_label: "E-Mail-Adresse",
+    newsletter_email_placeholder: "du@example.com",
+    newsletter_subscribe_button: "Abonnieren",
+    newsletter_subscribed_status: "Abonniert als {email}.",
+    newsletter_duplicate_status: "Diese E-Mail ist bereits abonniert.",
+    newsletter_invalid_email: "Gib eine g\u00FCltige E-Mail-Adresse ein.",
+    newsletter_subscribe_loading: "Wird abonniert...",
+    newsletter_configuration_error: "Der Newsletter-Dienst ist noch nicht konfiguriert.",
+    newsletter_request_error: "Newsletter-Abonnement konnte nicht aktualisiert werden. Bitte versuche es erneut.",
     auto_save_title: "Automatisch speichern",
     auto_save_description: "Speichert die aktuelle Sitzung automatisch in einem festen Intervall.",
     auto_save_toggle_label: "Automatisches Speichern aktivieren",
@@ -604,6 +659,12 @@ function getTranslation(key) {
     : translations['en'][key] || key;
 }
 
+function formatTranslation(key, replacements = {}) {
+  return getTranslation(key).replace(/\{([a-zA-Z0-9_]+)\}/g, (match, name) =>
+    Object.prototype.hasOwnProperty.call(replacements, name) ? String(replacements[name]) : match
+  );
+}
+
 function combineSessionCollections(existing, additions) {
   const currentSessions = Array.isArray(existing) ? existing : [];
   const newSessions = Array.isArray(additions) ? additions : [];
@@ -621,6 +682,24 @@ function normalizeAutoSaveSettings(rawSettings = {}) {
     enabled: settings.enabled === true,
     intervalMinutes,
     exitEnabled: settings.exitEnabled === true
+  };
+}
+
+function normalizeNewsletterEmail(value) {
+  if (typeof value !== 'string') return null;
+  const email = value.trim().toLowerCase();
+  if (!email || email.length > 254) return null;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+}
+
+function normalizeNewsletterSubscription(rawState = {}) {
+  const state = rawState && typeof rawState === 'object' ? rawState : {};
+  const email = normalizeNewsletterEmail(state.email);
+  const subscribed = state.subscribed === true && Boolean(email);
+  return {
+    subscribed,
+    email: subscribed ? email : '',
+    subscribedAt: subscribed && typeof state.subscribedAt === 'string' ? state.subscribedAt : null
   };
 }
 
@@ -1625,9 +1704,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchToggle = document.getElementById('session-search-toggle');
   const searchInput = document.getElementById('session-search-input');
   const searchClose = document.getElementById('session-search-close');
+  const newsletterForm = document.getElementById('newsletter-form');
+  const newsletterEmailInput = document.getElementById('newsletterEmail');
+  const newsletterSubmitBtn = document.getElementById('newsletterSubmit');
+  const newsletterStatus = document.getElementById('newsletterStatus');
   let latestSessions = [];
   let activeSessionCategory = SAVE_TYPE_MANUAL;
   let activeAutoSaveTrigger = AUTO_SAVE_TRIGGER_ALL;
+  let newsletterState = normalizeNewsletterSubscription();
 
   document.addEventListener('click', closeAllMenus);
 
@@ -1734,6 +1818,94 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSessionList(latestSessions, searchInput?.value || '');
   });
 
+  function setNewsletterStatus(key, options = {}) {
+    if (!newsletterStatus) return;
+    const { type = '', replacements = {} } = options;
+    newsletterStatus.textContent = key ? formatTranslation(key, replacements) : '';
+    newsletterStatus.classList.toggle('is-success', type === 'success');
+    newsletterStatus.classList.toggle('is-error', type === 'error');
+  }
+
+  function setNewsletterBusy(isBusy) {
+    if (newsletterSubmitBtn) {
+      newsletterSubmitBtn.disabled = isBusy || newsletterState.subscribed;
+      newsletterSubmitBtn.textContent = isBusy
+        ? getTranslation('newsletter_subscribe_loading')
+        : getTranslation('newsletter_subscribe_button');
+    }
+    if (newsletterEmailInput) {
+      newsletterEmailInput.disabled = isBusy || newsletterState.subscribed;
+    }
+  }
+
+  function renderNewsletterState(nextState, statusKey = '') {
+    newsletterState = normalizeNewsletterSubscription(nextState);
+    if (newsletterEmailInput) {
+      newsletterEmailInput.value = newsletterState.email;
+      newsletterEmailInput.disabled = newsletterState.subscribed;
+    }
+    if (newsletterSubmitBtn) {
+      newsletterSubmitBtn.disabled = newsletterState.subscribed;
+    }
+    if (statusKey) {
+      setNewsletterStatus(statusKey, {
+        type: statusKey === 'newsletter_request_error' || statusKey === 'newsletter_configuration_error' ? 'error' : 'success',
+        replacements: { email: newsletterState.email }
+      });
+    } else if (newsletterState.subscribed) {
+      setNewsletterStatus('newsletter_subscribed_status', {
+        type: 'success',
+        replacements: { email: newsletterState.email }
+      });
+    } else {
+      setNewsletterStatus('');
+    }
+    setNewsletterBusy(false);
+  }
+
+  function getNewsletterErrorKey(response) {
+    return response?.code === 'NEWSLETTER_NOT_CONFIGURED'
+      ? 'newsletter_configuration_error'
+      : 'newsletter_request_error';
+  }
+
+  function loadNewsletterSubscription() {
+    chrome.runtime.sendMessage({ action: 'get_newsletter_subscription' }, (response) => {
+      if (chrome.runtime.lastError || !response?.success) {
+        setNewsletterStatus('newsletter_request_error', { type: 'error' });
+        setNewsletterBusy(false);
+        return;
+      }
+      renderNewsletterState(response.state);
+    });
+  }
+
+  newsletterForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (newsletterState.subscribed) {
+      setNewsletterStatus('newsletter_duplicate_status', { type: 'success' });
+      return;
+    }
+    const email = normalizeNewsletterEmail(newsletterEmailInput?.value || '');
+    if (!email) {
+      setNewsletterStatus('newsletter_invalid_email', { type: 'error' });
+      newsletterEmailInput?.focus();
+      return;
+    }
+    setNewsletterBusy(true);
+    chrome.runtime.sendMessage({ action: 'newsletter_subscribe', email }, (response) => {
+      if (chrome.runtime.lastError || !response?.success) {
+        setNewsletterStatus(getNewsletterErrorKey(response), { type: 'error' });
+        setNewsletterBusy(false);
+        return;
+      }
+      renderNewsletterState(
+        response.state,
+        response.alreadySubscribed ? 'newsletter_duplicate_status' : 'newsletter_subscribed_status'
+      );
+    });
+  });
+
   // ACCENT COLOR
   accentSelect.addEventListener('change', e => {
     document.documentElement.style.setProperty('--accent-color', e.target.value);
@@ -1812,6 +1984,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedLang = e.target.value;
     translatePage(selectedLang);
     localStorage.setItem('language', selectedLang);
+    renderNewsletterState(newsletterState);
     loadSessions(); // Reload sessions to update button text
   });
 
@@ -2455,6 +2628,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       updateAutoSaveIntervalVisibility(response.settings);
     });
+    loadNewsletterSubscription();
   }
 
   restoreSettings();

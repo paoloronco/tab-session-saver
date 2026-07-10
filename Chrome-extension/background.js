@@ -16,6 +16,9 @@ const AUTO_SAVE_TRIGGER_SCHEDULED = 'scheduled';
 const AUTO_SAVE_TRIGGER_EXIT = 'exit';
 const AUTO_SAVE_EXIT_SESSION_MARKER = 'rolling-exit-snapshot';
 const AUTO_SAVE_EXIT_DEBOUNCE_MS = 1000;
+const NEWSLETTER_SUBSCRIPTION_KEY = 'newsletterSubscription';
+const NEWSLETTER_SUBSCRIBE_ENDPOINT = 'https://tabsessionsaver-newslettersubscribe.paolo-ronco2000.workers.dev';
+const NEWSLETTER_NOT_CONFIGURED_ERROR = 'NEWSLETTER_NOT_CONFIGURED';
 const MAX_STORED_STRING_LENGTH = 4096;
 const SAFE_RESTORE_PROTOCOLS = new Set([
   'http:',
@@ -145,6 +148,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           sendResponse({ success: true, settings });
           break;
         }
+        case 'get_newsletter_subscription': {
+          const state = await loadNewsletterSubscription();
+          sendResponse({ success: true, state });
+          break;
+        }
+        case 'newsletter_subscribe': {
+          const result = await subscribeToNewsletter(request.email);
+          sendResponse(result);
+          break;
+        }
         case 'open_session': {
           if (!request.session) throw new Error('No session payload provided.');
           const result = await restoreSessionWithLock(request.session, {
@@ -184,11 +197,92 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
     } catch (error) {
       console.error('[background] action error:', request.action, error);
-      sendResponse({ success: false, error: error?.message || String(error) });
+      sendResponse({
+        success: false,
+        error: error?.message || String(error),
+        ...(error?.code ? { code: error.code } : {})
+      });
     }
   })();
   return true;
 });
+
+function normalizeNewsletterEmail(value) {
+  if (typeof value !== 'string') return null;
+  const email = value.trim().toLowerCase();
+  if (!email || email.length > 254) return null;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+}
+
+function normalizeNewsletterSubscription(rawState = {}) {
+  const state = rawState && typeof rawState === 'object' ? rawState : {};
+  const email = normalizeNewsletterEmail(state.email);
+  const subscribed = state.subscribed === true && Boolean(email);
+  return {
+    subscribed,
+    email: subscribed ? email : '',
+    subscribedAt: subscribed && typeof state.subscribedAt === 'string' ? state.subscribedAt : null
+  };
+}
+
+async function loadNewsletterSubscription() {
+  const stored = await chrome.storage.local.get({
+    [NEWSLETTER_SUBSCRIPTION_KEY]: normalizeNewsletterSubscription()
+  });
+  return normalizeNewsletterSubscription(stored[NEWSLETTER_SUBSCRIPTION_KEY]);
+}
+
+async function saveNewsletterSubscription(state) {
+  const normalized = normalizeNewsletterSubscription(state);
+  await chrome.storage.local.set({ [NEWSLETTER_SUBSCRIPTION_KEY]: normalized });
+  return normalized;
+}
+
+async function subscribeToNewsletter(emailValue) {
+  const email = normalizeNewsletterEmail(emailValue);
+  if (!email) {
+    return { success: false, error: 'Invalid email address.' };
+  }
+
+  const currentState = await loadNewsletterSubscription();
+  if (currentState.subscribed) {
+    return { success: true, alreadySubscribed: true, state: currentState };
+  }
+
+  await postNewsletterRequest(NEWSLETTER_SUBSCRIBE_ENDPOINT, email);
+  const state = await saveNewsletterSubscription({
+    subscribed: true,
+    email,
+    subscribedAt: new Date().toISOString()
+  });
+  return { success: true, state };
+}
+
+async function postNewsletterRequest(endpoint, email) {
+  if (!endpoint) {
+    const error = new Error('Newsletter service is not configured.');
+    error.code = NEWSLETTER_NOT_CONFIGURED_ERROR;
+    throw error;
+  }
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ email })
+  });
+
+  if (!response.ok) {
+    let details = '';
+    try {
+      details = (await response.text()).slice(0, 200);
+    } catch (_) {
+      details = '';
+    }
+    throw new Error(`Newsletter service returned HTTP ${response.status}${details ? `: ${details}` : ''}`);
+  }
+}
 
 async function restoreSessionWithLock(session, options = {}) {
   return runRestoreWithLock(() => restoreSessionFromSnapshot(session, options));

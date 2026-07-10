@@ -39,6 +39,8 @@ test('settings controls are grouped by language, appearance, backup, and browser
   assert.match(markup, /class="settings-group-card settings-language"[\s\S]*?id="language"[\s\S]*?<\/div>/);
   assert.match(markup, /class="settings-group-card settings-appearance"[\s\S]*?id="darkMode"[\s\S]*?id="accentColor"[\s\S]*?<\/section>/);
   assert.match(markup, /class="settings-group-card settings-autosave"[\s\S]*?id="autoSaveEnabled"[\s\S]*?id="autoSaveOnExitEnabled"[\s\S]*?id="autoSaveInterval"[\s\S]*?<\/section>/);
+  assert.match(markup, /class="settings-group-card settings-newsletter"[\s\S]*?id="newsletterEmail"[\s\S]*?id="newsletterSubmit"[\s\S]*?<\/section>/);
+  assert.doesNotMatch(markup, /id="newsletterUnsubscribe"/);
   assert.match(markup, /class="settings-group-card settings-backup"[\s\S]*?id="exportSessions"[\s\S]*?id="importSessions"[\s\S]*?<\/section>/);
   assert.match(markup, /id="browser-support-group" class="settings-group-card settings-browser-support"/);
 });
@@ -96,7 +98,18 @@ test('every language translates the new settings group headings', () => {
     'auto_save_filter_group_label',
     'auto_save_filter_all',
     'auto_save_filter_scheduled',
-    'auto_save_filter_exit'
+    'auto_save_filter_exit',
+    'newsletter_title',
+    'newsletter_description',
+    'newsletter_email_label',
+    'newsletter_email_placeholder',
+    'newsletter_subscribe_button',
+    'newsletter_subscribed_status',
+    'newsletter_duplicate_status',
+    'newsletter_invalid_email',
+    'newsletter_subscribe_loading',
+    'newsletter_configuration_error',
+    'newsletter_request_error'
   ];
 
   for (const language of ['en', 'es', 'it', 'fr', 'de']) {
