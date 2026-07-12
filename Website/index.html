@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tabs Session Saver - Save and Restore Chrome Tab Sessions</title>
-  <meta name="description" content="Save, search, preview, restore, and back up Chrome tab sessions with a lightweight local-first extension." />
+  <title>Tabs Session Saver - Save & Restore Chrome Tab Sessions</title>
+  <meta name="description" content="A free Chrome extension to save, preview, search, restore, back up, and optionally sync your browser tab sessions." />
   <meta name="keywords" content="chrome extension, save tabs, restore tabs, tab session saver, tab manager, chrome tab groups" />
   <meta name="author" content="Paolo Ronco" />
   <meta name="robots" content="index, follow" />
-  <meta name="theme-color" content="#2563eb" />
+  <meta name="theme-color" content="#1d33a6" />
   <link rel="canonical" href="https://tabsessionsaver.paoloronco.it/" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232563eb'/%3E%3Cpath d='M18 18h28v15H18z' fill='none' stroke='white' stroke-width='5' stroke-linejoin='round'/%3E%3Cpath d='M23 39l9 9 9-9M22 52h20' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="site.css" />
 
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Tabs Session Saver - Save and Restore Chrome Tab Sessions" />
-  <meta property="og:description" content="A lightweight Chrome extension for saving full browser workspaces and restoring them later." />
-  <meta property="og:image" content="https://tabsessionsaver.paoloronco.it/image4.png" />
+  <meta property="og:title" content="Tabs Session Saver - Save & Restore Chrome Tab Sessions" />
+  <meta property="og:description" content="Save your Chrome workspace in one click and restore it later." />
+  <meta property="og:image" content="https://tabsessionsaver.paoloronco.it/extension-popup-demo.png" />
   <meta property="og:url" content="https://tabsessionsaver.paoloronco.it/" />
   <meta property="og:site_name" content="Tabs Session Saver" />
 
@@ -25,7 +25,7 @@
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "Tabs Session Saver",
-    "description": "Chrome extension to save, search, preview, restore, export, import, auto-save, and optionally sync tab sessions.",
+    "description": "Chrome extension to save, preview, search, restore, export, import, auto-save, and optionally sync tab sessions.",
     "applicationCategory": "BrowserApplication",
     "applicationSubCategory": "Productivity",
     "operatingSystem": "Chrome",
@@ -48,8 +48,8 @@
         </span>
         <span>Tabs Session Saver</span>
       </a>
-
       <div class="nav-links">
+        <a href="#screenshots">Screenshots</a>
         <a href="#features">Features</a>
         <a href="/technical">Technical</a>
         <details class="nav-menu">
@@ -68,108 +68,95 @@
   </header>
 
   <main id="main">
-    <section class="hero promo-hero">
-      <div class="hero-inner">
-        <div class="hero-copy-block">
-          <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span>Free Chrome extension - v7.14.0</p>
-          <h1>Save your tabs. Restore your flow.</h1>
-          <p class="hero-copy">One click captures your Chrome workspace. Come back later and reopen the exact tabs, windows, and groups you need.</p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=en" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z" stroke="currentColor" stroke-width="2"/><path d="m8 12 2.4 2.4L16 8.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Add to Chrome
-            </a>
-            <a class="btn btn-secondary" href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 8.36 22.9c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.29-1.68-1.29-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.04 1.76 2.7 1.25 3.37.96.1-.75.4-1.25.73-1.54-2.55-.3-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.12-3.04 0 0 .96-.31 3.16 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.64 1.58.24 2.75.12 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.7 5.38-5.27 5.67.42.36.79 1.07.79 2.15v3c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
-              View on GitHub
-            </a>
-          </div>
-          <div class="proof-row" aria-label="Highlights">
-            <span>Local-first</span>
-            <span>Open source</span>
-            <span>Tab groups</span>
-            <span>Auto Save</span>
-          </div>
+    <section class="hero-old">
+      <div class="hero-old-inner">
+        <p class="hero-badge">Chrome extension - Free</p>
+        <h1>Keep your workspaces ready, always.</h1>
+        <p class="hero-subtitle">Save all your Chrome tabs with one click. Restore the exact session whenever you need it.</p>
+        <div class="hero-actions center-actions">
+          <a class="btn btn-primary light-cta" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=en" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z" stroke="currentColor" stroke-width="2"/><path d="m8 12 2.4 2.4L16 8.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Add to Chrome - Free
+          </a>
+          <a class="btn btn-ghost-dark" href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 8.36 22.9c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.29-1.68-1.29-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.04 1.76 2.7 1.25 3.37.96.1-.75.4-1.25.73-1.54-2.55-.3-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.12-3.04 0 0 .96-.31 3.16 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.64 1.58.24 2.75.12 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.7 5.38-5.27 5.67.42.36.79 1.07.79 2.15v3c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+            GitHub
+          </a>
         </div>
-
-        <div class="hero-product" aria-label="Extension screenshot">
-          <div class="real-shot-card">
-            <img src="image4.png" alt="Tabs Session Saver extension interface showing open tabs, saved sessions, and the Save button" width="1536" height="1024" fetchpriority="high" />
-          </div>
+        <div class="hero-pills" aria-label="Highlights">
+          <span>Local-first</span>
+          <span>Open source</span>
+          <span>5 languages</span>
+          <span>Dark mode</span>
+          <span>Auto Save</span>
         </div>
       </div>
     </section>
 
-    <section class="quick-bar" aria-label="Core benefits">
-      <div class="quick-item"><strong>Save</strong><span>Capture the workspace.</span></div>
-      <div class="quick-item"><strong>Preview</strong><span>Check tabs before restore.</span></div>
-      <div class="quick-item"><strong>Restore</strong><span>Reopen windows and groups.</span></div>
-      <div class="quick-item"><strong>Back up</strong><span>Export JSON or sync.</span></div>
-    </section>
-
-    <section id="features" class="section compact-section">
-      <div class="section-head tight">
-        <div>
-          <p class="kicker">Why install it</p>
-          <h2>A cleaner way to pause browser work.</h2>
+    <section id="screenshots" class="screenshots-band">
+      <div class="section screenshot-section">
+        <p class="kicker">Screenshots</p>
+        <h2>See the extension in action</h2>
+        <div class="screenshot-grid">
+          <figure class="screenshot-card main-shot">
+            <img src="extension-popup-demo.png" alt="Tabs Session Saver popup with saved sessions" width="420" height="600" />
+            <figcaption>Save and restore named sessions.</figcaption>
+          </figure>
+          <figure class="screenshot-card">
+            <img src="extension-popup-preview.png" alt="Tabs Session Saver popup with session preview open" width="420" height="600" loading="lazy" />
+            <figcaption>Preview tabs before restoring.</figcaption>
+          </figure>
+          <figure class="screenshot-card">
+            <img src="extension-popup-settings.png" alt="Tabs Session Saver popup settings view" width="420" height="600" loading="lazy" />
+            <figcaption>Customize theme, backup, and sync.</figcaption>
+          </figure>
         </div>
-        <p>Built for research, admin tasks, study sessions, project switching, and every day you end with too many tabs open.</p>
-      </div>
-
-      <div class="benefit-grid">
-        <article class="benefit">
-          <span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 6.25A2.25 2.25 0 0 1 7.25 4h9.5A2.25 2.25 0 0 1 19 6.25v5.25H5V6.25Z" stroke-width="1.8"/><path d="M8 15l4 4 4-4M7.5 20h9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          <h3>One-click session save</h3>
-          <p>Save all open Chrome tabs and windows without bookmark clutter.</p>
-        </article>
-        <article class="benefit">
-          <span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.8" cy="10.8" r="6.2" stroke-width="1.8"/><path d="m15.4 15.4 4 4" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-          <h3>Search saved sessions</h3>
-          <p>Find sessions by name, tab title, URL, or domain.</p>
-        </article>
-        <article class="benefit">
-          <span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 5h12v5H6zM6 14h12v5H6z" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
-          <h3>Preview before restore</h3>
-          <p>Open a session preview and restore only what matters.</p>
-        </article>
-        <article class="benefit">
-          <span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 7h10M7 12h10M7 17h10" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-          <h3>Portable backups</h3>
-          <p>Export and import sessions as JSON whenever you want.</p>
-        </article>
       </div>
     </section>
 
-    <section class="showcase-band">
-      <div class="section showcase-simple">
-        <div class="showcase-copy">
-          <p class="kicker">The extension itself</p>
-          <h2>Small popup. Fast decisions.</h2>
-          <p>The screenshot is shown as-is, so visitors see the real product: open tabs, saved sessions, preview behavior, and the main Save action.</p>
-          <div class="mini-checks">
-            <span>Manual and Auto Saved views</span>
-            <span>Light and dark mode</span>
-            <span>Five languages</span>
-            <span>Optional Cloud Sync</span>
-          </div>
+    <section class="section about-strip">
+      <p class="kicker">About</p>
+      <h2>Save & restore your workspace, instantly.</h2>
+      <div class="about-box">
+        <p><strong>Simple:</strong> save every open tab, window, and tab group in one click.</p>
+        <p><strong>Fast:</strong> restore full sessions or inspect them before reopening.</p>
+        <p><strong>Portable:</strong> export/import JSON backups, with optional Cloud Sync when you want it.</p>
+      </div>
+    </section>
+
+    <section id="features" class="features-band">
+      <div class="section">
+        <p class="kicker">Features</p>
+        <h2>Everything you need</h2>
+        <div class="feature-card-grid">
+          <article class="feature-card"><span>Save</span><h3>One-click sessions</h3><p>Capture tabs, windows, and groups.</p></article>
+          <article class="feature-card"><span>Restore</span><h3>Instant restore</h3><p>Reopen saved workspaces when needed.</p></article>
+          <article class="feature-card"><span>Preview</span><h3>Tab preview panel</h3><p>Check what is inside before restoring.</p></article>
+          <article class="feature-card"><span>Search</span><h3>Live session search</h3><p>Find by title, URL, domain, or name.</p></article>
+          <article class="feature-card"><span>Backup</span><h3>Export & import</h3><p>Keep portable JSON backups.</p></article>
+          <article class="feature-card"><span>Sync</span><h3>Optional Cloud Sync</h3><p>Enable it only if you want multi-device sync.</p></article>
         </div>
-        <figure class="product-figure">
-          <img src="image4.png" alt="Full screenshot of the Tabs Session Saver extension UI" width="1536" height="1024" loading="lazy" />
-        </figure>
       </div>
     </section>
 
-    <section class="section split-cta">
-      <div class="cta-panel primary-panel">
-        <p class="kicker">For everyday users</p>
-        <h2>Close Chrome without losing your place.</h2>
-        <p>Save now. Restore later. Keep the workflow moving.</p>
-        <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=en" target="_blank" rel="noopener noreferrer">Install free</a>
+    <section class="privacy-strip">
+      <div class="privacy-inner">
+        <h2>Private by design</h2>
+        <p>Local-first storage. No account required for the core workflow. Open source on GitHub.</p>
+        <div class="privacy-pills">
+          <span>No account needed</span>
+          <span>Local storage</span>
+          <span>Open source</span>
+          <span>Optional sync</span>
+        </div>
       </div>
-      <div class="cta-panel secondary-panel">
-        <p class="kicker">For technical users</p>
-        <h2>Review how it works.</h2>
-        <p>Permissions, storage, restore logic, Cloud Sync, and privacy details.</p>
+    </section>
+
+    <section class="section final-cta">
+      <h2>Ready to stay organised?</h2>
+      <p>Install the extension and stop losing useful tab sessions.</p>
+      <div class="hero-actions center-actions">
+        <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=en" target="_blank" rel="noopener noreferrer">Add to Chrome</a>
         <a class="btn btn-secondary" href="/technical">Technical details</a>
       </div>
     </section>
