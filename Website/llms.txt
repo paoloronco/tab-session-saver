@@ -1,0 +1,49 @@
+# Tabs Session Saver
+
+> A free Chrome extension by Paolo Ronco that saves, previews, searches, restores, backs up, and optionally syncs Chrome tab sessions.
+
+Tabs Session Saver (v7.14.0) lets users capture open Chrome windows, tabs, and tab groups, then restore them later. It is designed for students, researchers, professionals, and anyone who works with many tabs across recurring projects.
+
+## Key Features
+
+- One-click session save - captures open tabs and windows
+- Restore behavior - open saved sessions in new windows or merge into the current window
+- Tab preview panel - inspect saved tabs and restore individual windows
+- Search - filter sessions by name, tab title, URL, or domain
+- Tab groups support - saves and restores Chrome tab group names, colors, and membership
+- Session management - rename, delete, reorder, add custom URLs, and remove individual tabs
+- Auto Save - scheduled saves and save-on-exit support with configurable grouping
+- Export and import - back up sessions to JSON and restore on another profile or device
+- Optional Cloud Sync - sign in with Google to sync through the configured Cloudflare backend
+
+## Settings & Customization
+
+- Dark mode / Light mode
+- 5 interface languages: English, Italian, Spanish, French, German
+- 5 accent colors
+- Popup size options, including a full-tab layout
+- Browser support notices for Chrome and Chromium-derived browsers
+
+## Privacy
+
+- Local-first storage by default with `chrome.storage.local`
+- No account or sign-in required for core local use
+- Google Sign-In is used only when the user enables optional Cloud Sync
+- Optional Cloud Sync may transmit saved session data to the configured sync backend
+- Optional newsletter signup processes the email address submitted by the user
+- Open source on GitHub
+
+## Legal Documents
+
+The website renders the Markdown files stored in `Website/legal`:
+
+- [Privacy Policy](https://tabsessionsaver.paoloronco.it/privacy)
+- [Terms of Service](https://tabsessionsaver.paoloronco.it/terms)
+- [Google OAuth Disclosure](https://tabsessionsaver.paoloronco.it/oauth-disclosure)
+- [Data Deletion Instructions](https://tabsessionsaver.paoloronco.it/data-deletion)
+
+## Links
+
+- [Chrome Web Store](https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp)
+- [GitHub Repository](https://github.com/paoloronco/tab-session-saver)
+- [Contact](mailto:info@paoloronco.it)
