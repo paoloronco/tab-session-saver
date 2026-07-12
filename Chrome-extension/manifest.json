@@ -1,11 +1,13 @@
 {
     "manifest_version": 3,
     "name": "Tabs Session Saver",
-    "version": "7.14.0",
+    "version": "7.15.0",
     "description": "Save and restore your tabs sessions easily",
-    "permissions": ["tabs", "storage", "windows", "tabGroups", "alarms"],
+    "permissions": ["tabs", "storage", "windows", "tabGroups", "alarms", "identity"],
     "host_permissions": [
-      "https://tabsessionsaver-newslettersubscribe.paolo-ronco2000.workers.dev/*"
+      "https://tabsessionsaver-newslettersubscribe.paolo-ronco2000.workers.dev/*",
+      "https://tabsessionsaver-cloudsync.paolo-ronco2000.workers.dev/*",
+      "https://sync.tabsessionsaver.com/*"
     ],
     "icons": {
       "16": "img-1616.png",
@@ -24,6 +26,10 @@
     },
     "background": {
       "service_worker": "background.js"
+    },
+    "oauth2": {
+      "client_id": "1061581523479-vmkl5h9abmhttsi5blp7urqa9kd4uh98.apps.googleusercontent.com",
+      "scopes": ["openid", "email", "profile"]
     },
     "web_accessible_resources": [
       {

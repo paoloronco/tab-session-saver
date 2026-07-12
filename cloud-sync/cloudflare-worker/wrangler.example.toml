@@ -1,0 +1,8 @@
+name = "tabsessionsaver-cloudsync"
+main = "src/index.js"
+compatibility_date = "2026-07-12"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tabsessionsaver-sync"
+database_id = "replace-with-your-d1-database-id"

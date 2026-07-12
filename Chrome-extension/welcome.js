@@ -5,7 +5,7 @@
     en: {
       lang_label: "Language",
       hero_title: "Welcome to Tab Session Saver",
-      hero_lead: "Save, manage, restore, export and import tab groups. Everything stays <strong>on your device</strong>.",
+      hero_lead: "Save, manage, restore, export and import tab groups. Everything stays <strong>on your device</strong> unless you enable Cloud Sync.",
       step1_title: "Make sure the extension is pinned",
       step1_caption: `<svg class="inline-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3l8 8-6 1-1 6-8-8 7-7z"></path></svg>
                       Click the <span class="pill">
@@ -43,7 +43,7 @@
       open_cws: "Open on Chrome Web Store",
       close: "Close",
       privacy_title: "Privacy",
-      privacy_text: "Session data is stored <strong>locally</strong> using <code class='inline'>chrome.storage.local</code>. No URLs or preferences are sent to external servers.",
+      privacy_text: "Session data is stored <strong>locally</strong> using <code class='inline'>chrome.storage.local</code> by default. If Cloud Sync is enabled, saved sessions are sent to your configured sync endpoint.",
       browser_warn_title: "Unsupported browser detected",
       browser_warn_text: "This extension is officially developed and tested for Google Chrome. You appear to be using a Chromium-based browser that is not officially supported. Some features — especially session restore, tab groups, and multi-window behavior — may behave differently.",
       browser_unknown_title: "Browser could not be reliably identified",
@@ -52,7 +52,7 @@
     it: {
       lang_label: "Lingua",
       hero_title: "Benvenuto in Tab Session Saver",
-      hero_lead: "Salva, gestisci, ripristina, esporta e importa gruppi di schede. Tutto resta <strong>solo sul tuo dispositivo</strong>.",
+      hero_lead: "Salva, gestisci, ripristina, esporta e importa gruppi di schede. Tutto resta <strong>solo sul tuo dispositivo</strong> se non abiliti Cloud Sync.",
       step1_title: "Assicurati che l’estensione sia pinnata",
       step1_caption: `<svg class="inline-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3l8 8-6 1-1 6-8-8 7-7z"></path></svg>
                       Clicca sull’icona <span class="pill">
@@ -90,7 +90,7 @@
       open_cws: "Apri sul Chrome Web Store",
       close: "Chiudi",
       privacy_title: "Privacy",
-      privacy_text: "I dati delle sessioni sono salvati <strong>in locale</strong> con <code class='inline'>chrome.storage.local</code>. Nessun dato viene inviato a server esterni.",
+      privacy_text: "I dati delle sessioni sono salvati <strong>in locale</strong> con <code class='inline'>chrome.storage.local</code> per impostazione predefinita. Se Cloud Sync \u00E8 abilitato, le sessioni salvate vengono inviate all'endpoint sync configurato.",
       browser_warn_title: "Browser non supportato rilevato",
       browser_warn_text: "Questa estensione è sviluppata e testata ufficialmente per Google Chrome. Sembra che tu stia usando un browser basato su Chromium non ufficialmente supportato. Alcune funzioni — in particolare il ripristino delle sessioni, i gruppi di schede e il comportamento multi-finestra — potrebbero funzionare diversamente.",
       browser_unknown_title: "Impossibile identificare il browser in modo affidabile",

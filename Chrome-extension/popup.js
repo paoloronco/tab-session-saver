@@ -22,11 +22,6 @@ const translations = {
     language_label: "Language",
     dark_mode_label: "Dark mode",
     color_label: "Accent color",
-    popup_size_label: "Popup size",
-    popup_size_small: "Small",
-    popup_size_medium: "Medium",
-    popup_size_large: "Large",
-    popup_size_huge: "Huge (Full tab)",
     appearance_title: "Appearance",
     restore_behavior_title: "Restore behavior",
     restore_behavior_description: "Choose where the last window of a restored session opens.",
@@ -47,25 +42,46 @@ const translations = {
     newsletter_subscribe_loading: "Subscribing...",
     newsletter_configuration_error: "Newsletter service is not configured yet.",
     newsletter_request_error: "Unable to update newsletter subscription. Please try again.",
+    cloud_sync_title: "Cloud Sync",
+    cloud_sync_description: "Sign in to sync saved sessions across your devices.",
+    cloud_sync_register_button: "Create sync account / Login",
+    cloud_sync_push_button: "Push",
+    cloud_sync_pull_button: "Pull",
+    cloud_sync_disconnect_button: "Disable",
+    cloud_sync_not_configured: "Sign in before using Cloud Sync.",
+    cloud_sync_registered: "Cloud Sync is enabled.",
+    cloud_sync_account_label: "Signed in as {email}.",
+    cloud_sync_pushed: "Local sessions pushed to cloud.",
+    cloud_sync_pulled: "Cloud sessions pulled.",
+    cloud_sync_disconnected: "Cloud Sync disabled on this device.",
+    cloud_sync_request_error: "Cloud Sync request failed. Sign in again and retry.",
+    cloud_sync_quota_exceeded: "Free Cloud Sync limit reached. Keep up to {sessions} sessions and {urls} URLs in cloud sync.",
+    cloud_sync_status_idle: "Not connected.",
+    cloud_sync_status_pending: "Pending upload.",
+    cloud_sync_status_synced: "Last synced {time}.",
     auto_save_title: "Auto Save",
     auto_save_description: "Automatically capture the current session on a schedule.",
     auto_save_toggle_label: "Enable Auto Save",
     auto_save_on_exit_toggle_label: "Save when Chrome closes",
     auto_save_interval_label: "Save every",
     auto_save_interval_unit: "minutes",
-    auto_save_filter_group_label: "Auto saved session source",
-    auto_save_filter_all: "All",
-    auto_save_filter_scheduled: "Scheduled",
-    auto_save_filter_exit: "On Exit",
     auto_save_group_mode_label: "Auto Save grouping",
     auto_save_group_mode_smart: "Smart",
     auto_save_group_mode_day: "By day",
     auto_save_group_mode_session: "By browser session",
     auto_save_group_mode_none: "No grouping",
-    auto_save_group_browser_title: "Current browser session",
-    auto_save_group_day_title: "{date}",
-    auto_save_group_topic_title: "{topic} workspace",
-    auto_save_group_count: "{count} auto saves",
+    auto_save_group_browser_title: "Browser session",
+    auto_save_group_day_title: "Day",
+    auto_save_group_topic_title: "Similar tabs",
+    auto_save_group_count: "{count} sessions",
+    add_url_button: "Add URL",
+    add_url_prompt: "Enter a URL to add to this session:",
+    add_url_invalid: "Enter a valid http or https URL.",
+    add_url_failed: "Unable to add this URL.",
+    auto_save_filter_group_label: "Auto saved session source",
+    auto_save_filter_all: "All",
+    auto_save_filter_scheduled: "Scheduled",
+    auto_save_filter_exit: "On Exit",
     manual_sessions_tab: "Manually Saved",
     auto_sessions_tab: "Auto Saved",
     resources_title: "Get the extension",
@@ -83,10 +99,6 @@ const translations = {
     preview_empty: "No tabs captured in this session",
     session_menu_label: "Session menu",
     session_default_name: "Session",
-    add_url_button: "Add URL",
-    add_url_prompt: "Add a URL to this saved session:",
-    add_url_invalid: "Enter a valid URL. You can type example.com and the extension will use https:// automatically.",
-    add_url_failed: "Unable to add this URL to the session. Please try again.",
     rename_prompt: "Enter a new name for this session:",
     chrome_store_link: "Install from Chrome Web Store",
     github_link: "Source code on GitHub",
@@ -135,11 +147,6 @@ const translations = {
     language_label: "Idioma",
     dark_mode_label: "Modo oscuro",
     color_label: "Color de acento",
-    popup_size_label: "Tamaño del popup",
-    popup_size_small: "Pequeño",
-    popup_size_medium: "Mediano",
-    popup_size_large: "Grande",
-    popup_size_huge: "Enorme (pestaña completa)",
     appearance_title: "Apariencia",
     restore_behavior_title: "Comportamiento de restauraci\u00F3n",
     restore_behavior_description: "Elige d\u00F3nde se abre la \u00FAltima ventana de una sesi\u00F3n restaurada.",
@@ -166,19 +173,23 @@ const translations = {
     auto_save_on_exit_toggle_label: "Guardar al cerrar Chrome",
     auto_save_interval_label: "Guardar cada",
     auto_save_interval_unit: "minutos",
+    auto_save_group_mode_label: "Agrupaci\u00F3n de guardado autom\u00E1tico",
+    auto_save_group_mode_smart: "Inteligente",
+    auto_save_group_mode_day: "Por d\u00EDa",
+    auto_save_group_mode_session: "Por sesi\u00F3n del navegador",
+    auto_save_group_mode_none: "Sin agrupaci\u00F3n",
+    auto_save_group_browser_title: "Sesi\u00F3n del navegador",
+    auto_save_group_day_title: "D\u00EDa",
+    auto_save_group_topic_title: "Pesta\u00F1as similares",
+    auto_save_group_count: "{count} sesiones",
+    add_url_button: "A\u00F1adir URL",
+    add_url_prompt: "Introduce una URL para a\u00F1adirla a esta sesi\u00F3n:",
+    add_url_invalid: "Introduce una URL http o https v\u00E1lida.",
+    add_url_failed: "No se pudo a\u00F1adir esta URL.",
     auto_save_filter_group_label: "Origen de sesiones autom\u00E1ticas",
     auto_save_filter_all: "Todas",
     auto_save_filter_scheduled: "Programadas",
     auto_save_filter_exit: "Al salir",
-    auto_save_group_mode_label: "Agrupar Auto Save",
-    auto_save_group_mode_smart: "Inteligente",
-    auto_save_group_mode_day: "Por d\u00EDa",
-    auto_save_group_mode_session: "Por sesi\u00F3n del navegador",
-    auto_save_group_mode_none: "Sin agrupar",
-    auto_save_group_browser_title: "Sesi\u00F3n actual del navegador",
-    auto_save_group_day_title: "{date}",
-    auto_save_group_topic_title: "Espacio {topic}",
-    auto_save_group_count: "{count} guardados autom\u00E1ticos",
     manual_sessions_tab: "Guardadas manualmente",
     auto_sessions_tab: "Guardadas autom\u00E1ticamente",
     resources_title: "Obtener la extensión",
@@ -196,10 +207,6 @@ const translations = {
     preview_empty: "No hay pesta\u00F1as en esta sesi\u00F3n",
     session_menu_label: "Men\u00FA de sesi\u00F3n",
     session_default_name: "Sesi\u00F3n",
-    add_url_button: "A\u00F1adir URL",
-    add_url_prompt: "A\u00F1ade una URL a esta sesi\u00F3n guardada:",
-    add_url_invalid: "Introduce una URL v\u00E1lida. Puedes escribir example.com y la extensi\u00F3n usar\u00E1 https:// autom\u00E1ticamente.",
-    add_url_failed: "No se pudo a\u00F1adir esta URL a la sesi\u00F3n. Int\u00E9ntalo de nuevo.",
     rename_prompt: "Introduce un nuevo nombre para esta sesi\u00F3n:",
     chrome_store_link: "Instalar desde Chrome Web Store",
     github_link: "Código fuente en GitHub",
@@ -248,11 +255,6 @@ const translations = {
     language_label: "Lingua",
     dark_mode_label: "Modalit\u00E0 scura",
     color_label: "Colore di accento",
-    popup_size_label: "Dimensioni popup",
-    popup_size_small: "Piccole",
-    popup_size_medium: "Medie",
-    popup_size_large: "Grandi",
-    popup_size_huge: "Enormi (scheda intera)",
     appearance_title: "Aspetto",
     restore_behavior_title: "Comportamento di ripristino",
     restore_behavior_description: "Scegli dove aprire l'ultima finestra di una sessione ripristinata.",
@@ -273,25 +275,46 @@ const translations = {
     newsletter_subscribe_loading: "Iscrizione in corso...",
     newsletter_configuration_error: "Il servizio newsletter non \u00E8 ancora configurato.",
     newsletter_request_error: "Impossibile aggiornare l'iscrizione. Riprova.",
+    cloud_sync_title: "Cloud Sync",
+    cloud_sync_description: "Accedi per sincronizzare le sessioni salvate tra i tuoi dispositivi.",
+    cloud_sync_register_button: "Crea account sync / Login",
+    cloud_sync_push_button: "Invia",
+    cloud_sync_pull_button: "Scarica",
+    cloud_sync_disconnect_button: "Disabilita",
+    cloud_sync_not_configured: "Accedi prima di usare Cloud Sync.",
+    cloud_sync_registered: "Cloud Sync \u00E8 abilitato.",
+    cloud_sync_account_label: "Accesso effettuato come {email}.",
+    cloud_sync_pushed: "Sessioni locali inviate al cloud.",
+    cloud_sync_pulled: "Sessioni cloud scaricate.",
+    cloud_sync_disconnected: "Cloud Sync disabilitato su questo dispositivo.",
+    cloud_sync_request_error: "Richiesta Cloud Sync non riuscita. Accedi di nuovo e riprova.",
+    cloud_sync_quota_exceeded: "Limite Cloud Sync gratuito raggiunto. Mantieni fino a {sessions} sessioni e {urls} URL nel cloud sync.",
+    cloud_sync_status_idle: "Non connesso.",
+    cloud_sync_status_pending: "Upload in attesa.",
+    cloud_sync_status_synced: "Ultimo sync {time}.",
     auto_save_title: "Auto Save",
     auto_save_description: "Salva automaticamente la sessione corrente con un intervallo programmato.",
     auto_save_toggle_label: "Abilita Auto Save",
     auto_save_on_exit_toggle_label: "Salva alla chiusura di Chrome",
     auto_save_interval_label: "Salva ogni",
     auto_save_interval_unit: "minuti",
+    auto_save_group_mode_label: "Raggruppamento Auto Save",
+    auto_save_group_mode_smart: "Smart",
+    auto_save_group_mode_day: "Per giorno",
+    auto_save_group_mode_session: "Per sessione browser",
+    auto_save_group_mode_none: "Nessun raggruppamento",
+    auto_save_group_browser_title: "Sessione browser",
+    auto_save_group_day_title: "Giorno",
+    auto_save_group_topic_title: "Schede simili",
+    auto_save_group_count: "{count} sessioni",
+    add_url_button: "Aggiungi URL",
+    add_url_prompt: "Inserisci un URL da aggiungere a questa sessione:",
+    add_url_invalid: "Inserisci un URL http o https valido.",
+    add_url_failed: "Impossibile aggiungere questo URL.",
     auto_save_filter_group_label: "Origine sessioni automatiche",
     auto_save_filter_all: "Tutte",
     auto_save_filter_scheduled: "Programmate",
     auto_save_filter_exit: "Alla chiusura",
-    auto_save_group_mode_label: "Raggruppamento Auto Save",
-    auto_save_group_mode_smart: "Intelligente",
-    auto_save_group_mode_day: "Per giorno",
-    auto_save_group_mode_session: "Per sessione browser",
-    auto_save_group_mode_none: "Nessun raggruppamento",
-    auto_save_group_browser_title: "Sessione browser corrente",
-    auto_save_group_day_title: "{date}",
-    auto_save_group_topic_title: "Area {topic}",
-    auto_save_group_count: "{count} auto-save",
     manual_sessions_tab: "Salvate manualmente",
     auto_sessions_tab: "Salvate automaticamente",
     resources_title: "Ottieni l'estensione",
@@ -309,10 +332,6 @@ const translations = {
     preview_empty: "Nessuna scheda in questa sessione",
     session_menu_label: "Menu sessione",
     session_default_name: "Sessione",
-    add_url_button: "Aggiungi URL",
-    add_url_prompt: "Aggiungi un URL a questa sessione salvata:",
-    add_url_invalid: "Inserisci un URL valido. Puoi scrivere example.com e l'estensione user\u00E0 https:// automaticamente.",
-    add_url_failed: "Impossibile aggiungere questo URL alla sessione. Riprova.",
     rename_prompt: "Inserisci un nuovo nome per questa sessione:",
     chrome_store_link: "Installa dal Chrome Web Store",
     github_link: "Codice sorgente su GitHub",
@@ -361,11 +380,6 @@ const translations = {
     language_label: "Langue",
     dark_mode_label: "Mode sombre",
     color_label: "Couleur d'accent",
-    popup_size_label: "Taille du popup",
-    popup_size_small: "Petite",
-    popup_size_medium: "Moyenne",
-    popup_size_large: "Grande",
-    popup_size_huge: "Énorme (onglet complet)",
     appearance_title: "Apparence",
     restore_behavior_title: "Comportement de restauration",
     restore_behavior_description: "Choisissez o\u00F9 ouvrir la derni\u00E8re fen\u00EAtre d'une session restaur\u00E9e.",
@@ -392,19 +406,23 @@ const translations = {
     auto_save_on_exit_toggle_label: "Enregistrer \u00E0 la fermeture de Chrome",
     auto_save_interval_label: "Enregistrer toutes les",
     auto_save_interval_unit: "minutes",
-    auto_save_filter_group_label: "Source des sessions automatiques",
-    auto_save_filter_all: "Toutes",
-    auto_save_filter_scheduled: "Planifi\u00E9es",
-    auto_save_filter_exit: "\u00C0 la fermeture",
-    auto_save_group_mode_label: "Regroupement Auto Save",
+    auto_save_group_mode_label: "Regroupement automatique",
     auto_save_group_mode_smart: "Intelligent",
     auto_save_group_mode_day: "Par jour",
     auto_save_group_mode_session: "Par session navigateur",
     auto_save_group_mode_none: "Aucun regroupement",
-    auto_save_group_browser_title: "Session actuelle du navigateur",
-    auto_save_group_day_title: "{date}",
-    auto_save_group_topic_title: "Espace {topic}",
-    auto_save_group_count: "{count} sauvegardes auto",
+    auto_save_group_browser_title: "Session navigateur",
+    auto_save_group_day_title: "Jour",
+    auto_save_group_topic_title: "Onglets similaires",
+    auto_save_group_count: "{count} sessions",
+    add_url_button: "Ajouter une URL",
+    add_url_prompt: "Saisissez une URL \u00E0 ajouter \u00E0 cette session :",
+    add_url_invalid: "Saisissez une URL http ou https valide.",
+    add_url_failed: "Impossible d'ajouter cette URL.",
+    auto_save_filter_group_label: "Source des sessions automatiques",
+    auto_save_filter_all: "Toutes",
+    auto_save_filter_scheduled: "Planifi\u00E9es",
+    auto_save_filter_exit: "\u00C0 la fermeture",
     manual_sessions_tab: "Enregistr\u00E9es manuellement",
     auto_sessions_tab: "Enregistr\u00E9es automatiquement",
     resources_title: "Obtenir l'extension",
@@ -422,10 +440,6 @@ const translations = {
     preview_empty: "Aucun onglet dans cette session",
     session_menu_label: "Menu de session",
     session_default_name: "Session",
-    add_url_button: "Ajouter une URL",
-    add_url_prompt: "Ajoutez une URL \u00E0 cette session enregistr\u00E9e :",
-    add_url_invalid: "Saisissez une URL valide. Vous pouvez \u00E9crire example.com et l'extension utilisera https:// automatiquement.",
-    add_url_failed: "Impossible d'ajouter cette URL \u00E0 la session. R\u00E9essayez.",
     rename_prompt: "Entrez un nouveau nom pour cette session :",
     chrome_store_link: "Installer depuis le Chrome Web Store",
     github_link: "Code source sur GitHub",
@@ -474,11 +488,6 @@ const translations = {
     language_label: "Sprache",
     dark_mode_label: "Dunkelmodus",
     color_label: "Akzentfarbe",
-    popup_size_label: "Popup-Gr\u00F6\u00DFe",
-    popup_size_small: "Klein",
-    popup_size_medium: "Mittel",
-    popup_size_large: "Gro\u00DF",
-    popup_size_huge: "Riesig (ganzer Tab)",
     appearance_title: "Darstellung",
     restore_behavior_title: "Wiederherstellungsverhalten",
     restore_behavior_description: "W\u00E4hlen Sie, wo das letzte Fenster einer Sitzung ge\u00F6ffnet wird.",
@@ -505,19 +514,23 @@ const translations = {
     auto_save_on_exit_toggle_label: "Beim Schlie\u00DFen von Chrome speichern",
     auto_save_interval_label: "Speichern alle",
     auto_save_interval_unit: "Minuten",
+    auto_save_group_mode_label: "Auto-Save-Gruppierung",
+    auto_save_group_mode_smart: "Smart",
+    auto_save_group_mode_day: "Nach Tag",
+    auto_save_group_mode_session: "Nach Browsersitzung",
+    auto_save_group_mode_none: "Keine Gruppierung",
+    auto_save_group_browser_title: "Browsersitzung",
+    auto_save_group_day_title: "Tag",
+    auto_save_group_topic_title: "\u00C4hnliche Tabs",
+    auto_save_group_count: "{count} Sitzungen",
+    add_url_button: "URL hinzuf\u00FCgen",
+    add_url_prompt: "Gib eine URL ein, die zu dieser Sitzung hinzugef\u00FCgt werden soll:",
+    add_url_invalid: "Gib eine g\u00FCltige http- oder https-URL ein.",
+    add_url_failed: "Diese URL konnte nicht hinzugef\u00FCgt werden.",
     auto_save_filter_group_label: "Quelle automatisch gespeicherter Sitzungen",
     auto_save_filter_all: "Alle",
     auto_save_filter_scheduled: "Geplant",
     auto_save_filter_exit: "Beim Schlie\u00DFen",
-    auto_save_group_mode_label: "Auto-Save gruppieren",
-    auto_save_group_mode_smart: "Intelligent",
-    auto_save_group_mode_day: "Nach Tag",
-    auto_save_group_mode_session: "Nach Browsersitzung",
-    auto_save_group_mode_none: "Nicht gruppieren",
-    auto_save_group_browser_title: "Aktuelle Browsersitzung",
-    auto_save_group_day_title: "{date}",
-    auto_save_group_topic_title: "{topic}-Arbeitsbereich",
-    auto_save_group_count: "{count} Auto-Sicherungen",
     manual_sessions_tab: "Manuell gespeichert",
     auto_sessions_tab: "Automatisch gespeichert",
     resources_title: "Erweiterung beziehen",
@@ -535,10 +548,6 @@ const translations = {
     preview_empty: "Keine Tabs in dieser Sitzung",
     session_menu_label: "Sitzungsmen\u00FC",
     session_default_name: "Sitzung",
-    add_url_button: "URL hinzuf\u00FCgen",
-    add_url_prompt: "F\u00FCge dieser gespeicherten Sitzung eine URL hinzu:",
-    add_url_invalid: "Gib eine g\u00FCltige URL ein. Du kannst example.com eingeben, dann verwendet die Erweiterung automatisch https://.",
-    add_url_failed: "Diese URL konnte der Sitzung nicht hinzugef\u00FCgt werden. Bitte versuche es erneut.",
     rename_prompt: "Gib einen neuen Namen f\u00FCr diese Sitzung ein:",
     chrome_store_link: "Aus dem Chrome Web Store installieren",
     github_link: "Quellcode auf GitHub",
@@ -599,17 +608,10 @@ const SAVE_TYPE_MANUAL = 'manual';
 const AUTO_SAVE_TRIGGER_ALL = 'all';
 const AUTO_SAVE_TRIGGER_SCHEDULED = 'scheduled';
 const AUTO_SAVE_TRIGGER_EXIT = 'exit';
-const AUTO_SAVE_GROUP_MODE_KEY = 'autoSaveGroupMode';
 const AUTO_SAVE_GROUP_MODE_SMART = 'smart';
 const AUTO_SAVE_GROUP_MODE_DAY = 'day';
 const AUTO_SAVE_GROUP_MODE_SESSION = 'session';
 const AUTO_SAVE_GROUP_MODE_NONE = 'none';
-const AUTO_SAVE_GROUP_MODES = new Set([
-  AUTO_SAVE_GROUP_MODE_SMART,
-  AUTO_SAVE_GROUP_MODE_DAY,
-  AUTO_SAVE_GROUP_MODE_SESSION,
-  AUTO_SAVE_GROUP_MODE_NONE
-]);
 
 let currentLanguage = 'en';
 let reloadSessions = () => {};
@@ -734,6 +736,18 @@ function getSessionsByAutoSaveTrigger(sessions, trigger) {
   return autoSessions.filter((session) => getSessionSaveTrigger(session) === trigger);
 }
 
+function getAutoSaveGroupMode() {
+  const value = localStorage.getItem('autoSaveGroupMode');
+  return [
+    AUTO_SAVE_GROUP_MODE_SMART,
+    AUTO_SAVE_GROUP_MODE_DAY,
+    AUTO_SAVE_GROUP_MODE_SESSION,
+    AUTO_SAVE_GROUP_MODE_NONE
+  ].includes(value)
+    ? value
+    : AUTO_SAVE_GROUP_MODE_SMART;
+}
+
 function getAutoSaveBaseDomain(url) {
   if (typeof url !== 'string') return '';
   try {
@@ -750,11 +764,6 @@ function getAutoSaveBaseDomain(url) {
 }
 
 function getAutoSaveTopicSignature(session) {
-  const storedSignature = session?.metadata?.autoSaveTopicSignature;
-  if (typeof storedSignature === 'string' && storedSignature.trim()) {
-    return storedSignature.trim().toLowerCase();
-  }
-
   const counts = new Map();
   const windows = Array.isArray(session?.windows) ? session.windows : [];
   windows.forEach((browserWindow) => {
@@ -766,147 +775,112 @@ function getAutoSaveTopicSignature(session) {
     });
   });
 
-  if (!counts.size) return '';
+  if (!counts.size) return null;
   return Array.from(counts.entries())
     .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0][0];
 }
 
-function normalizeAutoSaveGroupMode(value) {
-  return AUTO_SAVE_GROUP_MODES.has(value) ? value : AUTO_SAVE_GROUP_MODE_SMART;
-}
-
-function getAutoSaveGroupMode() {
-  return normalizeAutoSaveGroupMode(localStorage.getItem(AUTO_SAVE_GROUP_MODE_KEY));
-}
-
-function getAutoSaveDayKey(session) {
-  const timestamp = typeof session?.timestamp === 'string' ? session.timestamp : '';
-  if (/^\d{4}-\d{2}-\d{2}/.test(timestamp)) {
-    return timestamp.slice(0, 10);
+function getAutoSaveGroupKey(match, mode) {
+  const session = match?.sessionData || {};
+  if (mode === AUTO_SAVE_GROUP_MODE_DAY) {
+    const timestamp = typeof session.timestamp === 'string' ? session.timestamp : '';
+    return timestamp.slice(0, 10) || `single:${match.originalIndex}`;
   }
-  const time = new Date(timestamp).getTime();
-  if (!Number.isFinite(time)) return '';
-  return new Date(time).toISOString().slice(0, 10);
+  if (mode === AUTO_SAVE_GROUP_MODE_SESSION) {
+    return session?.metadata?.autoSaveRunId || `single:${match.originalIndex}`;
+  }
+  if (mode === AUTO_SAVE_GROUP_MODE_SMART) {
+    return session?.metadata?.autoSaveRunId || getAutoSaveTopicSignature(session) || `single:${match.originalIndex}`;
+  }
+  return `single:${match.originalIndex}`;
 }
 
-function getAutoSaveGroupDescriptor(session, fallbackIndex = 0, mode = AUTO_SAVE_GROUP_MODE_SMART) {
-  const groupMode = normalizeAutoSaveGroupMode(mode);
-  if (groupMode === AUTO_SAVE_GROUP_MODE_NONE) {
-    return {
-      key: `single:${session?.timestamp || fallbackIndex}`,
+function getAutoSaveGroupReason(match, mode) {
+  const session = match?.sessionData || {};
+  if (mode === AUTO_SAVE_GROUP_MODE_DAY) return 'day';
+  if (mode === AUTO_SAVE_GROUP_MODE_SESSION) return session?.metadata?.autoSaveRunId ? 'browser' : 'single';
+  if (mode === AUTO_SAVE_GROUP_MODE_SMART) {
+    if (session?.metadata?.autoSaveRunId) return 'browser';
+    return getAutoSaveTopicSignature(session) ? 'topic' : 'single';
+  }
+  return 'single';
+}
+
+function getSessionSortTime(match) {
+  const timestamp = match?.sessionData?.timestamp;
+  const parsed = typeof timestamp === 'string' ? Date.parse(timestamp) : Number.NaN;
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function groupAutoSavedSessionsForDisplay(matches, requestedMode = null) {
+  const mode = requestedMode || getAutoSaveGroupMode();
+  const sorted = (Array.isArray(matches) ? matches : [])
+    .slice()
+    .sort((left, right) => getSessionSortTime(right) - getSessionSortTime(left));
+
+  if (mode === AUTO_SAVE_GROUP_MODE_NONE) {
+    return sorted.map((match) => ({
+      key: `single:${match.originalIndex}`,
       reason: 'single',
-      topic: ''
-    };
+      sessions: [match]
+    }));
   }
 
-  if (groupMode === AUTO_SAVE_GROUP_MODE_DAY) {
-    const dayKey = getAutoSaveDayKey(session);
-    return {
-      key: dayKey ? `day:${dayKey}` : `single:${session?.timestamp || fallbackIndex}`,
-      reason: dayKey ? 'day' : 'single',
-      topic: dayKey
-    };
-  }
-
-  const runId = session?.metadata?.autoSaveRunId;
-  if (typeof runId === 'string' && runId.trim()) {
-    return {
-      key: `browser:${runId.trim()}`,
-      reason: 'browser',
-      topic: getAutoSaveTopicSignature(session)
-    };
-  }
-
-  if (groupMode === AUTO_SAVE_GROUP_MODE_SESSION) {
-    return {
-      key: `single:${session?.timestamp || fallbackIndex}`,
-      reason: 'single',
-      topic: ''
-    };
-  }
-
-  const topic = getAutoSaveTopicSignature(session);
-  if (topic) {
-    return {
-      key: `topic:${topic}`,
-      reason: 'topic',
-      topic
-    };
-  }
-
-  return {
-    key: `single:${session?.timestamp || fallbackIndex}`,
-    reason: 'single',
-    topic: ''
-  };
-}
-
-function getAutoSaveGroupTimestamp(group) {
-  return Math.max(...group.sessions.map(({ sessionData }) => {
-    const time = new Date(sessionData?.timestamp || 0).getTime();
-    return Number.isFinite(time) ? time : 0;
-  }));
-}
-
-function groupAutoSavedSessionsForDisplay(sessionMatches, mode = AUTO_SAVE_GROUP_MODE_SMART) {
-  const groupsByKey = new Map();
-  (Array.isArray(sessionMatches) ? sessionMatches : []).forEach((match, fallbackIndex) => {
-    const descriptor = getAutoSaveGroupDescriptor(match?.sessionData, fallbackIndex, mode);
-    if (!groupsByKey.has(descriptor.key)) {
-      groupsByKey.set(descriptor.key, {
-        ...descriptor,
+  const groups = new Map();
+  sorted.forEach((match) => {
+    const key = getAutoSaveGroupKey(match, mode);
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        reason: getAutoSaveGroupReason(match, mode),
         sessions: []
       });
     }
-    groupsByKey.get(descriptor.key).sessions.push(match);
+    groups.get(key).sessions.push(match);
   });
 
-  return Array.from(groupsByKey.values())
-    .map((group) => ({
-      ...group,
-      sessions: group.sessions.sort((left, right) => {
-        const leftTime = new Date(left.sessionData?.timestamp || 0).getTime();
-        const rightTime = new Date(right.sessionData?.timestamp || 0).getTime();
-        return rightTime - leftTime;
-      })
-    }))
-    .sort((left, right) => getAutoSaveGroupTimestamp(right) - getAutoSaveGroupTimestamp(left));
+  return Array.from(groups.values()).sort((left, right) =>
+    getSessionSortTime(right.sessions[0]) - getSessionSortTime(left.sessions[0])
+  );
 }
 
-function createAutoSaveGroupShell(group) {
-  const wrapper = document.createElement('details');
-  wrapper.className = 'auto-save-folder';
-  wrapper.open = true;
-
-  const summary = document.createElement('summary');
-  summary.className = 'auto-save-folder-summary';
-
-  const title = document.createElement('span');
-  title.className = 'auto-save-folder-title';
-  const topic = group.topic || 'Auto Save';
-  if (group.reason === 'browser') {
-    const baseTitle = getTranslation('auto_save_group_browser_title');
-    title.textContent = group.topic ? `${baseTitle} - ${group.topic}` : baseTitle;
-  } else if (group.reason === 'day') {
-    const dateLabel = formatTimestamp(group.topic).date;
-    title.textContent = getTranslation('auto_save_group_day_title').replace('{date}', dateLabel);
-  } else {
-    title.textContent = getTranslation('auto_save_group_topic_title').replace('{topic}', topic);
+function getCustomUrlTabFromInput(value) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed);
+  const candidate = hasScheme ? trimmed : `https://${trimmed}`;
+  try {
+    const parsed = new URL(candidate);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return {
+      title: trimmed,
+      url: parsed.href,
+      pinned: false,
+      active: false,
+      muted: false,
+      favIconUrl: null,
+      audible: false,
+      discarded: false,
+      index: null,
+      groupId: -1
+    };
+  } catch (_) {
+    return null;
   }
+}
 
-  const count = document.createElement('span');
-  count.className = 'auto-save-folder-count';
-  count.textContent = getTranslation('auto_save_group_count').replace('{count}', group.sessions.length);
-
-  summary.appendChild(title);
-  summary.appendChild(count);
-
-  const body = document.createElement('div');
-  body.className = 'auto-save-folder-sessions';
-
-  wrapper.appendChild(summary);
-  wrapper.appendChild(body);
-  return { wrapper, body };
+function addCustomUrlToSession(session, urlValue) {
+  const tab = getCustomUrlTabFromInput(urlValue);
+  if (!tab) return null;
+  const next = normalizeSessionSnapshot(session);
+  if (!Array.isArray(next.windows) || next.windows.length === 0) {
+    next.windows = [{ tabs: [], groups: [] }];
+  }
+  const targetWindow = next.windows[next.windows.length - 1];
+  if (!Array.isArray(targetWindow.tabs)) targetWindow.tabs = [];
+  targetWindow.tabs.push({ ...tab, index: targetWindow.tabs.length });
+  return next;
 }
 
 function renderMetaSegments(container, segments) {
@@ -1093,71 +1067,6 @@ function normalizeRestorableUrl(value) {
   } catch (_) {
     return null;
   }
-}
-
-function normalizeCustomUrlInput(value) {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-
-  const directUrl = normalizeRestorableUrl(trimmed);
-  if (directUrl) return directUrl;
-
-  const hasSchemePrefix = /^[a-z][a-z\d+.-]*:/i.test(trimmed);
-  const isLikelyHostWithPort = /^[\w.-]+:\d+(?:[/?#]|$)/.test(trimmed);
-  const hasExplicitScheme = hasSchemePrefix && !isLikelyHostWithPort;
-  if (hasExplicitScheme) return null;
-
-  return normalizeRestorableUrl(`https://${trimmed}`);
-}
-
-function getCustomUrlTabFromInput(value) {
-  const url = normalizeCustomUrlInput(value);
-  if (!url) return null;
-  const title = clampString(typeof value === 'string' && value.trim() ? value.trim() : url, 256);
-  return {
-    title,
-    url,
-    pinned: false,
-    active: false,
-    muted: false,
-    favIconUrl: null,
-    audible: false,
-    discarded: false,
-    index: null,
-    groupId: -1
-  };
-}
-
-function addCustomUrlToSession(session, value) {
-  const customTab = getCustomUrlTabFromInput(value);
-  if (!customTab) return null;
-
-  const nextSession = normalizeSessionSnapshot(session);
-  if (!Array.isArray(nextSession.windows)) {
-    nextSession.windows = [];
-  }
-  if (nextSession.windows.length === 0) {
-    nextSession.windows.push({
-      state: 'normal',
-      focused: false,
-      left: null,
-      top: null,
-      width: null,
-      height: null,
-      incognito: false,
-      alwaysOnTop: false,
-      tabs: [],
-      groups: []
-    });
-  }
-
-  const targetWindow = nextSession.windows[nextSession.windows.length - 1];
-  if (!Array.isArray(targetWindow.tabs)) {
-    targetWindow.tabs = [];
-  }
-  targetWindow.tabs.push(customTab);
-  return nextSession;
 }
 
 function sanitizeFaviconUrl(value) {
@@ -1690,7 +1599,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const accentSelect = document.getElementById('accentColor');
   const darkToggle = document.getElementById('darkMode');
   const languageSelect = document.getElementById('language');
-  const popupSizeSelect = document.getElementById('popupSize');
   const restoreModeInputs = document.querySelectorAll('input[name="restoreMode"]');
   const autoSaveEnabledToggle = document.getElementById('autoSaveEnabled');
   const autoSaveOnExitEnabledToggle = document.getElementById('autoSaveOnExitEnabled');
@@ -1708,10 +1616,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const newsletterEmailInput = document.getElementById('newsletterEmail');
   const newsletterSubmitBtn = document.getElementById('newsletterSubmit');
   const newsletterStatus = document.getElementById('newsletterStatus');
+  const cloudSyncForm = document.getElementById('cloud-sync-form');
+  const cloudSyncAccount = document.getElementById('cloudSyncAccount');
+  const cloudSyncLoginBtn = document.getElementById('cloudSyncLogin');
+  const cloudSyncPushBtn = document.getElementById('cloudSyncPush');
+  const cloudSyncPullBtn = document.getElementById('cloudSyncPull');
+  const cloudSyncDisconnectBtn = document.getElementById('cloudSyncDisconnect');
+  const cloudSyncStatus = document.getElementById('cloudSyncStatus');
   let latestSessions = [];
   let activeSessionCategory = SAVE_TYPE_MANUAL;
   let activeAutoSaveTrigger = AUTO_SAVE_TRIGGER_ALL;
   let newsletterState = normalizeNewsletterSubscription();
+  let cloudSyncSettingsState = null;
 
   document.addEventListener('click', closeAllMenus);
 
@@ -1811,10 +1727,8 @@ document.addEventListener('DOMContentLoaded', () => {
   autoSaveOnExitEnabledToggle?.addEventListener('change', persistAutoSaveSettings);
   autoSaveIntervalInput?.addEventListener('change', persistAutoSaveSettings);
   autoSaveIntervalInput?.addEventListener('blur', persistAutoSaveSettings);
-  autoSaveGroupModeSelect?.addEventListener('change', () => {
-    const mode = normalizeAutoSaveGroupMode(autoSaveGroupModeSelect.value);
-    localStorage.setItem(AUTO_SAVE_GROUP_MODE_KEY, mode);
-    autoSaveGroupModeSelect.value = mode;
+  autoSaveGroupModeSelect?.addEventListener('change', (event) => {
+    localStorage.setItem('autoSaveGroupMode', event.target.value);
     renderSessionList(latestSessions, searchInput?.value || '');
   });
 
@@ -1906,6 +1820,158 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  function setCloudSyncStatus(key, options = {}) {
+    if (!cloudSyncStatus) return;
+    const { type = '', replacements = {} } = options;
+    cloudSyncStatus.textContent = key ? formatTranslation(key, replacements) : '';
+    cloudSyncStatus.classList.toggle('is-success', type === 'success');
+    cloudSyncStatus.classList.toggle('is-error', type === 'error');
+  }
+
+  function getCloudSyncErrorStatus(response) {
+    if (response?.code === 'quota_exceeded') {
+      const limits = response.details?.limits || {};
+      return {
+        key: 'cloud_sync_quota_exceeded',
+        replacements: {
+          sessions: Number.isInteger(limits['max' + 'Sessions']) ? limits['max' + 'Sessions'] : 10,
+          urls: Number.isInteger(limits.maxUrls) ? limits.maxUrls : 300
+        }
+      };
+    }
+
+    return { key: 'cloud_sync_request_error', replacements: {} };
+  }
+
+  function setCloudSyncErrorStatus(response) {
+    const status = getCloudSyncErrorStatus(response);
+    setCloudSyncStatus(status.key, { type: 'error', replacements: status.replacements });
+  }
+
+  function setCloudSyncBusy(isBusy) {
+    [
+      cloudSyncLoginBtn,
+      cloudSyncPushBtn,
+      cloudSyncPullBtn,
+      cloudSyncDisconnectBtn
+    ].forEach((button) => {
+      if (button) button.disabled = isBusy;
+    });
+  }
+
+  function renderCloudSyncState(response, statusKey = '') {
+    if (!response?.success) {
+      setCloudSyncErrorStatus(response);
+      return;
+    }
+
+    cloudSyncSettingsState = response.settings || cloudSyncSettingsState || {};
+    const settings = cloudSyncSettingsState;
+    const state = response.state || {};
+    const email = settings.profile?.email || '';
+
+    if (cloudSyncAccount) {
+      cloudSyncAccount.textContent = email
+        ? formatTranslation('cloud_sync_account_label', { email })
+        : '';
+    }
+    if (cloudSyncPushBtn) cloudSyncPushBtn.disabled = !settings.configured;
+    if (cloudSyncPullBtn) cloudSyncPullBtn.disabled = !settings.configured;
+    if (cloudSyncDisconnectBtn) cloudSyncDisconnectBtn.disabled = !settings.configured;
+
+    if (statusKey) {
+      setCloudSyncStatus(statusKey, { type: statusKey === 'cloud_sync_request_error' ? 'error' : 'success' });
+      return;
+    }
+    if (!settings.configured) {
+      setCloudSyncStatus('cloud_sync_status_idle');
+      return;
+    }
+    if (state.pending) {
+      setCloudSyncStatus('cloud_sync_status_pending');
+      return;
+    }
+    if (state.lastSyncedAt) {
+      setCloudSyncStatus('cloud_sync_status_synced', {
+        type: 'success',
+        replacements: { time: formatTimestamp(state.lastSyncedAt).time }
+      });
+      return;
+    }
+    setCloudSyncStatus('');
+  }
+
+  function loadCloudSyncSettings() {
+    chrome.runtime.sendMessage({ action: 'get_cloud_sync_settings' }, (response) => {
+      if (chrome.runtime.lastError || !response?.success) {
+        setCloudSyncErrorStatus(response);
+        return;
+      }
+      renderCloudSyncState(response);
+    });
+  }
+
+  cloudSyncForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+  });
+
+  cloudSyncLoginBtn?.addEventListener('click', () => {
+    setCloudSyncBusy(true);
+    chrome.runtime.sendMessage({ action: 'cloud_sync_login' }, (response) => {
+      setCloudSyncBusy(false);
+      if (chrome.runtime.lastError || !response?.success) {
+        setCloudSyncErrorStatus(response);
+        return;
+      }
+      renderCloudSyncState(response, 'cloud_sync_registered');
+    });
+  });
+
+  cloudSyncPushBtn?.addEventListener('click', () => {
+    setCloudSyncBusy(true);
+    chrome.runtime.sendMessage({ action: 'cloud_sync_push' }, (response) => {
+      setCloudSyncBusy(false);
+      if (chrome.runtime.lastError || !response?.success) {
+        setCloudSyncErrorStatus(response);
+        return;
+      }
+      renderCloudSyncState({ success: true, settings: cloudSyncSettingsState, state: response.state }, 'cloud_sync_pushed');
+    });
+  });
+
+  cloudSyncPullBtn?.addEventListener('click', () => {
+    setCloudSyncBusy(true);
+    chrome.runtime.sendMessage({ action: 'cloud_sync_pull' }, (response) => {
+      setCloudSyncBusy(false);
+      if (chrome.runtime.lastError || !response?.success) {
+        setCloudSyncErrorStatus(response);
+        return;
+      }
+      renderCloudSyncState({ success: true, settings: cloudSyncSettingsState, state: response.state }, 'cloud_sync_pulled');
+      loadSessions();
+    });
+  });
+
+  cloudSyncDisconnectBtn?.addEventListener('click', () => {
+    setCloudSyncBusy(true);
+    chrome.runtime.sendMessage({ action: 'disconnect_cloud_sync' }, (response) => {
+      setCloudSyncBusy(false);
+      if (chrome.runtime.lastError || !response?.success) {
+        setCloudSyncErrorStatus(response);
+        return;
+      }
+      cloudSyncSettingsState = null;
+      renderCloudSyncState(
+        {
+          success: true,
+          settings: { enabled: false, configured: false, profile: {} },
+          state: {}
+        },
+        'cloud_sync_disconnected'
+      );
+    });
+  });
+
   // ACCENT COLOR
   accentSelect.addEventListener('change', e => {
     document.documentElement.style.setProperty('--accent-color', e.target.value);
@@ -1917,66 +1983,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.toggle('dark-mode', e.target.checked);
     document.body.classList.toggle('light-mode', !e.target.checked);
     localStorage.setItem('darkMode', e.target.checked);
-  });
-
-  // POPUP SIZE
-  const POPUP_SIZES = new Set(['small', 'medium', 'large', 'huge']);
-
-  function applyPopupSize(size) {
-    const validSize = POPUP_SIZES.has(size) ? size : 'medium';
-    document.documentElement.classList.remove('size-small', 'size-medium', 'size-large', 'size-huge');
-    document.body.classList.remove('size-small', 'size-medium', 'size-large', 'size-huge');
-    if (validSize !== 'medium') {
-      document.documentElement.classList.add(`size-${validSize}`);
-      document.body.classList.add(`size-${validSize}`);
-    }
-
-    // In huge mode: show both panels side-by-side, hide settings toggle
-    const main = document.getElementById('main-section');
-    const settings = document.getElementById('settings-section');
-    const settingsBtn = document.getElementById('settings-icon');
-    const settingsTitleH2 = settings && settings.querySelector('h2[data-translate="settings_title"]');
-
-    if (validSize === 'huge') {
-      if (main) main.style.display = '';
-      if (settings) settings.style.display = '';
-      if (settingsBtn) settingsBtn.style.display = 'none';
-      if (settingsTitleH2) settingsTitleH2.style.display = 'none';
-    } else {
-      // Restore normal toggle behavior: main visible, settings hidden
-      if (main) main.style.display = 'block';
-      if (settings) settings.style.display = 'none';
-      if (settingsBtn) { settingsBtn.style.display = ''; settingsBtn.setAttribute('aria-expanded', 'false'); }
-      if (settingsTitleH2) settingsTitleH2.style.display = '';
-    }
-
-    // Resize the popup window for small/large (Chrome honors window.resizeTo in extension popups)
-    const sizeMap = {
-      small: { w: 340, h: 480 },
-      medium: { w: 420, h: 600 },
-      large: { w: 520, h: 740 }
-    };
-    if (validSize !== 'huge' && sizeMap[validSize]) {
-      try {
-        window.resizeTo(sizeMap[validSize].w, sizeMap[validSize].h);
-      } catch (_) { /* noop if not supported */ }
-    }
-  }
-
-  function openHugeTab() {
-    const hugeUrl = chrome.runtime.getURL('popup.html') + '?size=huge';
-    chrome.tabs.create({ url: hugeUrl });
-    window.close();
-  }
-
-  popupSizeSelect?.addEventListener('change', e => {
-    const size = e.target.value;
-    localStorage.setItem('popupSize', size);
-    if (size === 'huge') {
-      openHugeTab();
-      return;
-    }
-    applyPopupSize(size);
   });
 
   // LANGUAGE SELECTION
@@ -2068,11 +2074,12 @@ document.addEventListener('DOMContentLoaded', () => {
                   ? importedSessions
                   : combineSessionCollections(resultSessions, importedSessions);
 
-                chrome.storage.local.set({ sessions: resultSessions }, () => {
+                chrome.runtime.sendMessage({ action: 'replace_sessions', sessions: resultSessions, reason: 'import_sessions' }, (response) => {
                   try {
-                    if (chrome.runtime.lastError) {
-                      console.error('Import persist error', chrome.runtime.lastError);
-                      alert('Failed to import sessions: ' + chrome.runtime.lastError.message);
+                    if (chrome.runtime.lastError || !response?.success) {
+                      const message = chrome.runtime.lastError?.message || response?.error || 'Unknown error';
+                      console.error('Import persist error', chrome.runtime.lastError || response);
+                      alert('Failed to import sessions: ' + message);
                       return;
                     }
                     loadSessions();
@@ -2102,8 +2109,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const settingsBtn = document.getElementById('settings-icon');
   if (settingsBtn) {
     settingsBtn.addEventListener('click', () => {
-      // In huge mode both panels are always visible — gear button is hidden anyway
-      if (document.body.classList.contains('size-huge')) return;
       closeAllMenus();
       const main = document.getElementById('main-section');
       const settings = document.getElementById('settings-section');
@@ -2187,11 +2192,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const sessionsToStore = combineSessionCollections(existing, [sessionObject]);
 
-                    chrome.storage.local.set({ sessions: sessionsToStore }, () => {
+                    chrome.runtime.sendMessage({ action: 'replace_sessions', sessions: sessionsToStore, reason: 'manual_save' }, (response) => {
                       try {
                         saveButtonEl.disabled = false;
-                        if (chrome.runtime.lastError) {
-                          console.error('Session save error', chrome.runtime.lastError);
+                        if (chrome.runtime.lastError || !response?.success) {
+                          console.error('Session save error', chrome.runtime.lastError || response);
                           alert('Unable to save this session. Please try again.');
                           return;
                         }
@@ -2232,30 +2237,6 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       (res) => {
         if (res && res.success) loadSessions();
-      }
-    );
-  }
-
-  function addCustomUrlToSavedSession(index, session, inputValue) {
-    const updatedSession = addCustomUrlToSession(session, inputValue);
-    if (!updatedSession) {
-      alert(getTranslation('add_url_invalid'));
-      return;
-    }
-
-    chrome.runtime.sendMessage(
-      {
-        action: 'update_session',
-        index,
-        session: updatedSession
-      },
-      (res) => {
-        if (res && res.success) {
-          loadSessions();
-          return;
-        }
-        console.error('Failed to add custom URL to session', res && res.error);
-        alert(getTranslation('add_url_failed'));
       }
     );
   }
@@ -2325,30 +2306,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }));
       searchEmptyState.style.display = matchingSessions.length === 0 ? 'block' : 'none';
 
-      const sessionTargets = new Map();
-      let sessionsToRender = matchingSessions;
-      if (activeSessionCategory === SAVE_TYPE_AUTO) {
-        const autoSaveGroups = groupAutoSavedSessionsForDisplay(matchingSessions, getAutoSaveGroupMode());
-        sessionsToRender = autoSaveGroups.flatMap((group) => group.sessions);
-        autoSaveGroups.forEach((group) => {
-          if (group.sessions.length < 2) {
-            const slot = document.createElement('div');
-            slot.className = 'auto-save-single-slot';
-            container.appendChild(slot);
-            group.sessions.forEach(({ originalIndex }) => {
-              sessionTargets.set(originalIndex, slot);
-            });
-            return;
-          }
-          const { wrapper, body } = createAutoSaveGroupShell(group);
-          container.appendChild(wrapper);
-          group.sessions.forEach(({ originalIndex }) => {
-            sessionTargets.set(originalIndex, body);
-          });
-        });
-      }
-
-      sessionsToRender.forEach(({ sessionData: normalized, originalIndex: index }) => {
+      matchingSessions.forEach(({ sessionData: normalized, originalIndex: index }) => {
         const entry = document.createElement('div');
         entry.className = 'session-entry';
         entry.setAttribute('role', 'listitem');
@@ -2404,15 +2362,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
 
-        const addUrlBtn = document.createElement('button');
-        addUrlBtn.textContent = getTranslation('add_url_button');
-        addUrlBtn.addEventListener('click', () => {
-          closeAllMenus();
-          const urlValue = prompt(getTranslation('add_url_prompt'), '');
-          if (urlValue === null) return;
-          addCustomUrlToSavedSession(index, sessionPayload, urlValue);
-        });
-
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = getTranslation('delete_button');
         deleteBtn.addEventListener('click', () => {
@@ -2423,7 +2372,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         menu.appendChild(previewBtn);
-        menu.appendChild(addUrlBtn);
         menu.appendChild(renameBtn);
         menu.appendChild(deleteBtn);
 
@@ -2541,8 +2489,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         entry.appendChild(topRow);
         entry.appendChild(previewContainer);
-        const targetContainer = sessionTargets.get(index) || container;
-        targetContainer.appendChild(entry);
+        container.appendChild(entry);
       });
   }
 
@@ -2570,8 +2517,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedAccent = localStorage.getItem('accentColor');
     const savedDark = localStorage.getItem('darkMode');
     const savedLanguage = localStorage.getItem('language');
-    const savedPopupSize = localStorage.getItem('popupSize');
     const restoreMode = getRestoreMode();
+    const autoSaveGroupMode = getAutoSaveGroupMode();
 
     if (savedAccent) {
       const hasOption = Array.from(accentSelect.options).some(option => option.value === savedAccent);
@@ -2595,31 +2542,11 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       translatePage('en');
     }
-    
-    // Check if we're in a huge tab via URL parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlSize = urlParams.get('size');
-    if (urlSize === 'huge') {
-      // We ARE in the huge tab — apply huge layout
-      if (popupSizeSelect) popupSizeSelect.value = 'huge';
-      applyPopupSize('huge');
-    } else if (savedPopupSize === 'huge') {
-      // User had huge selected — open the tab and close this popup immediately
-      if (popupSizeSelect) popupSizeSelect.value = 'huge';
-      openHugeTab();
-    } else if (savedPopupSize && POPUP_SIZES.has(savedPopupSize)) {
-      if (popupSizeSelect) popupSizeSelect.value = savedPopupSize;
-      applyPopupSize(savedPopupSize);
-    } else {
-      if (popupSizeSelect) popupSizeSelect.value = 'medium';
-      applyPopupSize('medium');
-    }
-    
     restoreModeInputs.forEach((input) => {
       input.checked = input.value === restoreMode;
     });
     if (autoSaveGroupModeSelect) {
-      autoSaveGroupModeSelect.value = getAutoSaveGroupMode();
+      autoSaveGroupModeSelect.value = autoSaveGroupMode;
     }
     chrome.runtime.sendMessage({ action: 'get_auto_save_settings' }, (response) => {
       if (chrome.runtime.lastError || !response?.success) {
@@ -2629,6 +2556,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateAutoSaveIntervalVisibility(response.settings);
     });
     loadNewsletterSubscription();
+    loadCloudSyncSettings();
   }
 
   restoreSettings();

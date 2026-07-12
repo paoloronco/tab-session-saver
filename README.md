@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.14.0-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.15.0-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -35,7 +35,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 
 Tabs Session Saver lets you snapshot your entire browsing state in one click and bring it back exactly as you left it — all windows, tabs, and tab groups included.
 
-Sessions are saved directly on your device using Chrome's built-in storage. No account, no cloud sync, no data leaving your browser.
+Sessions are saved directly on your device using Chrome's built-in storage by default. Optional Cloud Sync can be enabled through the included Cloudflare Worker and D1 backend.
 
 **Key features:**
 
@@ -48,6 +48,7 @@ Sessions are saved directly on your device using Chrome's built-in storage. No a
 - Rename, delete, and reorder sessions
 - Export and import sessions as JSON for backup or transfer
 - Preserves Chrome tab groups (colors and names) during save and restore
+- Optional Cloud Sync with Google sign-in and a server-side free plan
 - Multi-language UI: English, Italian, Spanish, French, German
 
 ---
@@ -85,8 +86,9 @@ Tabs Session Saver requests only what it needs to function. Here's exactly what 
 | `windows` | Read open windows and recreate them when restoring a session |
 | `tabGroups` | Preserve Chrome tab group names and colors during save and restore |
 | `alarms` | Schedule periodic Auto Save at the interval you configure |
+| `identity` | Let users sign in with Google for optional Cloud Sync |
 
-All data stays in `chrome.storage.local` — on your machine only.
+By default, session data stays in `chrome.storage.local` on your machine only. If Cloud Sync is enabled, saved sessions are sent to the configured sync endpoint.
 
 ---
 
@@ -104,7 +106,11 @@ tabs-session-saver/
 │   ├── browser-support.js     # Browser detection utility (Chrome vs Chromium)
 │   └── img-*.png              # Extension icons (16, 32, 48, 128px)
 ├── tests/                     # Automated test suite
-├── docs/                      # Feature plans and design specs
+├── docs/                      # Project documentation
+├── cloud-sync/                # Optional Cloudflare Worker + D1 sync backend
+│   ├── cloudflare-worker/     # Worker API source and deploy config
+│   └── cloudflare-d1/         # D1 schema and database notes
+├── newsletter-proxy/          # Server-side newsletter webhook proxy
 ├── .github/                   # GitHub Actions workflows
 └── README.md
 ```
@@ -116,7 +122,14 @@ tabs-session-saver/
 <details>
 <summary>View full changelog</summary>
 
+### 7.15.0
+- reorganized the Cloud Sync backend into separate Cloudflare Worker and D1 folders
+- documented the server-side free Cloud Sync model and quota behavior
+- removed the direct newsletter provider host permission from the extension manifest
+- updated extension version to `7.15.0`
+
 ### 7.14.0
+- added optional Cloud Sync client settings and a Cloudflare Worker/D1 backend scaffold
 - added Newsletter signup in extension settings through a secure server-side proxy
 - updated extension version to `7.14.0`
 

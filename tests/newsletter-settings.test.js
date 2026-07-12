@@ -57,6 +57,7 @@ test('newsletter settings expose email, subscribe, and status controls', () => {
   assert.match(markup, /id="newsletterStatus"[^>]*role="status"/);
   assert.ok(manifest.permissions.includes('storage'));
   assert.ok(manifest.host_permissions.includes('https://tabsessionsaver-newslettersubscribe.paolo-ronco2000.workers.dev/*'));
+  assert.ok(!manifest.host_permissions.includes('https://n8n.prhomelab.com/*'));
 });
 
 test('newsletter translations and state normalization are available for every language', () => {

@@ -1046,7 +1046,9 @@
 
     select,
     input[type="email"],
-    input[type="number"] {
+    input[type="number"],
+    input[type="text"],
+    input[type="url"] {
       width: 100%;
       padding: 0.55rem;
       border: 1px solid var(--border-color);
@@ -1058,7 +1060,9 @@
 
     select:focus,
     input[type="email"]:focus,
-    input[type="number"]:focus {
+    input[type="number"]:focus,
+    input[type="text"]:focus,
+    input[type="url"]:focus {
       outline: none;
       border-color: var(--accent-color);
       box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.18);
@@ -1206,6 +1210,85 @@
     }
 
     body.dark-mode .newsletter-status.is-error {
+      color: #ffb37a;
+    }
+
+    .cloud-sync-form {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .cloud-sync-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .cloud-sync-actions button,
+    .cloud-sync-secondary-actions button {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: 10px;
+      padding: 0.65rem 0.75rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      line-height: 1.25;
+      min-height: 2.65rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+    }
+
+    .cloud-sync-actions button:hover:not(:disabled),
+    .cloud-sync-secondary-actions button:hover:not(:disabled) {
+      background: var(--surface-alt);
+      border-color: var(--accent-color);
+    }
+
+    .cloud-sync-actions button:disabled,
+    .cloud-sync-secondary-actions button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .cloud-sync-secondary-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .cloud-sync-account {
+      min-height: 1rem;
+      margin: 0;
+      color: var(--text-primary);
+      font-size: 0.82rem;
+      font-weight: 600;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .cloud-sync-status {
+      min-height: 1rem;
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 0.76rem;
+      line-height: 1.4;
+    }
+
+    .cloud-sync-status.is-success {
+      color: #228b22;
+    }
+
+    .cloud-sync-status.is-error {
+      color: #c2410c;
+    }
+
+    body.dark-mode .cloud-sync-status.is-success {
+      color: #6fcf6f;
+    }
+
+    body.dark-mode .cloud-sync-status.is-error {
       color: #ffb37a;
     }
 
@@ -1830,6 +1913,21 @@
         </div>
       </section>
 
+      <section class="settings-group-card settings-cloud-sync" aria-labelledby="cloud-sync-title">
+        <h3 id="cloud-sync-title" class="settings-group-title" data-translate="cloud_sync_title">Cloud Sync</h3>
+        <p class="settings-description" data-translate="cloud_sync_description">Sync saved sessions through your Cloudflare backend.</p>
+        <form id="cloud-sync-form" class="cloud-sync-form" novalidate>
+          <p id="cloudSyncAccount" class="cloud-sync-account"></p>
+          <div class="cloud-sync-secondary-actions">
+            <button id="cloudSyncLogin" type="button" data-translate="cloud_sync_register_button">Create sync account / Login</button>
+            <button id="cloudSyncPush" type="button" data-translate="cloud_sync_push_button">Push now</button>
+            <button id="cloudSyncPull" type="button" data-translate="cloud_sync_pull_button">Pull now</button>
+            <button id="cloudSyncDisconnect" type="button" data-translate="cloud_sync_disconnect_button">Disconnect</button>
+          </div>
+          <p id="cloudSyncStatus" class="cloud-sync-status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
       <section class="settings-group-card settings-newsletter" aria-labelledby="newsletter-title">
         <h3 id="newsletter-title" class="settings-group-title" data-translate="newsletter_title">Newsletter</h3>
         <p class="settings-description" data-translate="newsletter_description">Get updates about new Tab Session Saver features.</p>
@@ -1875,7 +1973,7 @@
           </div>
         </div>
         <div class="footer-info">
-          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.14.0</div>
+          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.15.0</div>
           <div class="footer-secondary-links">
             <a class="footer-secondary-link" href="https://paoloronco.it" target="_blank" rel="noopener">paoloronco.it</a>
             <a class="footer-secondary-link" href="https://sites.google.com/view/pp-tabssessionsaver/home" target="_blank" rel="noopener" data-translate="privacy_policy_link">Privacy Policy</a>

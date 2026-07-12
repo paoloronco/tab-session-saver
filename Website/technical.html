@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Technical Details - Tabs Session Saver</title>
+  <meta name="description" content="Technical details for Tabs Session Saver: permissions, local storage, restore behavior, backup, Cloud Sync, and privacy model." />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="canonical" href="https://tabsessionsaver.paoloronco.it/technical" />
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Primary navigation">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 6.25A2.25 2.25 0 0 1 7.25 4h9.5A2.25 2.25 0 0 1 19 6.25v5.25H5V6.25Z" stroke-width="1.8"/><path d="M5 11.5h14M8 15l4 4 4-4M7.5 20h9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span>Tabs Session Saver</span>
+      </a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/technical" aria-current="page">Technical</a>
+        <details class="nav-menu">
+          <summary>Legal</summary>
+          <div class="nav-menu-panel">
+            <a href="/legal">Legal center</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms of Service</a>
+            <a href="/oauth-disclosure">OAuth Disclosure</a>
+            <a href="/data-deletion">Data Deletion</a>
+          </div>
+        </details>
+        <a class="nav-cta" href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="page-hero-inner">
+        <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span>Technical overview</p>
+        <h1>How Tabs Session Saver works.</h1>
+        <p>Short, practical details for developers, reviewers, and privacy-conscious users.</p>
+      </div>
+    </section>
+
+    <section class="section tech-grid">
+      <article class="tech-card wide">
+        <h2>Data model</h2>
+        <p>Sessions are snapshots of browser windows, tabs, tab groups, timestamps, and user-facing metadata. Local use stores this data in Chrome extension storage.</p>
+      </article>
+      <article class="tech-card">
+        <h2>Capture</h2>
+        <p>The extension reads current windows and tabs, normalizes the session, and stores it as manual or automatic.</p>
+      </article>
+      <article class="tech-card">
+        <h2>Restore</h2>
+        <p>Saved windows can reopen separately. The last window can also merge into the current browser window.</p>
+      </article>
+      <article class="tech-card">
+        <h2>Tab groups</h2>
+        <p>Group title, color, and tab membership are preserved when Chrome exposes the needed APIs.</p>
+      </article>
+      <article class="tech-card">
+        <h2>Search</h2>
+        <p>Filtering runs against session names, tab titles, full URLs, and domains already loaded in the popup.</p>
+      </article>
+      <article class="tech-card">
+        <h2>Backup</h2>
+        <p>Export/import uses JSON so sessions remain portable and reviewable outside the extension.</p>
+      </article>
+      <article class="tech-card">
+        <h2>Cloud Sync</h2>
+        <p>Optional Google Sign-In authenticates sync requests to the configured Cloudflare backend.</p>
+      </article>
+    </section>
+
+    <section class="section detail-section">
+      <div class="section-head tight">
+        <div>
+          <p class="kicker">Permissions</p>
+          <h2>Requested only for the extension workflow.</h2>
+        </div>
+        <p>No Drive, Gmail, Calendar, or Contacts access is requested.</p>
+      </div>
+      <div class="permission-table" role="table" aria-label="Extension permissions">
+        <div role="row"><strong role="cell">tabs</strong><span role="cell">Read tab titles, URLs, and state for saving and restoring.</span></div>
+        <div role="row"><strong role="cell">windows</strong><span role="cell">Save and recreate browser window structure.</span></div>
+        <div role="row"><strong role="cell">tabGroups</strong><span role="cell">Preserve Chrome tab group names, colors, and membership.</span></div>
+        <div role="row"><strong role="cell">storage</strong><span role="cell">Store sessions, preferences, and sync state locally.</span></div>
+        <div role="row"><strong role="cell">alarms</strong><span role="cell">Schedule optional Auto Save.</span></div>
+        <div role="row"><strong role="cell">identity</strong><span role="cell">Enable Google Sign-In for optional Cloud Sync.</span></div>
+      </div>
+    </section>
+
+    <section class="section split-cta">
+      <div class="cta-panel secondary-panel">
+        <p class="kicker">Privacy model</p>
+        <h2>Local-first by default.</h2>
+        <p>Saved sessions stay on the device unless Cloud Sync is enabled or the user exports data.</p>
+        <a class="btn btn-secondary" href="/privacy">Read Privacy Policy</a>
+      </div>
+      <div class="cta-panel primary-panel">
+        <p class="kicker">Source code</p>
+        <h2>Review it on GitHub.</h2>
+        <p>The extension source, tests, and backend scaffold are public.</p>
+        <a class="btn btn-primary" href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener noreferrer">Open GitHub</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>&copy; 2026 Tabs Session Saver - Paolo Ronco</div>
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=en" target="_blank" rel="noopener noreferrer">Chrome Web Store</a>
+        <a href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="/legal">Legal</a>
+        <a href="mailto:info@paoloronco.it">Contact</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

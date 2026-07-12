@@ -6,9 +6,16 @@ const RESTORE_MODE_NEW_WINDOWS = 'new_windows';
 const RESTORE_MODE_CURRENT_WINDOW = 'current_window';
 const RESTORE_TAB_BATCH_SIZE = 25;
 const AUTO_SAVE_ALARM_NAME = 'auto-save-session';
+const CLOUD_SYNC_ALARM_NAME = 'cloud-sync-push';
 const AUTO_SAVE_SETTINGS_KEY = 'autoSaveSettings';
 const AUTO_SAVE_EXIT_SNAPSHOT_KEY = 'autoSaveExitSnapshot';
 const AUTO_SAVE_RUN_ID_KEY = 'autoSaveRunId';
+const CLOUD_SYNC_SETTINGS_KEY = 'cloudSyncSettings';
+const CLOUD_SYNC_STATE_KEY = 'cloudSyncState';
+const CLOUD_SYNC_DEFAULT_API_BASE_URL = 'https://tabsessionsaver-cloudsync.paolo-ronco2000.workers.dev';
+const CLOUD_SYNC_PUSH_DEBOUNCE_MS = 1500;
+const CLOUD_SYNC_MAX_SESSIONS = 10000;
+const CLOUD_SYNC_MAX_PAYLOAD_BYTES = 4 * 1024 * 1024;
 const AUTO_SAVE_MIN_INTERVAL_MINUTES = 10;
 const SAVE_TYPE_AUTO = 'auto';
 const SAVE_TYPE_MANUAL = 'manual';
@@ -35,6 +42,7 @@ const SAFE_RESTORE_PROTOCOLS = new Set([
 let activeRestoreToken = null;
 let activeAutoSaveSettings = null;
 let exitSnapshotRefreshTimer = null;
+let cloudSyncPushTimer = null;
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
@@ -52,15 +60,25 @@ if (chrome.runtime.onStartup) {
     resetAutoSaveRunId().then(() => initializeAutoSaveSchedule()).catch((error) => {
       console.warn('[background] auto save startup scheduling failed:', error);
     });
+    runCloudSyncPull({ applyRemote: true }).then(() => runCloudSyncPush()).catch((error) => {
+      console.warn('[background] cloud sync startup failed:', error);
+    });
   });
 }
 
 if (chrome.alarms?.onAlarm) {
   chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm?.name !== AUTO_SAVE_ALARM_NAME) return;
-    runAutoSaveNow().catch((error) => {
-      console.warn('[background] auto save failed:', error);
-    });
+    if (alarm?.name === AUTO_SAVE_ALARM_NAME) {
+      runAutoSaveNow().catch((error) => {
+        console.warn('[background] auto save failed:', error);
+      });
+      return;
+    }
+    if (alarm?.name === CLOUD_SYNC_ALARM_NAME) {
+      runCloudSyncPush().catch((error) => {
+        console.warn('[background] cloud sync push failed:', error);
+      });
+    }
   });
 }
 
@@ -148,6 +166,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           sendResponse({ success: true, settings });
           break;
         }
+        case 'get_cloud_sync_settings': {
+          const settings = await loadCloudSyncSettings();
+          const state = await loadCloudSyncState();
+          sendResponse({ success: true, settings: redactCloudSyncSettings(settings), state });
+          break;
+        }
+        case 'cloud_sync_login': {
+          const result = await loginCloudSync();
+          sendResponse(result);
+          break;
+        }
+        case 'cloud_sync_push': {
+          const result = await runCloudSyncPush({ force: true });
+          sendResponse(result);
+          break;
+        }
+        case 'cloud_sync_pull': {
+          const result = await runCloudSyncPull({ applyRemote: true });
+          sendResponse(result);
+          break;
+        }
+        case 'disconnect_cloud_sync': {
+          await disconnectCloudSync();
+          sendResponse({ success: true });
+          break;
+        }
         case 'get_newsletter_subscription': {
           const state = await loadNewsletterSubscription();
           sendResponse({ success: true, state });
@@ -190,6 +234,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           const { index, session } = request;
           const success = await updateSessionAtIndex(index, session);
           sendResponse({ success });
+          break;
+        }
+        case 'replace_sessions': {
+          const sessions = normalizeSessionCollectionForStorage(request.sessions);
+          await persistSessions(sessions, { reason: request.reason || 'replace_sessions' });
+          sendResponse({ success: true, sessions });
           break;
         }
         default:
@@ -245,6 +295,9 @@ async function subscribeToNewsletter(emailValue) {
   }
 
   const currentState = await loadNewsletterSubscription();
+  if (currentState.subscribed && currentState.email === email) {
+    return { success: true, alreadySubscribed: true, state: currentState };
+  }
   if (currentState.subscribed) {
     return { success: true, alreadySubscribed: true, state: currentState };
   }
@@ -281,6 +334,347 @@ async function postNewsletterRequest(endpoint, email) {
       details = '';
     }
     throw new Error(`Newsletter service returned HTTP ${response.status}${details ? `: ${details}` : ''}`);
+  }
+}
+
+function normalizeCloudSyncApiBaseUrl(value) {
+  if (typeof value !== 'string' || !value.trim()) return CLOUD_SYNC_DEFAULT_API_BASE_URL;
+  const trimmed = value.trim().replace(/\/+$/, '');
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'https:') return CLOUD_SYNC_DEFAULT_API_BASE_URL;
+    return parsed.origin + parsed.pathname.replace(/\/+$/, '');
+  } catch (_) {
+    return CLOUD_SYNC_DEFAULT_API_BASE_URL;
+  }
+}
+
+function normalizeCloudSyncSettings(rawSettings = {}) {
+  const settings = rawSettings && typeof rawSettings === 'object' ? rawSettings : {};
+  const profile = settings.profile && typeof settings.profile === 'object' ? settings.profile : {};
+  return {
+    enabled: settings.enabled === true,
+    apiBaseUrl: normalizeCloudSyncApiBaseUrl(settings.apiBaseUrl),
+    profile: {
+      userId: typeof profile.userId === 'string' ? profile.userId : '',
+      email: typeof profile.email === 'string' ? profile.email : '',
+      name: typeof profile.name === 'string' ? profile.name : '',
+      picture: typeof profile.picture === 'string' ? profile.picture : ''
+    }
+  };
+}
+
+function redactCloudSyncSettings(settings) {
+  const normalized = normalizeCloudSyncSettings(settings);
+  return {
+    ...normalized,
+    configured: normalized.enabled === true && Boolean(normalized.profile.userId)
+  };
+}
+
+async function loadCloudSyncSettings() {
+  const stored = await chrome.storage.local.get({
+    [CLOUD_SYNC_SETTINGS_KEY]: normalizeCloudSyncSettings()
+  });
+  return normalizeCloudSyncSettings(stored[CLOUD_SYNC_SETTINGS_KEY]);
+}
+
+async function saveCloudSyncSettings(rawSettings = {}) {
+  const current = await loadCloudSyncSettings();
+  const normalized = normalizeCloudSyncSettings({
+    ...current,
+    ...rawSettings
+  });
+  await chrome.storage.local.set({ [CLOUD_SYNC_SETTINGS_KEY]: normalized });
+  return normalized;
+}
+
+function normalizeCloudSyncState(rawState = {}) {
+  const state = rawState && typeof rawState === 'object' ? rawState : {};
+  return {
+    revision: Number.isInteger(state.revision) && state.revision >= 0 ? state.revision : 0,
+    pending: state.pending === true,
+    lastSyncedAt: typeof state.lastSyncedAt === 'string' ? state.lastSyncedAt : null,
+    lastPulledAt: typeof state.lastPulledAt === 'string' ? state.lastPulledAt : null,
+    lastPushedAt: typeof state.lastPushedAt === 'string' ? state.lastPushedAt : null,
+    lastError: typeof state.lastError === 'string' ? state.lastError : '',
+    lastChangeReason: typeof state.lastChangeReason === 'string' ? state.lastChangeReason : '',
+    deviceId: typeof state.deviceId === 'string' && state.deviceId ? state.deviceId : ''
+  };
+}
+
+async function loadCloudSyncState() {
+  const stored = await chrome.storage.local.get({
+    [CLOUD_SYNC_STATE_KEY]: normalizeCloudSyncState()
+  });
+  return normalizeCloudSyncState(stored[CLOUD_SYNC_STATE_KEY]);
+}
+
+async function saveCloudSyncState(patch = {}) {
+  const current = await loadCloudSyncState();
+  const next = normalizeCloudSyncState({ ...current, ...patch });
+  await chrome.storage.local.set({ [CLOUD_SYNC_STATE_KEY]: next });
+  return next;
+}
+
+function createRandomId(prefix = '') {
+  const bytes = new Uint8Array(16);
+  if (globalThis.crypto?.getRandomValues) {
+    globalThis.crypto.getRandomValues(bytes);
+  } else {
+    for (let index = 0; index < bytes.length; index += 1) {
+      bytes[index] = Math.floor(Math.random() * 256);
+    }
+  }
+  const value = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return prefix ? `${prefix}_${value}` : value;
+}
+
+async function getCloudSyncDeviceId() {
+  const state = await loadCloudSyncState();
+  if (state.deviceId) return state.deviceId;
+  const deviceId = createRandomId('device');
+  await saveCloudSyncState({ deviceId });
+  return deviceId;
+}
+
+function hasCloudSyncCredentials(settings) {
+  return Boolean(settings?.enabled && settings.profile?.userId && settings.apiBaseUrl);
+}
+
+function buildCloudSyncUrl(settings, path) {
+  return `${settings.apiBaseUrl}${path}`;
+}
+
+function getGoogleAuthToken(interactive = false) {
+  return new Promise((resolve, reject) => {
+    if (!chrome.identity?.getAuthToken) {
+      reject(new Error('Google sign-in is not available in this browser.'));
+      return;
+    }
+    chrome.identity.getAuthToken({ interactive }, (result) => {
+      const lastError = chrome.runtime?.lastError;
+      if (lastError) {
+        reject(new Error(lastError.message || 'Google sign-in failed.'));
+        return;
+      }
+      const token = typeof result === 'string' ? result : result?.token;
+      if (!token) {
+        reject(new Error('Google sign-in did not return an access token.'));
+        return;
+      }
+      resolve(token);
+    });
+  });
+}
+
+function removeCachedGoogleAuthToken(token) {
+  if (!token || !chrome.identity?.removeCachedAuthToken) return;
+  chrome.identity.removeCachedAuthToken({ token }, () => {});
+}
+
+async function requestCloudSync(settings, path, options = {}, authOptions = {}) {
+  if (!settings?.apiBaseUrl) {
+    throw new Error('Cloud Sync endpoint is not configured.');
+  }
+  const googleToken = await getGoogleAuthToken(authOptions.interactive === true);
+  const response = await fetch(buildCloudSyncUrl(settings, path), {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${googleToken}`,
+      ...(options.headers || {})
+    }
+  });
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch (_) {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      removeCachedGoogleAuthToken(googleToken);
+    }
+    const error = new Error(payload?.error || `Cloud Sync returned HTTP ${response.status}`);
+    if (payload && typeof payload === 'object') {
+      error.code = typeof payload.code === 'string' ? payload.code : '';
+      error.details = payload;
+    }
+    throw error;
+  }
+  return payload || {};
+}
+
+async function loginCloudSync() {
+  const settings = await loadCloudSyncSettings();
+  const payload = await requestCloudSync(settings, '/v1/auth/session', {
+    method: 'POST',
+    body: JSON.stringify({ deviceId: await getCloudSyncDeviceId() })
+  }, { interactive: true });
+  const savedSettings = await saveCloudSyncSettings({
+    enabled: true,
+    apiBaseUrl: settings.apiBaseUrl,
+    profile: payload.profile || {}
+  });
+  await saveCloudSyncState({
+    revision: Number.isInteger(payload.revision) ? payload.revision : 0,
+    pending: true,
+    lastError: ''
+  });
+  scheduleCloudSyncPush();
+  return {
+    success: true,
+    settings: redactCloudSyncSettings(savedSettings),
+    state: await loadCloudSyncState()
+  };
+}
+
+async function disconnectCloudSync() {
+  const current = await loadCloudSyncSettings();
+  await chrome.storage.local.set({
+    [CLOUD_SYNC_SETTINGS_KEY]: normalizeCloudSyncSettings({
+      ...current,
+      enabled: false,
+      profile: {}
+    }),
+    [CLOUD_SYNC_STATE_KEY]: normalizeCloudSyncState()
+  });
+}
+
+async function markCloudSyncPending(reason = 'sessions_changed') {
+  const settings = await loadCloudSyncSettings();
+  if (!settings.enabled) return;
+  await saveCloudSyncState({
+    pending: true,
+    lastChangeReason: reason,
+    lastError: ''
+  });
+}
+
+function scheduleCloudSyncPush() {
+  if (cloudSyncPushTimer) clearTimeout(cloudSyncPushTimer);
+  cloudSyncPushTimer = setTimeout(() => {
+    cloudSyncPushTimer = null;
+    runCloudSyncPush().catch((error) => {
+      console.warn('[background] cloud sync push failed:', error);
+    });
+  }, CLOUD_SYNC_PUSH_DEBOUNCE_MS);
+
+  if (chrome.alarms?.create) {
+    chrome.alarms.create(CLOUD_SYNC_ALARM_NAME, { delayInMinutes: 1 }).catch?.(() => {});
+  }
+}
+
+function estimateJsonBytes(value) {
+  const json = JSON.stringify(value);
+  return new Blob([json]).size;
+}
+
+async function persistSessions(sessions, options = {}) {
+  const { reason = 'sessions_changed', sync = true } = options;
+  await chrome.storage.local.set({ sessions });
+  if (sync) {
+    await markCloudSyncPending(reason);
+    scheduleCloudSyncPush();
+  }
+}
+
+function normalizeSessionCollectionForStorage(rawSessions) {
+  const source = Array.isArray(rawSessions) ? rawSessions : [];
+  return source
+    .slice(0, CLOUD_SYNC_MAX_SESSIONS)
+    .map((session, index) => normalizeSessionForStorage(session, `${DEFAULT_SESSION_NAME} ${index + 1}`))
+    .filter((session) => Array.isArray(session.windows) && session.windows.length > 0);
+}
+
+async function runCloudSyncPush(options = {}) {
+  const settings = await loadCloudSyncSettings();
+  const state = await loadCloudSyncState();
+  if (!hasCloudSyncCredentials(settings)) {
+    return { success: false, skipped: true, reason: 'not_configured', state };
+  }
+  if (!options.force && !state.pending) {
+    return { success: true, skipped: true, reason: 'no_pending_changes', state };
+  }
+
+  const sessions = await loadSessionsFromStorage();
+  const payload = {
+    deviceId: await getCloudSyncDeviceId(),
+    baseRevision: state.revision,
+    updatedAt: new Date().toISOString(),
+    sessions
+  };
+
+  if (estimateJsonBytes(payload) > CLOUD_SYNC_MAX_PAYLOAD_BYTES) {
+    const nextState = await saveCloudSyncState({
+      pending: true,
+      lastError: 'Cloud Sync payload is too large.'
+    });
+    return { success: false, error: nextState.lastError, code: 'payload_too_large', state: nextState };
+  }
+
+  try {
+    const remote = await requestCloudSync(settings, '/v1/sync/snapshot', {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+    const nextState = await saveCloudSyncState({
+      revision: Number.isInteger(remote.revision) ? remote.revision : state.revision,
+      pending: false,
+      lastSyncedAt: remote.updatedAt || new Date().toISOString(),
+      lastPushedAt: new Date().toISOString(),
+      lastError: ''
+    });
+    return { success: true, state: nextState };
+  } catch (error) {
+    const nextState = await saveCloudSyncState({
+      pending: true,
+      lastError: error?.message || String(error)
+    });
+    return {
+      success: false,
+      error: nextState.lastError,
+      ...(error?.code ? { code: error.code } : {}),
+      ...(error?.details ? { details: error.details } : {}),
+      state: nextState
+    };
+  }
+}
+
+async function runCloudSyncPull(options = {}) {
+  const settings = await loadCloudSyncSettings();
+  const state = await loadCloudSyncState();
+  if (!hasCloudSyncCredentials(settings)) {
+    return { success: false, skipped: true, reason: 'not_configured', state };
+  }
+
+  try {
+    const remote = await requestCloudSync(settings, '/v1/sync/snapshot', { method: 'GET' });
+    const remoteSessions = normalizeSessionCollectionForStorage(remote.sessions || []);
+    if (options.applyRemote && Number.isInteger(remote.revision) && remote.revision > state.revision) {
+      await persistSessions(remoteSessions, { reason: 'cloud_pull', sync: false });
+    }
+    const nextState = await saveCloudSyncState({
+      revision: Number.isInteger(remote.revision) ? remote.revision : state.revision,
+      lastSyncedAt: remote.updatedAt || state.lastSyncedAt,
+      lastPulledAt: new Date().toISOString(),
+      lastError: ''
+    });
+    return { success: true, sessions: remoteSessions, state: nextState };
+  } catch (error) {
+    const nextState = await saveCloudSyncState({
+      lastError: error?.message || String(error)
+    });
+    return {
+      success: false,
+      error: nextState.lastError,
+      ...(error?.code ? { code: error.code } : {}),
+      ...(error?.details ? { details: error.details } : {}),
+      state: nextState
+    };
   }
 }
 
@@ -927,7 +1321,7 @@ async function storeAutoSaveSessionFromSnapshot(snapshot, trigger, options = {})
   } else {
     sessions.push(autoSession);
   }
-  await chrome.storage.local.set({ sessions });
+  await persistSessions(sessions, { reason: `auto_save_${saveTrigger}` });
   return { success: true, session: autoSession };
 }
 
@@ -957,7 +1351,7 @@ async function loadSessionsFromStorage() {
     normalizeSessionForStorage(session, `${DEFAULT_SESSION_NAME} ${index + 1}`)
   );
 
-  await chrome.storage.local.set({ sessions: migrated });
+  await persistSessions(migrated, { reason: 'storage_migration' });
   return migrated;
 }
 
@@ -965,7 +1359,7 @@ async function deleteSessionAtIndex(index) {
   const sessions = await loadSessionsFromStorage();
   if (index < 0 || index >= sessions.length) return false;
   sessions.splice(index, 1);
-  await chrome.storage.local.set({ sessions });
+  await persistSessions(sessions, { reason: 'delete_session' });
   return true;
 }
 
@@ -974,7 +1368,7 @@ async function renameSessionAtIndex(index, newName) {
   if (index < 0 || index >= sessions.length) return false;
   if (typeof newName !== 'string' || !newName.trim()) return false;
   sessions[index].name = newName.trim();
-  await chrome.storage.local.set({ sessions });
+  await persistSessions(sessions, { reason: 'rename_session' });
   return true;
 }
 
@@ -984,7 +1378,7 @@ async function updateSessionAtIndex(index, sessionObject) {
   // Normalize/validate session object before storing
   const normalized = normalizeSessionForStorage(sessionObject, sessions[index]?.name || DEFAULT_SESSION_NAME);
   sessions[index] = normalized;
-  await chrome.storage.local.set({ sessions });
+  await persistSessions(sessions, { reason: 'update_session' });
   return true;
 }
 function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_NAME, options = {}) {

@@ -2,10 +2,12 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/privacy", "destination": "/index.html" },
-    { "source": "/terms", "destination": "/index.html" },
-    { "source": "/oauth-disclosure", "destination": "/index.html" },
-    { "source": "/data-deletion", "destination": "/index.html" }
+    { "source": "/technical", "destination": "/technical.html" },
+    { "source": "/legal", "destination": "/legal.html" },
+    { "source": "/privacy", "destination": "/legal.html" },
+    { "source": "/terms", "destination": "/legal.html" },
+    { "source": "/oauth-disclosure", "destination": "/legal.html" },
+    { "source": "/data-deletion", "destination": "/legal.html" }
   ],
   "headers": [
     {

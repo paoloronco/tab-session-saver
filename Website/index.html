@@ -4,1728 +4,188 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tabs Session Saver - Save and Restore Chrome Tab Sessions</title>
-  <meta name="description" content="Tabs Session Saver is a lightweight Chrome extension to save, search, preview, restore, export, import, and optionally sync your browser tab sessions." />
-  <meta name="keywords" content="chrome extension, tab session saver, save tabs, restore tabs, tab manager, chrome tab groups, session manager" />
+  <meta name="description" content="Save, search, preview, restore, and back up Chrome tab sessions with a lightweight local-first extension." />
+  <meta name="keywords" content="chrome extension, save tabs, restore tabs, tab session saver, tab manager, chrome tab groups" />
   <meta name="author" content="Paolo Ronco" />
   <meta name="robots" content="index, follow" />
-  <meta name="theme-color" content="#246bfe" />
+  <meta name="theme-color" content="#2563eb" />
   <link rel="canonical" href="https://tabsessionsaver.paoloronco.it/" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23246bfe'/%3E%3Cpath d='M18 18h28v15H18z' fill='none' stroke='white' stroke-width='5' stroke-linejoin='round'/%3E%3Cpath d='M23 39l9 9 9-9M22 52h20' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232563eb'/%3E%3Cpath d='M18 18h28v15H18z' fill='none' stroke='white' stroke-width='5' stroke-linejoin='round'/%3E%3Cpath d='M23 39l9 9 9-9M22 52h20' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="site.css" />
 
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Tabs Session Saver - Save and Restore Chrome Tab Sessions" />
-  <meta property="og:description" content="Save your Chrome workspace in one click. Restore sessions, preserve tab groups, search saved tabs, use Auto Save, and keep control of your data." />
-  <meta property="og:image" content="https://tabsessionsaver.paoloronco.it/image2.png" />
+  <meta property="og:description" content="A lightweight Chrome extension for saving full browser workspaces and restoring them later." />
+  <meta property="og:image" content="https://tabsessionsaver.paoloronco.it/image4.png" />
   <meta property="og:url" content="https://tabsessionsaver.paoloronco.it/" />
   <meta property="og:site_name" content="Tabs Session Saver" />
-  <meta property="og:locale" content="en_US" />
-
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Tabs Session Saver - Save and Restore Chrome Tab Sessions" />
-  <meta name="twitter:description" content="A lightweight Chrome extension for saving and restoring complete browsing workspaces." />
-  <meta name="twitter:image" content="https://tabsessionsaver.paoloronco.it/image2.png" />
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "Tabs Session Saver",
-    "description": "A Chrome extension to save, manage, preview, restore, export, import, auto-save, and optionally sync browser tab sessions.",
+    "description": "Chrome extension to save, search, preview, restore, export, import, auto-save, and optionally sync tab sessions.",
     "applicationCategory": "BrowserApplication",
     "applicationSubCategory": "Productivity",
     "operatingSystem": "Chrome",
     "softwareVersion": "7.14.0",
     "isAccessibleForFree": true,
-    "author": {
-      "@type": "Person",
-      "name": "Paolo Ronco",
-      "email": "info@paoloronco.it"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    },
-    "featureList": [
-      "One-click tab session saving",
-      "Session restore in new windows or current window",
-      "Session search",
-      "Session preview",
-      "Chrome tab groups preservation",
-      "Auto Save",
-      "Export and import JSON backups",
-      "Optional Cloud Sync",
-      "Dark and light mode",
-      "Five interface languages"
-    ],
-    "inLanguage": ["en", "it", "es", "fr", "de"],
-    "url": "https://tabsessionsaver.paoloronco.it/",
+    "author": { "@type": "Person", "name": "Paolo Ronco", "email": "info@paoloronco.it" },
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
     "downloadUrl": "https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp"
   }
   </script>
-
-  <style>
-    :root {
-      color-scheme: light;
-      --blue: #246bfe;
-      --blue-strong: #064ee4;
-      --ink: #101624;
-      --ink-soft: #475064;
-      --muted: #687386;
-      --line: #dce4f2;
-      --paper: #fbfcff;
-      --surface: #ffffff;
-      --surface-blue: #eef4ff;
-      --night: #141922;
-      --night-soft: #202737;
-      --green: #12a15f;
-      --yellow: #f5b900;
-      --red: #ef3f35;
-      --radius: 8px;
-      --shadow: 0 22px 60px rgba(22, 36, 64, 0.14);
-      --wrap: min(1120px, calc(100% - 40px));
-    }
-
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--paper);
-      color: var(--ink);
-      line-height: 1.55;
-      text-rendering: geometricPrecision;
-    }
-
-    img,
-    svg {
-      display: block;
-      max-width: 100%;
-    }
-
-    a {
-      color: inherit;
-    }
-
-    button,
-    input {
-      font: inherit;
-    }
-
-    .skip-link {
-      position: fixed;
-      left: 12px;
-      top: 12px;
-      z-index: 30;
-      transform: translateY(-150%);
-      background: var(--ink);
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: var(--radius);
-      text-decoration: none;
-    }
-
-    .skip-link:focus {
-      transform: translateY(0);
-    }
-
-    .site-header {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      border-bottom: 1px solid rgba(220, 228, 242, 0.78);
-      background: rgba(251, 252, 255, 0.88);
-      backdrop-filter: blur(16px);
-    }
-
-    .nav {
-      width: var(--wrap);
-      min-height: 68px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-    }
-
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-      color: var(--ink);
-      text-decoration: none;
-      font-weight: 760;
-      letter-spacing: 0;
-    }
-
-    .brand-mark,
-    .app-mark {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: var(--blue);
-      color: #fff;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 12px 22px rgba(36, 107, 254, 0.28);
-      flex: 0 0 auto;
-    }
-
-    .brand-mark svg,
-    .app-mark svg {
-      width: 25px;
-      height: 25px;
-      stroke: currentColor;
-    }
-
-    .brand span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .nav-links a {
-      min-height: 40px;
-      display: inline-flex;
-      align-items: center;
-      border-radius: var(--radius);
-      padding: 0 12px;
-      color: var(--ink-soft);
-      text-decoration: none;
-      font-size: 0.93rem;
-      font-weight: 650;
-    }
-
-    .nav-links a:hover {
-      background: var(--surface-blue);
-      color: var(--blue-strong);
-    }
-
-    .nav-cta {
-      background: var(--blue);
-      color: #fff !important;
-      box-shadow: 0 12px 26px rgba(36, 107, 254, 0.22);
-    }
-
-    .nav-cta:hover {
-      background: var(--blue-strong) !important;
-    }
-
-    .hero {
-      position: relative;
-      overflow: hidden;
-      border-bottom: 1px solid var(--line);
-      background:
-        linear-gradient(90deg, rgba(36, 107, 254, 0.06) 1px, transparent 1px),
-        linear-gradient(rgba(36, 107, 254, 0.05) 1px, transparent 1px),
-        linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
-      background-size: 44px 44px, 44px 44px, auto;
-    }
-
-    .hero::after {
-      content: "";
-      position: absolute;
-      inset: auto -12% -38% auto;
-      width: min(640px, 70vw);
-      aspect-ratio: 1;
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--blue) 14%, transparent);
-      filter: blur(34px);
-      pointer-events: none;
-    }
-
-    .hero-inner {
-      position: relative;
-      z-index: 1;
-      width: var(--wrap);
-      min-height: calc(100svh - 68px);
-      margin: 0 auto;
-      padding: clamp(54px, 8vw, 98px) 0 clamp(38px, 5vw, 58px);
-      display: grid;
-      grid-template-columns: minmax(0, 0.95fr) minmax(360px, 1.05fr);
-      gap: clamp(34px, 6vw, 76px);
-      align-items: center;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      width: fit-content;
-      margin: 0 0 22px;
-      padding: 7px 11px;
-      border: 1px solid rgba(36, 107, 254, 0.22);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.72);
-      color: var(--blue-strong);
-      font-size: 0.82rem;
-      font-weight: 760;
-    }
-
-    .eyebrow-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--green);
-      box-shadow: 0 0 0 4px rgba(18, 161, 95, 0.14);
-    }
-
-    h1 {
-      margin: 0;
-      max-width: 850px;
-      font-size: clamp(3rem, 8vw, 6.9rem);
-      line-height: 0.92;
-      letter-spacing: 0;
-      font-weight: 860;
-    }
-
-    .hero-copy {
-      max-width: 620px;
-      margin: 24px 0 0;
-      color: var(--ink-soft);
-      font-size: clamp(1.05rem, 1.5vw, 1.23rem);
-    }
-
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 34px;
-    }
-
-    .btn {
-      min-height: 48px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      border: 1px solid transparent;
-      border-radius: var(--radius);
-      padding: 0 18px;
-      text-decoration: none;
-      font-weight: 760;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-    }
-
-    .btn svg {
-      width: 20px;
-      height: 20px;
-      flex: 0 0 auto;
-    }
-
-    .btn-primary {
-      background: var(--blue);
-      color: #fff;
-      box-shadow: 0 18px 34px rgba(36, 107, 254, 0.26);
-    }
-
-    .btn-primary:hover {
-      background: var(--blue-strong);
-    }
-
-    .btn-secondary {
-      background: var(--surface);
-      border-color: var(--line);
-      color: var(--ink);
-      box-shadow: 0 12px 24px rgba(22, 36, 64, 0.08);
-    }
-
-    .proof-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 28px;
-      color: var(--muted);
-      font-size: 0.9rem;
-      font-weight: 690;
-    }
-
-    .proof-row span {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      min-height: 30px;
-      padding: 0 10px;
-      border: 1px solid rgba(220, 228, 242, 0.9);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.7);
-    }
-
-    .proof-row i {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: var(--blue);
-    }
-
-    .product-stage {
-      position: relative;
-      min-height: 560px;
-      display: grid;
-      align-items: center;
-    }
-
-    .product-browser {
-      position: relative;
-      overflow: hidden;
-      border: 1px solid rgba(16, 22, 36, 0.14);
-      border-radius: 18px;
-      background: var(--surface);
-      box-shadow: var(--shadow);
-    }
-
-    .browser-chrome {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-height: 42px;
-      padding: 0 16px;
-      border-bottom: 1px solid var(--line);
-      background: linear-gradient(180deg, #f7f9fc, #edf2fa);
-    }
-
-    .browser-chrome span {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: #b9c2d0;
-    }
-
-    .browser-view {
-      position: relative;
-      aspect-ratio: 1280 / 800;
-      background: #e8f0ff;
-    }
-
-    .browser-view img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .extension-popup {
-      position: absolute;
-      right: clamp(-18px, -1vw, 0px);
-      bottom: 28px;
-      width: min(330px, 50%);
-      border: 1px solid rgba(16, 22, 36, 0.14);
-      border-radius: 18px;
-      background: linear-gradient(180deg, #ffffff, #f5f8ff);
-      box-shadow: 0 24px 60px rgba(16, 22, 36, 0.24);
-      overflow: hidden;
-    }
-
-    .popup-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 16px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .popup-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 820;
-    }
-
-    .popup-title .app-mark {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      box-shadow: none;
-    }
-
-    .save-chip {
-      padding: 8px 12px;
-      border-radius: var(--radius);
-      background: var(--blue);
-      color: #fff;
-      font-weight: 780;
-    }
-
-    .popup-body {
-      padding: 16px;
-      display: grid;
-      gap: 12px;
-    }
-
-    .session-card {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fff;
-      padding: 14px;
-    }
-
-    .session-card header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      color: var(--ink);
-      font-weight: 780;
-    }
-
-    .session-meta {
-      color: var(--muted);
-      font-size: 0.86rem;
-      margin-top: 2px;
-    }
-
-    .tab-list {
-      display: grid;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .tab-line {
-      display: grid;
-      grid-template-columns: 16px 1fr;
-      align-items: center;
-      gap: 9px;
-      color: var(--ink-soft);
-      font-size: 0.84rem;
-    }
-
-    .favicon-dot {
-      width: 16px;
-      height: 16px;
-      border-radius: 4px;
-      background: var(--blue);
-    }
-
-    .favicon-dot.red {
-      background: var(--red);
-    }
-
-    .favicon-dot.yellow {
-      background: var(--yellow);
-    }
-
-    .feature-strip {
-      width: var(--wrap);
-      margin: -24px auto 0;
-      position: relative;
-      z-index: 3;
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 1px;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: var(--line);
-      box-shadow: 0 14px 38px rgba(22, 36, 64, 0.08);
-    }
-
-    .strip-item {
-      background: var(--surface);
-      padding: 22px;
-    }
-
-    .strip-item strong {
-      display: block;
-      color: var(--ink);
-      font-size: 1.02rem;
-      line-height: 1.2;
-    }
-
-    .strip-item span {
-      display: block;
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    .section {
-      width: var(--wrap);
-      margin: 0 auto;
-      padding: clamp(70px, 9vw, 116px) 0;
-    }
-
-    .section-head {
-      display: grid;
-      grid-template-columns: minmax(0, 0.7fr) minmax(280px, 0.5fr);
-      gap: 30px;
-      align-items: end;
-      margin-bottom: 36px;
-    }
-
-    .kicker {
-      margin: 0 0 10px;
-      color: var(--blue-strong);
-      font-size: 0.82rem;
-      font-weight: 820;
-      letter-spacing: 0;
-      text-transform: uppercase;
-    }
-
-    h2 {
-      margin: 0;
-      font-size: clamp(2rem, 4.7vw, 4.35rem);
-      line-height: 0.98;
-      letter-spacing: 0;
-      font-weight: 850;
-    }
-
-    .section-head p,
-    .section-intro {
-      margin: 0;
-      color: var(--ink-soft);
-      font-size: 1.03rem;
-    }
-
-    .workflow {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 18px;
-    }
-
-    .workflow-step {
-      position: relative;
-      min-height: 280px;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: var(--surface);
-      padding: 24px;
-      box-shadow: 0 12px 30px rgba(22, 36, 64, 0.07);
-    }
-
-    .step-number {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 38px;
-      height: 38px;
-      border-radius: 999px;
-      background: var(--ink);
-      color: #fff;
-      font-weight: 820;
-      margin-bottom: 22px;
-    }
-
-    .workflow-step h3,
-    .feature-panel h3,
-    .trust-panel h3 {
-      margin: 0 0 10px;
-      font-size: 1.25rem;
-      line-height: 1.18;
-    }
-
-    .workflow-step p,
-    .feature-panel p,
-    .trust-panel p {
-      margin: 0;
-      color: var(--ink-soft);
-    }
-
-    .mini-ui {
-      position: absolute;
-      left: 24px;
-      right: 24px;
-      bottom: 22px;
-      display: grid;
-      gap: 8px;
-    }
-
-    .mini-bar,
-    .mini-action,
-    .mini-row {
-      border-radius: var(--radius);
-      background: var(--surface-blue);
-      border: 1px solid rgba(36, 107, 254, 0.18);
-      min-height: 38px;
-    }
-
-    .mini-action {
-      background: var(--blue);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.88rem;
-      font-weight: 760;
-    }
-
-    .mini-row {
-      display: grid;
-      grid-template-columns: 32px 1fr 58px;
-      gap: 9px;
-      align-items: center;
-      padding: 7px;
-      background: #fff;
-    }
-
-    .mini-row span {
-      min-height: 10px;
-      border-radius: 99px;
-      background: #dce6f7;
-    }
-
-    .mini-row i {
-      min-height: 24px;
-      border-radius: 6px;
-      background: var(--blue);
-    }
-
-    .mini-row b {
-      min-height: 24px;
-      border-radius: 6px;
-      background: rgba(36, 107, 254, 0.12);
-    }
-
-    .showcase-band {
-      border-block: 1px solid var(--line);
-      background: #fff;
-    }
-
-    .showcase {
-      display: grid;
-      grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.12fr);
-      gap: clamp(28px, 5vw, 64px);
-      align-items: center;
-    }
-
-    .showcase-copy {
-      padding: clamp(66px, 8vw, 102px) 0;
-    }
-
-    .showcase-copy h2 {
-      font-size: clamp(2rem, 4.2vw, 3.7rem);
-    }
-
-    .feature-list {
-      display: grid;
-      gap: 14px;
-      margin-top: 28px;
-    }
-
-    .feature-row {
-      display: grid;
-      grid-template-columns: 38px 1fr;
-      gap: 14px;
-      align-items: start;
-    }
-
-    .feature-row svg {
-      width: 38px;
-      height: 38px;
-      padding: 9px;
-      border-radius: 11px;
-      background: var(--surface-blue);
-      color: var(--blue);
-      stroke: currentColor;
-    }
-
-    .feature-row strong {
-      display: block;
-      line-height: 1.2;
-      margin-bottom: 2px;
-    }
-
-    .feature-row span {
-      color: var(--muted);
-      font-size: 0.94rem;
-    }
-
-    .gallery {
-      min-width: 0;
-    }
-
-    .gallery-frame {
-      overflow: hidden;
-      border-radius: 18px;
-      border: 1px solid rgba(16, 22, 36, 0.12);
-      box-shadow: var(--shadow);
-      background: var(--night);
-      aspect-ratio: 1280 / 800;
-    }
-
-    .gallery-frame img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 1;
-      transition: opacity 0.2s ease;
-    }
-
-    .gallery-controls {
-      display: flex;
-      gap: 8px;
-      margin-top: 14px;
-    }
-
-    .gallery-controls button {
-      border: 1px solid var(--line);
-      background: #fff;
-      color: var(--ink-soft);
-      border-radius: var(--radius);
-      min-height: 42px;
-      padding: 0 12px;
-      cursor: pointer;
-      font-weight: 720;
-    }
-
-    .gallery-controls button[aria-selected="true"] {
-      background: var(--blue);
-      border-color: var(--blue);
-      color: #fff;
-    }
-
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 18px;
-    }
-
-    .feature-panel {
-      min-height: 230px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: var(--surface);
-      padding: 24px;
-      box-shadow: 0 12px 28px rgba(22, 36, 64, 0.06);
-    }
-
-    .feature-panel:nth-child(1),
-    .feature-panel:nth-child(4) {
-      grid-column: span 7;
-    }
-
-    .feature-panel:nth-child(2),
-    .feature-panel:nth-child(3) {
-      grid-column: span 5;
-    }
-
-    .feature-panel:nth-child(5),
-    .feature-panel:nth-child(6),
-    .feature-panel:nth-child(7) {
-      grid-column: span 4;
-    }
-
-    .feature-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 34px;
-      color: var(--blue);
-      background: var(--surface-blue);
-    }
-
-    .feature-icon svg {
-      width: 24px;
-      height: 24px;
-      stroke: currentColor;
-    }
-
-    .dark-feature {
-      background: var(--night);
-      color: #f4f7ff;
-      border-color: var(--night);
-    }
-
-    .dark-feature p {
-      color: #b9c2d6;
-    }
-
-    .dark-feature .feature-icon {
-      background: rgba(255, 255, 255, 0.1);
-      color: #fff;
-    }
-
-    .trust-band {
-      background: var(--night);
-      color: #fff;
-    }
-
-    .trust {
-      display: grid;
-      grid-template-columns: minmax(0, 0.85fr) minmax(280px, 0.75fr);
-      gap: clamp(32px, 6vw, 74px);
-      align-items: start;
-    }
-
-    .trust h2 {
-      color: #fff;
-    }
-
-    .trust .kicker {
-      color: #9db9ff;
-    }
-
-    .trust p {
-      color: #c4ccdb;
-    }
-
-    .trust-panels {
-      display: grid;
-      gap: 12px;
-    }
-
-    .trust-panel {
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.055);
-      padding: 20px;
-    }
-
-    .trust-panel h3 {
-      color: #fff;
-      font-size: 1.08rem;
-    }
-
-    .legal {
-      border-top: 1px solid var(--line);
-      background: linear-gradient(180deg, #f6f9ff, #fff);
-    }
-
-    .legal-shell {
-      display: grid;
-      grid-template-columns: 270px minmax(0, 1fr);
-      gap: 22px;
-      align-items: start;
-    }
-
-    .legal-nav {
-      position: sticky;
-      top: 92px;
-      display: grid;
-      gap: 8px;
-    }
-
-    .legal-nav button {
-      min-height: 48px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: #fff;
-      color: var(--ink-soft);
-      cursor: pointer;
-      text-align: left;
-      padding: 0 14px;
-      font-weight: 720;
-    }
-
-    .legal-nav button:hover,
-    .legal-nav button[aria-selected="true"] {
-      border-color: rgba(36, 107, 254, 0.35);
-      background: var(--surface-blue);
-      color: var(--blue-strong);
-    }
-
-    .legal-document {
-      min-height: 560px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fff;
-      padding: clamp(22px, 4vw, 42px);
-      box-shadow: 0 14px 34px rgba(22, 36, 64, 0.07);
-    }
-
-    .legal-document h1 {
-      max-width: 760px;
-      margin-bottom: 18px;
-      font-size: clamp(2rem, 4vw, 3.3rem);
-      line-height: 1;
-    }
-
-    .legal-document h2 {
-      margin-top: 30px;
-      margin-bottom: 10px;
-      font-size: clamp(1.28rem, 2.3vw, 1.75rem);
-      line-height: 1.15;
-    }
-
-    .legal-document p {
-      color: var(--ink-soft);
-      margin: 0 0 14px;
-    }
-
-    .legal-document ul,
-    .legal-document ol {
-      color: var(--ink-soft);
-      padding-left: 1.2rem;
-      margin: 0 0 18px;
-    }
-
-    .legal-document li + li {
-      margin-top: 6px;
-    }
-
-    .legal-document a {
-      color: var(--blue-strong);
-      font-weight: 650;
-    }
-
-    .legal-document code {
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      background: #f4f7fc;
-      color: var(--ink);
-      padding: 0.14em 0.35em;
-      font-size: 0.92em;
-    }
-
-    .legal-document pre {
-      overflow: auto;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: #f4f7fc;
-      padding: 14px;
-    }
-
-    .legal-document pre code {
-      border: 0;
-      background: transparent;
-      padding: 0;
-    }
-
-    .legal-document table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 18px 0 24px;
-      font-size: 0.93rem;
-    }
-
-    .legal-document th,
-    .legal-document td {
-      border: 1px solid var(--line);
-      padding: 10px 12px;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    .legal-document th {
-      background: var(--surface-blue);
-      color: var(--ink);
-    }
-
-    .loading-state,
-    .error-state {
-      color: var(--muted);
-    }
-
-    .cta-band {
-      background:
-        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-        var(--blue);
-      background-size: 38px 38px, 38px 38px, auto;
-      color: #fff;
-    }
-
-    .cta {
-      width: var(--wrap);
-      margin: 0 auto;
-      padding: clamp(70px, 9vw, 112px) 0;
-      display: grid;
-      grid-template-columns: minmax(0, 0.82fr) auto;
-      gap: 30px;
-      align-items: center;
-    }
-
-    .cta h2 {
-      max-width: 790px;
-      color: #fff;
-    }
-
-    .cta p {
-      max-width: 620px;
-      margin: 18px 0 0;
-      color: rgba(255, 255, 255, 0.82);
-      font-size: 1.05rem;
-    }
-
-    .cta .btn-primary {
-      background: #fff;
-      color: var(--blue-strong);
-      box-shadow: 0 18px 34px rgba(7, 43, 114, 0.22);
-    }
-
-    .site-footer {
-      background: #0e131d;
-      color: #aeb8ca;
-    }
-
-    .footer-inner {
-      width: var(--wrap);
-      margin: 0 auto;
-      padding: 34px 0;
-      display: flex;
-      justify-content: space-between;
-      gap: 22px;
-      flex-wrap: wrap;
-      font-size: 0.92rem;
-    }
-
-    .footer-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-    }
-
-    .footer-links a {
-      color: #dce6ff;
-      text-decoration: none;
-    }
-
-    .footer-links a:hover {
-      text-decoration: underline;
-      text-underline-offset: 0.18em;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        scroll-behavior: auto !important;
-        transition-duration: 0.01ms !important;
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-      }
-    }
-
-    @media (max-width: 920px) {
-      .nav {
-        min-height: 62px;
-      }
-
-      .nav-links a:not(.nav-cta) {
-        display: none;
-      }
-
-      .hero-inner,
-      .section-head,
-      .showcase,
-      .trust,
-      .legal-shell,
-      .cta {
-        grid-template-columns: 1fr;
-      }
-
-      .hero-inner {
-        min-height: auto;
-      }
-
-      .product-stage {
-        min-height: 0;
-      }
-
-      .feature-strip,
-      .workflow {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .feature-panel,
-      .feature-panel:nth-child(n) {
-        grid-column: span 6;
-      }
-
-      .legal-nav {
-        position: static;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 620px) {
-      :root {
-        --wrap: min(100% - 28px, 1120px);
-      }
-
-      .hero-inner {
-        padding: 22px 0 14px;
-        gap: 18px;
-      }
-
-      .brand span {
-        max-width: 180px;
-      }
-
-      h1 {
-        font-size: clamp(2.45rem, 12vw, 2.8rem);
-      }
-
-      .hero-copy {
-        margin-top: 18px;
-        font-size: 1rem;
-      }
-
-      .hero-actions {
-        margin-top: 24px;
-      }
-
-      .hero-actions .btn,
-      .cta .btn {
-        width: 100%;
-      }
-
-      .product-browser {
-        border-radius: 14px;
-      }
-
-      .browser-chrome {
-        min-height: 30px;
-        padding: 0 14px;
-      }
-
-      .browser-chrome span {
-        width: 9px;
-        height: 9px;
-      }
-
-      .browser-view {
-        aspect-ratio: 16 / 7.6;
-      }
-
-      .extension-popup {
-        display: none;
-      }
-
-      .feature-strip {
-        margin-top: -10px;
-      }
-
-      .feature-strip,
-      .workflow,
-      .legal-nav {
-        grid-template-columns: 1fr;
-      }
-
-      .strip-item {
-        padding: 18px;
-      }
-
-      .feature-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .feature-panel,
-      .feature-panel:nth-child(n) {
-        grid-column: auto;
-      }
-
-      .gallery-controls {
-        overflow-x: auto;
-        padding-bottom: 2px;
-      }
-
-      .gallery-controls button {
-        flex: 0 0 auto;
-      }
-
-      .legal-document {
-        padding: 20px 16px;
-      }
-
-      .footer-inner {
-        display: grid;
-      }
-    }
-  </style>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="site-header">
     <nav class="nav" aria-label="Primary navigation">
-      <a class="brand" href="/" aria-label="Tabs Session Saver home">
+      <a class="brand" href="/">
         <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M5 6.25A2.25 2.25 0 0 1 7.25 4h9.5A2.25 2.25 0 0 1 19 6.25v5.25H5V6.25Z" stroke-width="1.8" stroke-linejoin="round"></path>
-            <path d="M5 11.5h14M8 15l4 4 4-4M7.5 20h9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 6.25A2.25 2.25 0 0 1 7.25 4h9.5A2.25 2.25 0 0 1 19 6.25v5.25H5V6.25Z" stroke-width="1.8"/><path d="M5 11.5h14M8 15l4 4 4-4M7.5 20h9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
         <span>Tabs Session Saver</span>
       </a>
+
       <div class="nav-links">
         <a href="#features">Features</a>
-        <a href="#privacy">Privacy</a>
-        <a href="#legal">Legal</a>
+        <a href="/technical">Technical</a>
+        <details class="nav-menu">
+          <summary>Legal</summary>
+          <div class="nav-menu-panel">
+            <a href="/legal">Legal center</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms of Service</a>
+            <a href="/oauth-disclosure">OAuth Disclosure</a>
+            <a href="/data-deletion">Data Deletion</a>
+          </div>
+        </details>
         <a class="nav-cta" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=en" target="_blank" rel="noopener noreferrer">Add to Chrome</a>
       </div>
     </nav>
   </header>
 
   <main id="main">
-    <section class="hero">
+    <section class="hero promo-hero">
       <div class="hero-inner">
         <div class="hero-copy-block">
-          <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Chrome extension - Manifest V3 - v7.14.0</p>
-          <h1>Your tab chaos, saved.</h1>
-          <p class="hero-copy">Snapshot every open Chrome window, tab, and group in one click. Restore the whole workspace later, search what you saved, and keep backups without turning your browser into another account to manage.</p>
+          <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span>Free Chrome extension - v7.14.0</p>
+          <h1>Save your tabs. Restore your flow.</h1>
+          <p class="hero-copy">One click captures your Chrome workspace. Come back later and reopen the exact tabs, windows, and groups you need.</p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=en" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z" stroke="currentColor" stroke-width="2"></path><path d="m8 12 2.4 2.4L16 8.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z" stroke="currentColor" stroke-width="2"/><path d="m8 12 2.4 2.4L16 8.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               Add to Chrome
             </a>
-            <a class="btn btn-secondary" href="#legal">Read legal docs</a>
+            <a class="btn btn-secondary" href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 8.36 22.9c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.29-1.68-1.29-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.04 1.76 2.7 1.25 3.37.96.1-.75.4-1.25.73-1.54-2.55-.3-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.12-3.04 0 0 .96-.31 3.16 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.64 1.58.24 2.75.12 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.7 5.38-5.27 5.67.42.36.79 1.07.79 2.15v3c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+              View on GitHub
+            </a>
           </div>
-          <div class="proof-row" aria-label="Product highlights">
-            <span><i aria-hidden="true"></i>Local-first</span>
-            <span><i aria-hidden="true"></i>Open source</span>
-            <span><i aria-hidden="true"></i>Auto Save</span>
-            <span><i aria-hidden="true"></i>Optional Cloud Sync</span>
+          <div class="proof-row" aria-label="Highlights">
+            <span>Local-first</span>
+            <span>Open source</span>
+            <span>Tab groups</span>
+            <span>Auto Save</span>
           </div>
         </div>
 
-        <div class="product-stage" aria-label="Tabs Session Saver interface preview">
-          <div class="product-browser">
-            <div class="browser-chrome" aria-hidden="true"><span></span><span></span><span></span></div>
-            <div class="browser-view">
-              <img src="image2.png" alt="Tabs Session Saver promotional screenshot showing the extension popup and saved sessions" width="1280" height="800" fetchpriority="high" />
-            </div>
+        <div class="hero-product" aria-label="Extension screenshot">
+          <div class="real-shot-card">
+            <img src="image4.png" alt="Tabs Session Saver extension interface showing open tabs, saved sessions, and the Save button" width="1536" height="1024" fetchpriority="high" />
           </div>
-          <aside class="extension-popup" aria-label="Simplified extension popup mockup">
-            <div class="popup-top">
-              <div class="popup-title">
-                <span class="app-mark" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none"><path d="M5 6.25A2.25 2.25 0 0 1 7.25 4h9.5A2.25 2.25 0 0 1 19 6.25v5.25H5V6.25Z" stroke-width="1.8"></path><path d="M8 15l4 4 4-4M7.5 20h9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                </span>
-                Save tabs
-              </div>
-              <span class="save-chip">Save</span>
-            </div>
-            <div class="popup-body">
-              <div class="session-card">
-                <header><span>Research sprint</span><span>8 tabs</span></header>
-                <p class="session-meta">2 windows - 3 tab groups - today</p>
-                <div class="tab-list">
-                  <div class="tab-line"><span class="favicon-dot"></span><span>Chrome Web Store</span></div>
-                  <div class="tab-line"><span class="favicon-dot red"></span><span>YouTube tutorial</span></div>
-                  <div class="tab-line"><span class="favicon-dot yellow"></span><span>Project notes</span></div>
-                </div>
-              </div>
-            </div>
-          </aside>
         </div>
       </div>
     </section>
 
-    <div class="feature-strip" aria-label="Core promise">
-      <div class="strip-item"><strong>Save full workspaces</strong><span>All windows, tabs, pinned state, and groups.</span></div>
-      <div class="strip-item"><strong>Restore your way</strong><span>New windows or current-window restore behavior.</span></div>
-      <div class="strip-item"><strong>Find old sessions</strong><span>Search by session name, title, URL, or domain.</span></div>
-      <div class="strip-item"><strong>Stay portable</strong><span>Export/import JSON and optional Cloud Sync.</span></div>
-    </div>
+    <section class="quick-bar" aria-label="Core benefits">
+      <div class="quick-item"><strong>Save</strong><span>Capture the workspace.</span></div>
+      <div class="quick-item"><strong>Preview</strong><span>Check tabs before restore.</span></div>
+      <div class="quick-item"><strong>Restore</strong><span>Reopen windows and groups.</span></div>
+      <div class="quick-item"><strong>Back up</strong><span>Export JSON or sync.</span></div>
+    </section>
 
-    <section class="section" aria-labelledby="workflow-title">
-      <div class="section-head">
+    <section id="features" class="section compact-section">
+      <div class="section-head tight">
         <div>
-          <p class="kicker">How it works</p>
-          <h2 id="workflow-title">Three clicks instead of thirty tabs.</h2>
+          <p class="kicker">Why install it</p>
+          <h2>A cleaner way to pause browser work.</h2>
         </div>
-        <p>Tabs Session Saver is built for people who switch between projects, research trails, admin dashboards, and recurring browser workspaces.</p>
+        <p>Built for research, admin tasks, study sessions, project switching, and every day you end with too many tabs open.</p>
       </div>
 
-      <div class="workflow">
-        <article class="workflow-step">
-          <span class="step-number">1</span>
-          <h3>Capture the current browser state.</h3>
-          <p>Save all open tabs as a named session. Auto Save can also capture sessions on a schedule or when Chrome closes.</p>
-          <div class="mini-ui" aria-hidden="true">
-            <div class="mini-action">Save current tabs</div>
-            <div class="mini-bar"></div>
-          </div>
+      <div class="benefit-grid">
+        <article class="benefit">
+          <span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 6.25A2.25 2.25 0 0 1 7.25 4h9.5A2.25 2.25 0 0 1 19 6.25v5.25H5V6.25Z" stroke-width="1.8"/><path d="M8 15l4 4 4-4M7.5 20h9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <h3>One-click session save</h3>
+          <p>Save all open Chrome tabs and windows without bookmark clutter.</p>
         </article>
-        <article class="workflow-step">
-          <span class="step-number">2</span>
-          <h3>Preview before you restore.</h3>
-          <p>Open any saved session to inspect tabs and windows, then restore everything or just the window you need.</p>
-          <div class="mini-ui" aria-hidden="true">
-            <div class="mini-row"><i></i><span></span><b></b></div>
-            <div class="mini-row"><i class="red"></i><span></span><b></b></div>
-          </div>
+        <article class="benefit">
+          <span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.8" cy="10.8" r="6.2" stroke-width="1.8"/><path d="m15.4 15.4 4 4" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+          <h3>Search saved sessions</h3>
+          <p>Find sessions by name, tab title, URL, or domain.</p>
         </article>
-        <article class="workflow-step">
-          <span class="step-number">3</span>
-          <h3>Bring work back exactly when needed.</h3>
-          <p>Restore sessions into fresh windows or merge the last saved window into the current one, depending on your workflow.</p>
-          <div class="mini-ui" aria-hidden="true">
-            <div class="mini-bar"></div>
-            <div class="mini-action">Restore</div>
-          </div>
+        <article class="benefit">
+          <span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 5h12v5H6zM6 14h12v5H6z" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+          <h3>Preview before restore</h3>
+          <p>Open a session preview and restore only what matters.</p>
+        </article>
+        <article class="benefit">
+          <span class="benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 7h10M7 12h10M7 17h10" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+          <h3>Portable backups</h3>
+          <p>Export and import sessions as JSON whenever you want.</p>
         </article>
       </div>
     </section>
 
-    <section class="showcase-band" aria-labelledby="showcase-title">
-      <div class="section showcase">
+    <section class="showcase-band">
+      <div class="section showcase-simple">
         <div class="showcase-copy">
-          <p class="kicker">Real extension UI</p>
-          <h2 id="showcase-title">Small popup, serious session control.</h2>
-          <p class="section-intro">The extension stays compact, but it now handles the workflows that usually force people into messy bookmarks or overloaded browser windows.</p>
-          <div class="feature-list">
-            <div class="feature-row">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M7 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z" stroke-width="1.8"></path><path d="M8 12h8M8 16h5" stroke-width="1.8" stroke-linecap="round"></path></svg>
-              <div><strong>Manual and automatic sessions</strong><span>Separate saved-by-you sessions from scheduled or on-exit snapshots.</span></div>
-            </div>
-            <div class="feature-row">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.2" stroke-width="1.8"></circle><path d="m15.4 15.4 4 4" stroke-width="1.8" stroke-linecap="round"></path></svg>
-              <div><strong>Live search</strong><span>Filter saved sessions by session name, tab title, URL, or website domain.</span></div>
-            </div>
-            <div class="feature-row">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5v-11Z" stroke-width="1.8"></path><path d="M8 9h8M8 13h8M8 17h4" stroke-width="1.8" stroke-linecap="round"></path></svg>
-              <div><strong>Configurable interface</strong><span>Light/dark mode, accent colors, five languages, and popup sizes up to a full-tab layout.</span></div>
-            </div>
+          <p class="kicker">The extension itself</p>
+          <h2>Small popup. Fast decisions.</h2>
+          <p>The screenshot is shown as-is, so visitors see the real product: open tabs, saved sessions, preview behavior, and the main Save action.</p>
+          <div class="mini-checks">
+            <span>Manual and Auto Saved views</span>
+            <span>Light and dark mode</span>
+            <span>Five languages</span>
+            <span>Optional Cloud Sync</span>
           </div>
         </div>
-
-        <div class="gallery">
-          <div class="gallery-frame">
-            <img id="gallery-image" src="image3.png" alt="Screenshot of Tabs Session Saver saved sessions interface" width="1280" height="800" loading="lazy" />
-          </div>
-          <div class="gallery-controls" role="tablist" aria-label="Screenshot selector">
-            <button type="button" data-shot="0" aria-selected="true">Save tabs</button>
-            <button type="button" data-shot="1" aria-selected="false">Sessions</button>
-            <button type="button" data-shot="2" aria-selected="false">Popup</button>
-          </div>
-        </div>
+        <figure class="product-figure">
+          <img src="image4.png" alt="Full screenshot of the Tabs Session Saver extension UI" width="1536" height="1024" loading="lazy" />
+        </figure>
       </div>
     </section>
 
-    <section id="features" class="section" aria-labelledby="features-title">
-      <div class="section-head">
-        <div>
-          <p class="kicker">Features</p>
-          <h2 id="features-title">Built around how tab-heavy work actually happens.</h2>
-        </div>
-        <p>No account is required for the core workflow. Use it locally, back it up manually, or enable optional sync only when you want it.</p>
+    <section class="section split-cta">
+      <div class="cta-panel primary-panel">
+        <p class="kicker">For everyday users</p>
+        <h2>Close Chrome without losing your place.</h2>
+        <p>Save now. Restore later. Keep the workflow moving.</p>
+        <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=en" target="_blank" rel="noopener noreferrer">Install free</a>
       </div>
-
-      <div class="feature-grid">
-        <article class="feature-panel dark-feature">
-          <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 6.25A2.25 2.25 0 0 1 7.25 4h9.5A2.25 2.25 0 0 1 19 6.25v5.25H5V6.25Z" stroke-width="1.8"></path><path d="M5 11.5h14M8 15l4 4 4-4M7.5 20h9" stroke-width="1.8" stroke-linecap="round"></path></svg></span>
-          <h3>One-click save for complete sessions</h3>
-          <p>Capture every open tab across windows, including tab group names, colors, and membership, then rename sessions so they stay understandable later.</p>
-        </article>
-        <article class="feature-panel">
-          <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 5h12v5H6zM6 14h12v5H6z" stroke-width="1.8" stroke-linejoin="round"></path></svg></span>
-          <h3>Preview and restore individual windows</h3>
-          <p>Inspect saved tabs before reopening anything, then restore a full session or just one saved window.</p>
-        </article>
-        <article class="feature-panel">
-          <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke-width="1.8" stroke-linecap="round"></path></svg></span>
-          <h3>Add and remove tabs inside sessions</h3>
-          <p>Append custom URLs to a saved session and remove individual tabs when a saved workspace needs cleanup.</p>
-        </article>
-        <article class="feature-panel dark-feature">
-          <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 4h12v5H6zM4 13h16v7H4z" stroke-width="1.8" stroke-linejoin="round"></path><path d="M8 16h8" stroke-width="1.8" stroke-linecap="round"></path></svg></span>
-          <h3>Auto Save for long-running browser work</h3>
-          <p>Automatically save on a schedule or when Chrome closes. Group auto-saved sessions by smart topic, day, browser session, or keep them flat.</p>
-        </article>
-        <article class="feature-panel">
-          <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 7h10M7 12h10M7 17h10" stroke-width="1.8" stroke-linecap="round"></path></svg></span>
-          <h3>JSON backup and import</h3>
-          <p>Export saved sessions to a JSON file and import them back on another Chrome profile or device.</p>
-        </article>
-        <article class="feature-panel">
-          <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 18a4 4 0 1 1 .8-7.92A5.5 5.5 0 0 1 18.6 12 3 3 0 0 1 18 18H7Z" stroke-width="1.8" stroke-linejoin="round"></path></svg></span>
-          <h3>Optional Cloud Sync</h3>
-          <p>Sign in with Google only if you choose to sync sessions through the configured Cloudflare backend.</p>
-        </article>
-        <article class="feature-panel">
-          <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 1 0 9 9 6 6 0 0 1-9-9Z" stroke-width="1.8" stroke-linejoin="round"></path></svg></span>
-          <h3>Personalized but focused</h3>
-          <p>Dark mode, light mode, accent colors, language settings, browser support notices, and multiple popup sizes.</p>
-        </article>
-      </div>
-    </section>
-
-    <section id="privacy" class="trust-band">
-      <div class="section trust">
-        <div>
-          <p class="kicker">Privacy and control</p>
-          <h2>Local-first by default. Sync only when you ask.</h2>
-          <p class="section-intro">Tabs Session Saver stores sessions in Chrome local storage unless you explicitly enable Cloud Sync. Because saved tabs can include sensitive URLs, the site makes that tradeoff visible instead of hiding it in fine print.</p>
-        </div>
-        <div class="trust-panels">
-          <article class="trust-panel">
-            <h3>No account for local use</h3>
-            <p>Install the extension, save sessions, restore tabs, and export/import backups without signing in.</p>
-          </article>
-          <article class="trust-panel">
-            <h3>Clear OAuth scope</h3>
-            <p>Google Sign-In is used for optional Cloud Sync identity only. It does not request Drive, Gmail, Calendar, or Contacts access.</p>
-          </article>
-          <article class="trust-panel">
-            <h3>Deletion instructions included</h3>
-            <p>Legal documents below are rendered directly from Markdown files in this static site, including privacy, terms, OAuth disclosure, and deletion steps.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="legal" class="legal">
-      <div class="section">
-        <div class="section-head">
-          <div>
-            <p class="kicker">Legal</p>
-            <h2>Readable legal docs, rendered from Markdown.</h2>
-          </div>
-          <p>These documents are loaded from the `.md` files in <code>Website/legal</code>, so the published page and source documents stay aligned.</p>
-        </div>
-
-        <div class="legal-shell">
-          <div class="legal-nav" role="tablist" aria-label="Legal documents">
-            <button type="button" role="tab" aria-selected="true" data-doc="privacy">Privacy Policy</button>
-            <button type="button" role="tab" aria-selected="false" data-doc="terms">Terms of Service</button>
-            <button type="button" role="tab" aria-selected="false" data-doc="oauth">Google OAuth Disclosure</button>
-            <button type="button" role="tab" aria-selected="false" data-doc="deletion">Data Deletion</button>
-          </div>
-          <article id="legal-document" class="legal-document" tabindex="-1" aria-live="polite">
-            <p class="loading-state">Loading legal document...</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section class="cta-band" aria-labelledby="cta-title">
-      <div class="cta">
-        <div>
-          <h2 id="cta-title">Close Chrome without closing your train of thought.</h2>
-          <p>Save the session, shut the laptop, come back later, and restore the exact workspace when it matters.</p>
-        </div>
-        <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=en" target="_blank" rel="noopener noreferrer">Add to Chrome</a>
+      <div class="cta-panel secondary-panel">
+        <p class="kicker">For technical users</p>
+        <h2>Review how it works.</h2>
+        <p>Permissions, storage, restore logic, Cloud Sync, and privacy details.</p>
+        <a class="btn btn-secondary" href="/technical">Technical details</a>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="footer-inner">
-      <div>&copy; 2026 Tabs Session Saver - Paolo Ronco - <a href="mailto:info@paoloronco.it">info@paoloronco.it</a></div>
+      <div>&copy; 2026 Tabs Session Saver - Paolo Ronco</div>
       <div class="footer-links">
         <a href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=en" target="_blank" rel="noopener noreferrer">Chrome Web Store</a>
         <a href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener noreferrer">GitHub</a>
-        <a href="/privacy">Privacy</a>
-        <a href="/terms">Terms</a>
-        <a href="/data-deletion">Data deletion</a>
+        <a href="/technical">Technical</a>
+        <a href="/legal">Legal</a>
+        <a href="mailto:info@paoloronco.it">Contact</a>
       </div>
     </div>
   </footer>
-
-  <script>
-    const screenshots = [
-      { src: "image3.png", alt: "Tabs Session Saver saved sessions screenshot" },
-      { src: "image2.png", alt: "Tabs Session Saver promotional screenshot with extension popup" },
-      { src: "image4.png", alt: "Tabs Session Saver popup UI screenshot" }
-    ];
-
-    const galleryImage = document.getElementById("gallery-image");
-    document.querySelectorAll("[data-shot]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const shot = screenshots[Number(button.dataset.shot)];
-        if (!shot) return;
-        document.querySelectorAll("[data-shot]").forEach((item) => {
-          item.setAttribute("aria-selected", String(item === button));
-        });
-        galleryImage.style.opacity = "0";
-        window.setTimeout(() => {
-          galleryImage.src = shot.src;
-          galleryImage.alt = shot.alt;
-          galleryImage.style.opacity = "1";
-        }, 130);
-      });
-    });
-
-    const docs = {
-      privacy: {
-        title: "Privacy Policy",
-        file: "legal/privacy-policy.md",
-        path: "/privacy"
-      },
-      terms: {
-        title: "Terms of Service",
-        file: "legal/terms-of-service.md",
-        path: "/terms"
-      },
-      oauth: {
-        title: "Google OAuth App Disclosure",
-        file: "legal/oauth-app-disclosure.md",
-        path: "/oauth-disclosure"
-      },
-      deletion: {
-        title: "Data Deletion Instructions",
-        file: "legal/data-deletion-instructions.md",
-        path: "/data-deletion"
-      }
-    };
-
-    const legalDocument = document.getElementById("legal-document");
-    const legalButtons = Array.from(document.querySelectorAll("[data-doc]"));
-    const markdownCache = new Map();
-
-    function escapeHtml(value) {
-      return value
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function renderInline(value) {
-      let html = escapeHtml(value);
-      html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
-      html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-      html = html.replace(/(^|[\s>])([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi, '$1<a href="mailto:$2">$2</a>');
-      html = html.replace(/(^|[\s>])(https?:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>');
-      return html;
-    }
-
-    function renderMarkdown(markdown) {
-      const lines = markdown.replace(/\r\n/g, "\n").split("\n");
-      const blocks = [];
-      let i = 0;
-
-      function collectParagraph() {
-        const parts = [];
-        while (i < lines.length && lines[i].trim() && !/^(#{1,3})\s+/.test(lines[i]) && !/^[-*]\s+/.test(lines[i]) && !/^\d+\.\s+/.test(lines[i]) && !/^```/.test(lines[i]) && !isTableStart(i)) {
-          parts.push(lines[i].trim());
-          i += 1;
-        }
-        blocks.push(`<p>${renderInline(parts.join(" ").replace(/ {2,}/g, " "))}</p>`);
-      }
-
-      function isTableStart(index) {
-        return lines[index] && lines[index].trim().startsWith("|") && lines[index + 1] && /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(lines[index + 1]);
-      }
-
-      while (i < lines.length) {
-        const line = lines[i];
-        const trimmed = line.trim();
-
-        if (!trimmed) {
-          i += 1;
-          continue;
-        }
-
-        if (/^```/.test(trimmed)) {
-          i += 1;
-          const code = [];
-          while (i < lines.length && !/^```/.test(lines[i].trim())) {
-            code.push(lines[i]);
-            i += 1;
-          }
-          i += 1;
-          blocks.push(`<pre><code>${escapeHtml(code.join("\n"))}</code></pre>`);
-          continue;
-        }
-
-        const heading = trimmed.match(/^(#{1,3})\s+(.*)$/);
-        if (heading) {
-          const level = heading[1].length;
-          blocks.push(`<h${level}>${renderInline(heading[2])}</h${level}>`);
-          i += 1;
-          continue;
-        }
-
-        if (isTableStart(i)) {
-          const headerCells = trimmed.split("|").map((cell) => cell.trim()).filter(Boolean);
-          i += 2;
-          const rows = [];
-          while (i < lines.length && lines[i].trim().startsWith("|")) {
-            rows.push(lines[i].trim().split("|").map((cell) => cell.trim()).filter(Boolean));
-            i += 1;
-          }
-          blocks.push(`<table><thead><tr>${headerCells.map((cell) => `<th>${renderInline(cell)}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${renderInline(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table>`);
-          continue;
-        }
-
-        if (/^[-*]\s+/.test(trimmed)) {
-          const items = [];
-          while (i < lines.length && /^[-*]\s+/.test(lines[i].trim())) {
-            items.push(lines[i].trim().replace(/^[-*]\s+/, ""));
-            i += 1;
-          }
-          blocks.push(`<ul>${items.map((item) => `<li>${renderInline(item)}</li>`).join("")}</ul>`);
-          continue;
-        }
-
-        if (/^\d+\.\s+/.test(trimmed)) {
-          const items = [];
-          while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
-            items.push(lines[i].trim().replace(/^\d+\.\s+/, ""));
-            i += 1;
-          }
-          blocks.push(`<ol>${items.map((item) => `<li>${renderInline(item)}</li>`).join("")}</ol>`);
-          continue;
-        }
-
-        collectParagraph();
-      }
-
-      return blocks.join("\n");
-    }
-
-    function docFromLocation() {
-      const path = window.location.pathname.replace(/\/$/, "");
-      const hash = window.location.hash.replace("#", "");
-      if (path === "/terms" || hash === "terms") return "terms";
-      if (path === "/oauth-disclosure" || hash === "oauth") return "oauth";
-      if (path === "/data-deletion" || hash === "deletion") return "deletion";
-      if (path === "/privacy" || hash === "privacy") return "privacy";
-      return "privacy";
-    }
-
-    async function loadDoc(key, updatePath = false) {
-      const doc = docs[key] || docs.privacy;
-      legalButtons.forEach((button) => {
-        button.setAttribute("aria-selected", String(button.dataset.doc === key));
-      });
-      legalDocument.innerHTML = '<p class="loading-state">Loading legal document...</p>';
-
-      try {
-        let markdown = markdownCache.get(key);
-        if (!markdown) {
-          const response = await fetch(doc.file, { cache: "no-cache" });
-          if (!response.ok) throw new Error(`Unable to load ${doc.file}`);
-          markdown = await response.text();
-          markdownCache.set(key, markdown);
-        }
-        legalDocument.innerHTML = renderMarkdown(markdown);
-        if (updatePath && window.location.protocol !== "file:") {
-          history.pushState({ doc: key }, doc.title, doc.path);
-        }
-      } catch (error) {
-        legalDocument.innerHTML = `<h1>${doc.title}</h1><p class="error-state">This Markdown document could not be loaded. Open <a href="${doc.file}">${doc.file}</a> directly.</p>`;
-      }
-    }
-
-    legalButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        loadDoc(button.dataset.doc, true);
-        document.getElementById("legal").scrollIntoView({ behavior: "smooth", block: "start" });
-        window.setTimeout(() => legalDocument.focus({ preventScroll: true }), 250);
-      });
-    });
-
-    window.addEventListener("popstate", () => loadDoc(docFromLocation(), false));
-    loadDoc(docFromLocation(), false);
-  </script>
 </body>
 </html>

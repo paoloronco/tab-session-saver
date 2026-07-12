@@ -1,0 +1,15 @@
+{
+  "name": "tabsessionsaver-cloudsync-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check src/index.js",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:schema:local": "wrangler d1 execute tabsessionsaver-sync --local --file=../cloudflare-d1/schema.sql",
+    "db:schema:remote": "wrangler d1 execute tabsessionsaver-sync --remote --file=../cloudflare-d1/schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.110.0"
+  }
+}
