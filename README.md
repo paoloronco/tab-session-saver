@@ -123,13 +123,14 @@ tabs-session-saver/
 <summary>View full changelog</summary>
 
 ### 7.15.0
+- added optional Cloud Sync client settings with Google sign-in
+- added the Cloudflare Worker and D1 backend for real cloud sync storage
 - reorganized the Cloud Sync backend into separate Cloudflare Worker and D1 folders
 - documented the server-side free Cloud Sync model and quota behavior
 - removed the direct newsletter provider host permission from the extension manifest
 - updated extension version to `7.15.0`
 
 ### 7.14.0
-- added optional Cloud Sync client settings and a Cloudflare Worker/D1 backend scaffold
 - added Newsletter signup in extension settings through a secure server-side proxy
 - updated extension version to `7.14.0`
 
