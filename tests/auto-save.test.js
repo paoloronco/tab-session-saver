@@ -322,18 +322,19 @@ test('auto saved sessions can disable grouping', () => {
 });
 
 test('auto save UI exposes settings controls, session tabs, translations, and alarm permission', () => {
-  const markup = readExtensionFile('popup.html');
+  const popupMarkup = readExtensionFile('popup.html');
+  const settingsMarkup = readExtensionFile('settings.html');
   const manifest = JSON.parse(readExtensionFile('manifest.json'));
   const { translations } = loadPopupAutoSaveBindings();
 
-  assert.match(markup, /class="settings-group-card settings-autosave"/);
-  assert.match(markup, /type="checkbox" id="autoSaveEnabled"/);
-  assert.match(markup, /type="checkbox" id="autoSaveOnExitEnabled"/);
-  assert.match(markup, /id="autoSaveInterval"[^>]*type="number"[^>]*min="10"/);
-  assert.match(markup, /id="autoSaveGroupMode"[\s\S]*?value="smart"[\s\S]*?value="day"[\s\S]*?value="session"[\s\S]*?value="none"/);
-  assert.match(markup, /id="session-category-manual"[\s\S]*?Manually Saved/);
-  assert.match(markup, /id="session-category-auto"[\s\S]*?Auto Saved/);
-  assert.match(markup, /id="auto-save-trigger-filters"/);
+  assert.match(settingsMarkup, /class="settings-group-card settings-autosave"/);
+  assert.match(settingsMarkup, /type="checkbox" id="autoSaveEnabled"/);
+  assert.match(settingsMarkup, /type="checkbox" id="autoSaveOnExitEnabled"/);
+  assert.match(settingsMarkup, /id="autoSaveInterval"[^>]*type="number"[^>]*min="10"/);
+  assert.match(settingsMarkup, /id="autoSaveGroupMode"[\s\S]*?value="smart"[\s\S]*?value="day"[\s\S]*?value="session"[\s\S]*?value="none"/);
+  assert.match(popupMarkup, /id="session-category-manual"[\s\S]*?Manually Saved/);
+  assert.match(popupMarkup, /id="session-category-auto"[\s\S]*?Auto Saved/);
+  assert.match(popupMarkup, /id="auto-save-trigger-filters"/);
   assert.ok(manifest.permissions.includes('alarms'));
 
   for (const language of ['en', 'es', 'it', 'fr', 'de']) {

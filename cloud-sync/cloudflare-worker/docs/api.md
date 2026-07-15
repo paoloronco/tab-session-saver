@@ -173,6 +173,11 @@ If the snapshot exceeds the current server-side Cloud Sync limits:
 
 If the account pushes another snapshot too soon after the previous accepted write:
 
+```http
+HTTP/1.1 429 Too Many Requests
+Retry-After: 87
+```
+
 ```json
 {
   "success": false,

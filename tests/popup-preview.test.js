@@ -230,3 +230,32 @@ test('preview header omits redundant full-session restore and aligns count summa
   assert.ok(titleWrap.children.includes(summary));
   assert.equal(summary.textContent, '2 tabs \u2022 1 window');
 });
+
+test('multi-window preview exposes a confirmed remove-window control', () => {
+  const { renderPreview } = loadPopupBindings();
+  const previewContainer = createElement('div');
+  const label = createElement('span');
+  const sessionPayload = {
+    timestamp: '2026-06-30T10:00:00.000Z',
+    windows: [
+      {
+        tabs: [{ title: 'One', url: 'https://one.test', groupId: -1 }],
+        groups: []
+      },
+      {
+        tabs: [{ title: 'Two', url: 'https://two.test', groupId: -1 }],
+        groups: []
+      }
+    ]
+  };
+
+  renderPreview(sessionPayload, previewContainer, 0, label);
+
+  const removeWindowButtons = findAllElements(
+    previewContainer,
+    (element) => element.classList?.contains('preview-window-remove-btn')
+  );
+
+  assert.equal(removeWindowButtons.length, 2);
+  assert.equal(removeWindowButtons[0].getAttribute('aria-label'), 'Delete window');
+});

@@ -2,7 +2,7 @@
 
 > A Chrome extension by Paolo Ronco that saves, previews, searches, restores, backs up, and optionally syncs Chrome tab sessions.
 
-Tabs Session Saver (v7.15.3) lets users capture open Chrome windows, tabs, and tab groups, then restore them later. It is designed for students, researchers, professionals, and anyone who works with many tabs across recurring projects.
+Tabs Session Saver (v7.15.4) lets users capture open Chrome windows, tabs, and tab groups, then restore them later. It is designed for students, researchers, professionals, and anyone who works with many tabs across recurring projects.
 
 ## Key Features
 

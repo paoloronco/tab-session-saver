@@ -115,4 +115,6 @@ Fix:
 
 - wait for the returned `retryAfterSeconds` value;
 - avoid repeatedly pressing Push in the extension;
-- deploy the latest extension code so local changes use the automatic 10-minute push cadence.
+- deploy the latest extension code so local changes use the automatic 10-minute push cadence and the best-effort close-time push.
+
+The extension may still add local UX throttling, but this error is enforced by the Worker and applies even if a modified open-source client calls the API directly.

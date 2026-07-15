@@ -16,6 +16,16 @@ const translations = {
     restore_window_button: "Restore window",
     restore_in_progress: "Restoring...",
     restore_in_progress_message: "A session restore is already in progress.",
+    reorder_session_label: "Drag to reorder session",
+    create_folder_label: "Create folder",
+    create_folder_prompt: "Folder name:",
+    default_folder_name: "New folder",
+    folder_empty: "Drop sessions here",
+    delete_folder_label: "Delete folder",
+    delete_folder_empty_confirm: "Delete folder \"{name}\"?",
+    delete_folder_with_sessions_confirm: "Folder \"{name}\" contains {count} sessions. Delete those sessions too?",
+    delete_folder_keep_sessions_confirm: "Keep the sessions and delete only folder \"{name}\"?",
+    unfiled_sessions_title: "Other sessions",
     export_button: "Export saved sessions (JSON)",
     import_button: "Import sessions (JSON)",
     settings_title: "Settings",
@@ -23,6 +33,11 @@ const translations = {
     dark_mode_label: "Dark mode",
     color_label: "Accent color",
     appearance_title: "Appearance",
+    popup_size_label: "Popup size",
+    popup_size_small: "Small",
+    popup_size_medium: "Medium",
+    popup_size_large: "Large",
+    popup_size_huge: "Huge (Full tab)",
     restore_behavior_title: "Restore behavior",
     restore_behavior_description: "Choose where the last window of a restored session opens.",
     restore_new_windows_label: "Restore in new windows",
@@ -45,7 +60,7 @@ const translations = {
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Optional multi-device sync. Core sessions still work locally without an account.",
     cloud_sync_limits_note: "Current cloud storage limit: up to 10 synced sessions, 300 total URLs, and a 512 KB snapshot.",
-    cloud_sync_auto_note: "After local changes, Cloud Sync pushes automatically after about 10 minutes. Manual Push is rate-limited.",
+    cloud_sync_auto_note: "After local changes, Cloud Sync pushes automatically after about 10 minutes and also tries to sync when the browser closes. Push writes are rate-limited by the cloud service.",
     cloud_sync_register_button: "Create sync account / Login",
     cloud_sync_push_button: "Push",
     cloud_sync_pull_button: "Pull",
@@ -79,9 +94,14 @@ const translations = {
     auto_save_group_topic_title: "Similar tabs",
     auto_save_group_count: "{count} sessions",
     add_url_button: "Add URL",
-    add_url_prompt: "Enter a URL to add to this session:",
-    add_url_invalid: "Enter a valid http or https URL.",
-    add_url_failed: "Unable to add this URL.",
+    add_session_item_button: "Add item",
+    add_session_window_button: "Add as new window",
+    add_url_prompt: "Enter a URL or search to add to this session:",
+    add_url_invalid: "Enter a valid URL or search text.",
+    add_url_failed: "Unable to add this item.",
+    remove_window_button: "Delete window",
+    remove_window_confirm: "Delete window {index} from this saved session?",
+    remove_tab_confirm: "Remove this tab from the saved session?",
     auto_save_filter_group_label: "Auto saved session source",
     auto_save_filter_all: "All",
     auto_save_filter_scheduled: "Scheduled",
@@ -145,6 +165,16 @@ const translations = {
     restore_window_button: "Restaurar ventana",
     restore_in_progress: "Restaurando...",
     restore_in_progress_message: "Ya hay una restauraci\u00F3n de sesi\u00F3n en curso.",
+    reorder_session_label: "Arrastra para reordenar la sesi\u00F3n",
+    create_folder_label: "Crear carpeta",
+    create_folder_prompt: "Nombre de la carpeta:",
+    default_folder_name: "Nueva carpeta",
+    folder_empty: "Suelta sesiones aqu\u00ED",
+    delete_folder_label: "Eliminar carpeta",
+    delete_folder_empty_confirm: "\u00BFEliminar la carpeta \"{name}\"?",
+    delete_folder_with_sessions_confirm: "La carpeta \"{name}\" contiene {count} sesiones. \u00BFEliminar tambi\u00E9n esas sesiones?",
+    delete_folder_keep_sessions_confirm: "\u00BFConservar las sesiones y eliminar solo la carpeta \"{name}\"?",
+    unfiled_sessions_title: "Otras sesiones",
     export_button: "Exportar sesiones guardadas (JSON)",
     import_button: "Importar sesiones (JSON)",
     settings_title: "Configuraci\u00F3n",
@@ -152,6 +182,11 @@ const translations = {
     dark_mode_label: "Modo oscuro",
     color_label: "Color de acento",
     appearance_title: "Apariencia",
+    popup_size_label: "Tama\u00F1o del popup",
+    popup_size_small: "Peque\u00F1o",
+    popup_size_medium: "Mediano",
+    popup_size_large: "Grande",
+    popup_size_huge: "Enorme (pesta\u00F1a completa)",
     restore_behavior_title: "Comportamiento de restauraci\u00F3n",
     restore_behavior_description: "Elige d\u00F3nde se abre la \u00FAltima ventana de una sesi\u00F3n restaurada.",
     restore_new_windows_label: "Restaurar en ventanas nuevas",
@@ -174,7 +209,7 @@ const translations = {
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Sincronizaci\u00F3n opcional entre dispositivos. Las sesiones locales funcionan sin cuenta.",
     cloud_sync_limits_note: "L\u00EDmite actual en la nube: hasta 10 sesiones sincronizadas, 300 URL en total y una captura de 512 KB.",
-    cloud_sync_auto_note: "Tras cambios locales, Cloud Sync sube los datos autom\u00E1ticamente en unos 10 minutos. La subida manual tiene l\u00EDmite.",
+    cloud_sync_auto_note: "Tras cambios locales, Cloud Sync sube los datos autom\u00E1ticamente en unos 10 minutos y tambi\u00E9n intenta sincronizar al cerrar el navegador. Las escrituras Push est\u00E1n limitadas por el servicio cloud.",
     cloud_sync_register_button: "Crear cuenta sync / Iniciar sesi\u00F3n",
     cloud_sync_push_button: "Subir",
     cloud_sync_pull_button: "Descargar",
@@ -208,9 +243,14 @@ const translations = {
     auto_save_group_topic_title: "Pesta\u00F1as similares",
     auto_save_group_count: "{count} sesiones",
     add_url_button: "A\u00F1adir URL",
-    add_url_prompt: "Introduce una URL para a\u00F1adirla a esta sesi\u00F3n:",
-    add_url_invalid: "Introduce una URL http o https v\u00E1lida.",
-    add_url_failed: "No se pudo a\u00F1adir esta URL.",
+    add_session_item_button: "A\u00F1adir elemento",
+    add_session_window_button: "A\u00F1adir como ventana",
+    add_url_prompt: "Introduce una URL o b\u00FAsqueda para a\u00F1adirla a esta sesi\u00F3n:",
+    add_url_invalid: "Introduce una URL o b\u00FAsqueda v\u00E1lida.",
+    add_url_failed: "No se pudo a\u00F1adir este elemento.",
+    remove_window_button: "Eliminar ventana",
+    remove_window_confirm: "\u00BFEliminar la ventana {index} de esta sesi\u00F3n guardada?",
+    remove_tab_confirm: "\u00BFEliminar esta pesta\u00F1a de la sesi\u00F3n guardada?",
     auto_save_filter_group_label: "Origen de sesiones autom\u00E1ticas",
     auto_save_filter_all: "Todas",
     auto_save_filter_scheduled: "Programadas",
@@ -274,6 +314,16 @@ const translations = {
     restore_window_button: "Ripristina finestra",
     restore_in_progress: "Ripristino...",
     restore_in_progress_message: "Un ripristino sessione \u00E8 gi\u00E0 in corso.",
+    reorder_session_label: "Trascina per riordinare la sessione",
+    create_folder_label: "Crea cartella",
+    create_folder_prompt: "Nome cartella:",
+    default_folder_name: "Nuova cartella",
+    folder_empty: "Trascina qui le sessioni",
+    delete_folder_label: "Elimina cartella",
+    delete_folder_empty_confirm: "Eliminare la cartella \"{name}\"?",
+    delete_folder_with_sessions_confirm: "La cartella \"{name}\" contiene {count} sessioni. Eliminare anche queste sessioni?",
+    delete_folder_keep_sessions_confirm: "Tenere le sessioni ed eliminare solo la cartella \"{name}\"?",
+    unfiled_sessions_title: "Altre sessioni",
     export_button: "Esporta le sessioni salvate (JSON)",
     import_button: "Importa le sessioni (JSON)",
     settings_title: "Impostazioni",
@@ -281,6 +331,11 @@ const translations = {
     dark_mode_label: "Modalit\u00E0 scura",
     color_label: "Colore di accento",
     appearance_title: "Aspetto",
+    popup_size_label: "Dimensione popup",
+    popup_size_small: "Piccolo",
+    popup_size_medium: "Medio",
+    popup_size_large: "Grande",
+    popup_size_huge: "Enorme (scheda completa)",
     restore_behavior_title: "Comportamento di ripristino",
     restore_behavior_description: "Scegli dove aprire l'ultima finestra di una sessione ripristinata.",
     restore_new_windows_label: "Ripristina in nuove finestre",
@@ -303,7 +358,7 @@ const translations = {
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Sync opzionale tra dispositivi. Le sessioni locali funzionano anche senza account.",
     cloud_sync_limits_note: "Limite cloud attuale: fino a 10 sessioni sincronizzate, 300 URL totali e snapshot da 512 KB.",
-    cloud_sync_auto_note: "Dopo modifiche locali, Cloud Sync invia automaticamente dopo circa 10 minuti. Il Push manuale ha un limite.",
+    cloud_sync_auto_note: "Dopo modifiche locali, Cloud Sync invia automaticamente dopo circa 10 minuti e prova anche a sincronizzare alla chiusura del browser. Le scritture Push sono limitate dal servizio cloud.",
     cloud_sync_register_button: "Crea account sync / Login",
     cloud_sync_push_button: "Invia",
     cloud_sync_pull_button: "Scarica",
@@ -337,9 +392,14 @@ const translations = {
     auto_save_group_topic_title: "Schede simili",
     auto_save_group_count: "{count} sessioni",
     add_url_button: "Aggiungi URL",
-    add_url_prompt: "Inserisci un URL da aggiungere a questa sessione:",
-    add_url_invalid: "Inserisci un URL http o https valido.",
-    add_url_failed: "Impossibile aggiungere questo URL.",
+    add_session_item_button: "Aggiungi elemento",
+    add_session_window_button: "Aggiungi come finestra",
+    add_url_prompt: "Inserisci un URL o una ricerca da aggiungere a questa sessione:",
+    add_url_invalid: "Inserisci un URL o una ricerca valida.",
+    add_url_failed: "Impossibile aggiungere questo elemento.",
+    remove_window_button: "Elimina finestra",
+    remove_window_confirm: "Eliminare la finestra {index} da questa sessione salvata?",
+    remove_tab_confirm: "Rimuovere questa scheda dalla sessione salvata?",
     auto_save_filter_group_label: "Origine sessioni automatiche",
     auto_save_filter_all: "Tutte",
     auto_save_filter_scheduled: "Programmate",
@@ -403,6 +463,16 @@ const translations = {
     restore_window_button: "Restaurer la fen\u00EAtre",
     restore_in_progress: "Restauration...",
     restore_in_progress_message: "Une restauration de session est d\u00E9j\u00E0 en cours.",
+    reorder_session_label: "Faites glisser pour r\u00E9organiser la session",
+    create_folder_label: "Cr\u00E9er un dossier",
+    create_folder_prompt: "Nom du dossier :",
+    default_folder_name: "Nouveau dossier",
+    folder_empty: "D\u00E9posez des sessions ici",
+    delete_folder_label: "Supprimer le dossier",
+    delete_folder_empty_confirm: "Supprimer le dossier \"{name}\" ?",
+    delete_folder_with_sessions_confirm: "Le dossier \"{name}\" contient {count} sessions. Supprimer aussi ces sessions ?",
+    delete_folder_keep_sessions_confirm: "Conserver les sessions et supprimer seulement le dossier \"{name}\" ?",
+    unfiled_sessions_title: "Autres sessions",
     export_button: "Exporter les sessions enregistr\u00E9es (JSON)",
     import_button: "Importer des sessions (JSON)",
     settings_title: "Param\u00E8tres",
@@ -410,6 +480,11 @@ const translations = {
     dark_mode_label: "Mode sombre",
     color_label: "Couleur d'accent",
     appearance_title: "Apparence",
+    popup_size_label: "Taille du popup",
+    popup_size_small: "Petite",
+    popup_size_medium: "Moyenne",
+    popup_size_large: "Grande",
+    popup_size_huge: "Immense (onglet complet)",
     restore_behavior_title: "Comportement de restauration",
     restore_behavior_description: "Choisissez o\u00F9 ouvrir la derni\u00E8re fen\u00EAtre d'une session restaur\u00E9e.",
     restore_new_windows_label: "Restaurer dans de nouvelles fen\u00EAtres",
@@ -432,7 +507,7 @@ const translations = {
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Synchronisation optionnelle entre appareils. Les sessions locales fonctionnent sans compte.",
     cloud_sync_limits_note: "Limite cloud actuelle : jusqu'\u00E0 10 sessions synchronis\u00E9es, 300 URL au total et un instantan\u00E9 de 512 Ko.",
-    cloud_sync_auto_note: "Apr\u00E8s des changements locaux, Cloud Sync envoie automatiquement dans environ 10 minutes. L'envoi manuel est limit\u00E9.",
+    cloud_sync_auto_note: "Apr\u00E8s des changements locaux, Cloud Sync envoie automatiquement dans environ 10 minutes et tente aussi une synchronisation \u00E0 la fermeture du navigateur. Les \u00E9critures Push sont limit\u00E9es par le service cloud.",
     cloud_sync_register_button: "Cr\u00E9er un compte sync / Connexion",
     cloud_sync_push_button: "Envoyer",
     cloud_sync_pull_button: "R\u00E9cup\u00E9rer",
@@ -466,9 +541,14 @@ const translations = {
     auto_save_group_topic_title: "Onglets similaires",
     auto_save_group_count: "{count} sessions",
     add_url_button: "Ajouter une URL",
-    add_url_prompt: "Saisissez une URL \u00E0 ajouter \u00E0 cette session :",
-    add_url_invalid: "Saisissez une URL http ou https valide.",
-    add_url_failed: "Impossible d'ajouter cette URL.",
+    add_session_item_button: "Ajouter un \u00E9l\u00E9ment",
+    add_session_window_button: "Ajouter comme fen\u00EAtre",
+    add_url_prompt: "Saisissez une URL ou recherche \u00E0 ajouter \u00E0 cette session :",
+    add_url_invalid: "Saisissez une URL ou recherche valide.",
+    add_url_failed: "Impossible d'ajouter cet \u00E9l\u00E9ment.",
+    remove_window_button: "Supprimer la fen\u00EAtre",
+    remove_window_confirm: "Supprimer la fen\u00EAtre {index} de cette session enregistr\u00E9e ?",
+    remove_tab_confirm: "Supprimer cet onglet de la session enregistr\u00E9e ?",
     auto_save_filter_group_label: "Source des sessions automatiques",
     auto_save_filter_all: "Toutes",
     auto_save_filter_scheduled: "Planifi\u00E9es",
@@ -532,6 +612,16 @@ const translations = {
     restore_window_button: "Fenster wiederherstellen",
     restore_in_progress: "Wiederherstellung...",
     restore_in_progress_message: "Eine Sitzungswiederherstellung l\u00E4uft bereits.",
+    reorder_session_label: "Ziehen, um die Sitzung neu zu sortieren",
+    create_folder_label: "Ordner erstellen",
+    create_folder_prompt: "Ordnername:",
+    default_folder_name: "Neuer Ordner",
+    folder_empty: "Sitzungen hier ablegen",
+    delete_folder_label: "Ordner l\u00F6schen",
+    delete_folder_empty_confirm: "Ordner \"{name}\" l\u00F6schen?",
+    delete_folder_with_sessions_confirm: "Ordner \"{name}\" enth\u00E4lt {count} Sitzungen. Diese Sitzungen ebenfalls l\u00F6schen?",
+    delete_folder_keep_sessions_confirm: "Sitzungen behalten und nur Ordner \"{name}\" l\u00F6schen?",
+    unfiled_sessions_title: "Weitere Sitzungen",
     export_button: "Gespeicherte Sitzungen exportieren (JSON)",
     import_button: "Sitzungen importieren (JSON)",
     settings_title: "Einstellungen",
@@ -539,6 +629,11 @@ const translations = {
     dark_mode_label: "Dunkelmodus",
     color_label: "Akzentfarbe",
     appearance_title: "Darstellung",
+    popup_size_label: "Popup-Gr\u00F6\u00DFe",
+    popup_size_small: "Klein",
+    popup_size_medium: "Mittel",
+    popup_size_large: "Gro\u00DF",
+    popup_size_huge: "Riesig (voller Tab)",
     restore_behavior_title: "Wiederherstellungsverhalten",
     restore_behavior_description: "W\u00E4hlen Sie, wo das letzte Fenster einer Sitzung ge\u00F6ffnet wird.",
     restore_new_windows_label: "In neuen Fenstern wiederherstellen",
@@ -561,7 +656,7 @@ const translations = {
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Optionale Synchronisierung zwischen Ger\u00E4ten. Lokale Sitzungen funktionieren ohne Konto.",
     cloud_sync_limits_note: "Aktuelles Cloud-Limit: bis zu 10 synchronisierte Sitzungen, 300 URLs insgesamt und ein 512-KB-Snapshot.",
-    cloud_sync_auto_note: "Nach lokalen \u00C4nderungen l\u00E4dt Cloud Sync nach etwa 10 Minuten automatisch hoch. Manuelles Pushen ist begrenzt.",
+    cloud_sync_auto_note: "Nach lokalen \u00C4nderungen l\u00E4dt Cloud Sync nach etwa 10 Minuten automatisch hoch und versucht auch beim Schlie\u00DFen des Browsers zu synchronisieren. Push-Schreibvorg\u00E4nge werden vom Cloud-Dienst begrenzt.",
     cloud_sync_register_button: "Sync-Konto erstellen / Anmelden",
     cloud_sync_push_button: "Hochladen",
     cloud_sync_pull_button: "Herunterladen",
@@ -595,9 +690,14 @@ const translations = {
     auto_save_group_topic_title: "\u00C4hnliche Tabs",
     auto_save_group_count: "{count} Sitzungen",
     add_url_button: "URL hinzuf\u00FCgen",
-    add_url_prompt: "Gib eine URL ein, die zu dieser Sitzung hinzugef\u00FCgt werden soll:",
-    add_url_invalid: "Gib eine g\u00FCltige http- oder https-URL ein.",
-    add_url_failed: "Diese URL konnte nicht hinzugef\u00FCgt werden.",
+    add_session_item_button: "Element hinzuf\u00FCgen",
+    add_session_window_button: "Als Fenster hinzuf\u00FCgen",
+    add_url_prompt: "Gib eine URL oder Suche ein, die zu dieser Sitzung hinzugef\u00FCgt werden soll:",
+    add_url_invalid: "Gib eine g\u00FCltige URL oder Suche ein.",
+    add_url_failed: "Dieses Element konnte nicht hinzugef\u00FCgt werden.",
+    remove_window_button: "Fenster l\u00F6schen",
+    remove_window_confirm: "Fenster {index} aus dieser gespeicherten Sitzung l\u00F6schen?",
+    remove_tab_confirm: "Diesen Tab aus der gespeicherten Sitzung entfernen?",
     auto_save_filter_group_label: "Quelle automatisch gespeicherter Sitzungen",
     auto_save_filter_all: "Alle",
     auto_save_filter_scheduled: "Geplant",
@@ -683,10 +783,15 @@ const AUTO_SAVE_GROUP_MODE_SMART = 'smart';
 const AUTO_SAVE_GROUP_MODE_DAY = 'day';
 const AUTO_SAVE_GROUP_MODE_SESSION = 'session';
 const AUTO_SAVE_GROUP_MODE_NONE = 'none';
+const SESSION_FOLDERS_KEY = 'sessionFolders';
 
 let currentLanguage = 'en';
 let reloadSessions = () => {};
 let restoreRequestInFlight = false;
+
+function normalizePopupSize(value) {
+  return ['small', 'medium', 'large', 'huge'].includes(value) ? value : 'medium';
+}
 
 // Translation function
 function translatePage(lang) {
@@ -742,6 +847,132 @@ function combineSessionCollections(existing, additions) {
   const currentSessions = Array.isArray(existing) ? existing : [];
   const newSessions = Array.isArray(additions) ? additions : [];
   return currentSessions.concat(newSessions);
+}
+
+function reorderSessionCollection(sessions, fromIndex, toIndex, placement = 'before') {
+  const source = Array.isArray(sessions) ? sessions.slice() : [];
+  if (
+    !Number.isInteger(fromIndex) ||
+    !Number.isInteger(toIndex) ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= source.length ||
+    toIndex >= source.length ||
+    fromIndex === toIndex
+  ) {
+    return source;
+  }
+
+  const [movedSession] = source.splice(fromIndex, 1);
+  let insertIndex = toIndex;
+  if (fromIndex < toIndex) {
+    insertIndex -= 1;
+  }
+  if (placement === 'after') {
+    insertIndex += 1;
+  }
+  insertIndex = Math.max(0, Math.min(insertIndex, source.length));
+  source.splice(insertIndex, 0, movedSession);
+  return source;
+}
+
+function createRandomId(prefix = '') {
+  const bytes = new Uint8Array(12);
+  if (globalThis.crypto?.getRandomValues) {
+    globalThis.crypto.getRandomValues(bytes);
+  } else {
+    for (let index = 0; index < bytes.length; index += 1) {
+      bytes[index] = Math.floor(Math.random() * 256);
+    }
+  }
+  const value = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return prefix ? `${prefix}_${value}` : value;
+}
+
+function normalizeSessionFolderName(value) {
+  return typeof value === 'string' && value.trim()
+    ? clampString(value.trim(), 80)
+    : '';
+}
+
+function normalizeSessionFolder(rawFolder) {
+  const folder = rawFolder && typeof rawFolder === 'object' ? rawFolder : {};
+  const id = typeof folder.id === 'string' && folder.id.trim() ? folder.id.trim() : '';
+  const name = normalizeSessionFolderName(folder.name);
+  if (!id || !name) return null;
+  return {
+    id,
+    name,
+    createdAt: typeof folder.createdAt === 'string' ? folder.createdAt : new Date().toISOString()
+  };
+}
+
+function getSessionFolderId(session) {
+  const id = session?.metadata?.folderId ?? session?.folderId;
+  return typeof id === 'string' && id.trim() ? id.trim() : '';
+}
+
+function getSessionFolderName(session) {
+  return normalizeSessionFolderName(session?.metadata?.folderName ?? session?.folderName);
+}
+
+function normalizeSessionFolders(rawFolders = [], sessions = []) {
+  const folders = [];
+  const seen = new Set();
+
+  (Array.isArray(rawFolders) ? rawFolders : []).forEach((rawFolder) => {
+    const folder = normalizeSessionFolder(rawFolder);
+    if (!folder || seen.has(folder.id)) return;
+    seen.add(folder.id);
+    folders.push(folder);
+  });
+
+  (Array.isArray(sessions) ? sessions : []).forEach((session) => {
+    const id = getSessionFolderId(session);
+    const name = getSessionFolderName(session);
+    if (!id || !name || seen.has(id)) return;
+    seen.add(id);
+    folders.push({ id, name, createdAt: new Date().toISOString() });
+  });
+
+  return folders;
+}
+
+function setSessionFolder(session, folder = null) {
+  const next = normalizeSessionSnapshot(session);
+  const metadata = { ...(next.metadata || {}) };
+  if (folder?.id && folder?.name) {
+    metadata.folderId = folder.id;
+    metadata.folderName = folder.name;
+  } else {
+    delete metadata.folderId;
+    delete metadata.folderName;
+  }
+  return { ...next, metadata };
+}
+
+function moveSessionToFolderCollection(sessions, fromIndex, folder = null, toIndex = null, placement = 'after') {
+  const source = Array.isArray(sessions)
+    ? sessions.map((session) => normalizeSessionSnapshot(session))
+    : [];
+  if (!Number.isInteger(fromIndex) || fromIndex < 0 || fromIndex >= source.length) return source;
+
+  source[fromIndex] = setSessionFolder(source[fromIndex], folder);
+  if (Number.isInteger(toIndex) && toIndex >= 0 && toIndex < source.length && toIndex !== fromIndex) {
+    return reorderSessionCollection(source, fromIndex, toIndex, placement);
+  }
+
+  const [movedSession] = source.splice(fromIndex, 1);
+  const targetFolderId = folder?.id || '';
+  let insertIndex = source.length;
+  for (let index = source.length - 1; index >= 0; index -= 1) {
+    if (getSessionFolderId(source[index]) === targetFolderId) {
+      insertIndex = index + 1;
+      break;
+    }
+  }
+  source.splice(insertIndex, 0, movedSession);
+  return source;
 }
 
 function normalizeAutoSaveSettings(rawSettings = {}) {
@@ -920,33 +1151,62 @@ function getCustomUrlTabFromInput(value) {
   const trimmed = value.trim();
   if (!trimmed) return null;
   const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed);
-  const candidate = hasScheme ? trimmed : `https://${trimmed}`;
-  try {
-    const parsed = new URL(candidate);
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
-    return {
-      title: trimmed,
-      url: parsed.href,
-      pinned: false,
-      active: false,
-      muted: false,
-      favIconUrl: null,
-      audible: false,
-      discarded: false,
-      index: null,
-      groupId: -1
-    };
-  } catch (_) {
-    return null;
+  const hasWhitespace = /\s/.test(trimmed);
+  const looksLikeUrl =
+    /^www\./i.test(trimmed) ||
+    /^localhost(?::|\/|$)/i.test(trimmed) ||
+    /^\d{1,3}(?:\.\d{1,3}){3}(?::|\/|$)/.test(trimmed) ||
+    /^[^/?#\s]+\.[^/?#\s]+/.test(trimmed);
+
+  let url = '';
+  if (hasScheme || (!hasWhitespace && looksLikeUrl)) {
+    const candidate = hasScheme ? trimmed : `https://${trimmed}`;
+    try {
+      const parsed = new URL(candidate);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+      url = parsed.href;
+    } catch (_) {
+      return null;
+    }
+  } else {
+    url = `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`;
   }
+
+  return {
+    title: trimmed,
+    url,
+    pinned: false,
+    active: false,
+    muted: false,
+    favIconUrl: null,
+    audible: false,
+    discarded: false,
+    index: null,
+    groupId: -1
+  };
 }
 
-function addCustomUrlToSession(session, urlValue) {
+function addCustomUrlToSession(session, urlValue, options = {}) {
   const tab = getCustomUrlTabFromInput(urlValue);
   if (!tab) return null;
   const next = normalizeSessionSnapshot(session);
   if (!Array.isArray(next.windows) || next.windows.length === 0) {
     next.windows = [{ tabs: [], groups: [] }];
+  }
+  if (options.newWindow === true) {
+    next.windows.push({
+      state: 'normal',
+      focused: false,
+      left: null,
+      top: null,
+      width: null,
+      height: null,
+      incognito: false,
+      alwaysOnTop: false,
+      tabs: [{ ...tab, index: 0 }],
+      groups: []
+    });
+    return next;
   }
   const targetWindow = next.windows[next.windows.length - 1];
   if (!Array.isArray(targetWindow.tabs)) targetWindow.tabs = [];
@@ -988,7 +1248,7 @@ function configureRestoreButton(button, idleText) {
 
 function bindSessionPreviewToggle(entry, label, previewButton, togglePreview) {
   entry.addEventListener('click', (event) => {
-    if (event.target?.closest?.('.session-actions, .preview-container')) return;
+    if (event.target?.closest?.('.session-actions, .preview-container, .session-drag-handle')) return;
     event.stopPropagation?.();
     togglePreview();
   });
@@ -1225,6 +1485,18 @@ function sanitizeWindowForClient(win) {
   };
 }
 
+function updateSessionLabelMeta(sessionPayload, label) {
+  const countInfo = describeSessionCounts(sessionPayload);
+  const { date: d, time: t } = formatTimestamp(sessionPayload.timestamp);
+  const strategy = sessionPayload.desktopStrategy || sessionPayload.metadata?.desktopStrategy;
+  const metaSegments = [d, t, countInfo.windowsLabel, countInfo.tabsLabel];
+  if (countInfo.groupsLabel) metaSegments.splice(3, 0, countInfo.groupsLabel);
+  if (strategy === 'workspace') metaSegments.push(getTranslation('desktop_scope_workspace'));
+  const metaEl = label?.querySelector?.('.session-meta');
+  renderMetaSegments(metaEl, metaSegments);
+  return countInfo;
+}
+
 function createPreviewItem(tab, displayIndex, winSnapshot, sessionPayload, index, label, previewContainer) {
   const item = document.createElement('div');
   item.className = 'preview-item';
@@ -1280,7 +1552,7 @@ function createPreviewItem(tab, displayIndex, winSnapshot, sessionPayload, index
   removeBtn.addEventListener('click', (ev) => {
     try {
       ev.stopPropagation();
-      const confirmed = confirm('Remove this tab from the saved session?');
+      const confirmed = confirm(getTranslation('remove_tab_confirm'));
       if (!confirmed) return;
 
       const currentWindowIndex = Array.isArray(sessionPayload.windows)
@@ -1310,14 +1582,7 @@ function createPreviewItem(tab, displayIndex, winSnapshot, sessionPayload, index
         sessionPayload.windows.splice(currentWindowIndex, 1);
       }
 
-      const countInfo = describeSessionCounts(sessionPayload);
-      const { date: d, time: t } = formatTimestamp(sessionPayload.timestamp);
-      const strategy = sessionPayload.desktopStrategy || sessionPayload.metadata?.desktopStrategy;
-      const metaSegments = [d, t, countInfo.windowsLabel, countInfo.tabsLabel];
-      if (countInfo.groupsLabel) metaSegments.splice(3, 0, countInfo.groupsLabel);
-      if (strategy === 'workspace') metaSegments.push(getTranslation('desktop_scope_workspace'));
-      const metaEl = label.querySelector('.session-meta');
-      renderMetaSegments(metaEl, metaSegments);
+      const countInfo = updateSessionLabelMeta(sessionPayload, label);
 
       // Persist changes: if no tabs left, delete session; else update session
       if (countInfo.tabsCount === 0) {
@@ -1344,6 +1609,33 @@ function createPreviewItem(tab, displayIndex, winSnapshot, sessionPayload, index
   item.appendChild(removeBtn);
 
   return item;
+}
+
+function removeWindowFromSavedSession(sessionPayload, windowIndex, index, label, previewContainer) {
+  if (!Array.isArray(sessionPayload?.windows)) return;
+  if (!Number.isInteger(windowIndex) || windowIndex < 0 || windowIndex >= sessionPayload.windows.length) return;
+  if (sessionPayload.windows.length <= 1) return;
+
+  const confirmed = confirm(formatTranslation('remove_window_confirm', { index: windowIndex + 1 }));
+  if (!confirmed) return;
+
+  sessionPayload.windows.splice(windowIndex, 1);
+  const countInfo = updateSessionLabelMeta(sessionPayload, label);
+
+  if (countInfo.tabsCount === 0) {
+    chrome.runtime.sendMessage({ action: 'delete_session', index }, (res) => {
+      if (res && res.success) reloadSessions();
+    });
+    return;
+  }
+
+  chrome.runtime.sendMessage({ action: 'update_session', index, session: sessionPayload }, (res) => {
+    if (!res || !res.success) {
+      console.error('Failed to update session after window removal', res && res.error);
+      return;
+    }
+    renderPreview(sessionPayload, previewContainer, index, label);
+  });
 }
 
 function renderPreview(sessionPayload, previewContainer, index, label) {
@@ -1423,8 +1715,26 @@ function renderPreview(sessionPayload, previewContainer, index, label) {
       );
     });
 
+    const windowActions = document.createElement('div');
+    windowActions.className = 'preview-window-actions';
+    windowActions.appendChild(restoreWindowBtn);
+
+    if (sessionPayload.windows.length > 1) {
+      const removeWindowBtn = document.createElement('button');
+      removeWindowBtn.className = 'preview-window-remove-btn';
+      removeWindowBtn.type = 'button';
+      removeWindowBtn.setAttribute('aria-label', getTranslation('remove_window_button'));
+      removeWindowBtn.setAttribute('title', getTranslation('remove_window_button'));
+      removeWindowBtn.textContent = '\u00D7';
+      removeWindowBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        removeWindowFromSavedSession(sessionPayload, wIndex, index, label, previewContainer);
+      });
+      windowActions.appendChild(removeWindowBtn);
+    }
+
     windowHeader.appendChild(windowHeaderText);
-    windowHeader.appendChild(restoreWindowBtn);
+    windowHeader.appendChild(windowActions);
 
     const items = document.createElement('div');
     items.className = 'preview-items';
@@ -1670,6 +1980,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const accentSelect = document.getElementById('accentColor');
   const darkToggle = document.getElementById('darkMode');
   const languageSelect = document.getElementById('language');
+  const popupSizeSelect = document.getElementById('popupSize');
   const restoreModeInputs = document.querySelectorAll('input[name="restoreMode"]');
   const autoSaveEnabledToggle = document.getElementById('autoSaveEnabled');
   const autoSaveOnExitEnabledToggle = document.getElementById('autoSaveOnExitEnabled');
@@ -1680,6 +1991,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const autoSaveTriggerFilters = document.getElementById('auto-save-trigger-filters');
   const autoSaveTriggerButtons = document.querySelectorAll('[data-auto-save-trigger]');
   const searchToolbar = document.querySelector('.session-toolbar');
+  const createFolderBtn = document.getElementById('create-folder');
   const searchToggle = document.getElementById('session-search-toggle');
   const searchInput = document.getElementById('session-search-input');
   const searchClose = document.getElementById('session-search-close');
@@ -1695,12 +2007,53 @@ document.addEventListener('DOMContentLoaded', () => {
   const cloudSyncDisconnectBtn = document.getElementById('cloudSyncDisconnect');
   const cloudSyncStatus = document.getElementById('cloudSyncStatus');
   let latestSessions = [];
+  let sessionFolders = [];
   let activeSessionCategory = SAVE_TYPE_MANUAL;
   let activeAutoSaveTrigger = AUTO_SAVE_TRIGGER_ALL;
   let newsletterState = normalizeNewsletterSubscription();
   let cloudSyncSettingsState = null;
+  let activeDragSessionIndex = null;
+  let activeDropPlacement = 'before';
+  const isPopupPage = window.location.pathname.endsWith('/popup.html');
+  const isFullTabPopupView = new URLSearchParams(window.location.search).get('view') === 'tab';
 
   document.addEventListener('click', closeAllMenus);
+
+  function applyPopupSize(size) {
+    const selectedSize = normalizePopupSize(size);
+    const effectiveSize = selectedSize === 'huge' && isPopupPage && !isFullTabPopupView
+      ? 'large'
+      : selectedSize;
+    if (!isPopupPage) return selectedSize;
+
+    ['small', 'medium', 'large', 'huge'].forEach((candidate) => {
+      document.documentElement.classList.toggle(`size-${candidate}`, candidate === effectiveSize && candidate !== 'medium');
+      document.body.classList.toggle(`size-${candidate}`, candidate === effectiveSize && candidate !== 'medium');
+    });
+    return selectedSize;
+  }
+
+  const savedPopupSize = applyPopupSize(localStorage.getItem('popupSize') || 'medium');
+  chrome.storage?.local?.get('popupSize', (stored) => {
+    const storedSize = normalizePopupSize(stored?.popupSize || savedPopupSize);
+    localStorage.setItem('popupSize', storedSize);
+    applyPopupSize(storedSize);
+    if (popupSizeSelect) popupSizeSelect.value = storedSize;
+    if (!stored?.popupSize) {
+      chrome.storage.local.set({ popupSize: storedSize });
+    }
+    chrome.runtime?.sendMessage?.({ action: 'set_popup_size', size: storedSize }, () => {});
+  });
+  if (popupSizeSelect) {
+    popupSizeSelect.value = savedPopupSize;
+    popupSizeSelect.addEventListener('change', (event) => {
+      const nextSize = normalizePopupSize(event.target.value);
+      applyPopupSize(nextSize);
+      localStorage.setItem('popupSize', nextSize);
+      chrome.storage?.local?.set({ popupSize: nextSize });
+      chrome.runtime?.sendMessage?.({ action: 'set_popup_size', size: nextSize }, () => {});
+    });
+  }
 
   function setSessionSearchOpen(isOpen) {
     searchToolbar?.classList.toggle('search-open', isOpen);
@@ -2029,6 +2382,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  createFolderBtn?.addEventListener('click', () => {
+    const folderName = prompt(getTranslation('create_folder_prompt'), getTranslation('default_folder_name'));
+    const normalizedName = normalizeSessionFolderName(folderName);
+    if (!normalizedName) return;
+    const folder = {
+      id: createRandomId('folder'),
+      name: normalizedName,
+      createdAt: new Date().toISOString()
+    };
+    persistFolderCollection([...sessionFolders, folder], 'create_session_folder');
+  });
+
   cloudSyncPullBtn?.addEventListener('click', () => {
     setCloudSyncBusy(true);
     chrome.runtime.sendMessage({ action: 'cloud_sync_pull' }, (response) => {
@@ -2063,25 +2428,27 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ACCENT COLOR
-  accentSelect.addEventListener('change', e => {
+  accentSelect?.addEventListener('change', e => {
     document.documentElement.style.setProperty('--accent-color', e.target.value);
     localStorage.setItem('accentColor', e.target.value);
   });
 
   // DARK MODE
-  darkToggle.addEventListener('change', e => {
+  darkToggle?.addEventListener('change', e => {
     document.body.classList.toggle('dark-mode', e.target.checked);
     document.body.classList.toggle('light-mode', !e.target.checked);
     localStorage.setItem('darkMode', e.target.checked);
   });
 
   // LANGUAGE SELECTION
-  languageSelect.addEventListener('change', e => {
+  languageSelect?.addEventListener('change', e => {
     const selectedLang = e.target.value;
     translatePage(selectedLang);
     localStorage.setItem('language', selectedLang);
     renderNewsletterState(newsletterState);
-    loadSessions(); // Reload sessions to update button text
+    if (document.getElementById('sessions')) {
+      loadSessions(); // Reload sessions to update button text
+    }
   });
 
   restoreModeInputs.forEach((input) => {
@@ -2195,18 +2562,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ICONA IMPOSTAZIONI
+  // SETTINGS PAGE
   const settingsBtn = document.getElementById('settings-icon');
   if (settingsBtn) {
     settingsBtn.addEventListener('click', () => {
       closeAllMenus();
-      const main = document.getElementById('main-section');
-      const settings = document.getElementById('settings-section');
-      const isSettingsVisible = settings && settings.style.display === 'block';
-      const showSettings = !isSettingsVisible;
-      if (settings) settings.style.display = showSettings ? 'block' : 'none';
-      if (main) main.style.display = showSettings ? 'none' : 'block';
-      settingsBtn.setAttribute('aria-expanded', showSettings.toString());
+      chrome.tabs.create({ url: chrome.runtime.getURL('settings.html') });
+      window.close();
     });
   }
 
@@ -2331,6 +2693,286 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   }
 
+  function clearSessionDropTargets() {
+    document.querySelectorAll('.session-entry.drag-over-before, .session-entry.drag-over-after, .session-entry.is-dragging')
+      .forEach((entry) => {
+        entry.classList.remove('drag-over-before', 'drag-over-after', 'is-dragging');
+      });
+    document.querySelectorAll('.session-folder.is-folder-drop-target')
+      .forEach((folderEl) => folderEl.classList.remove('is-folder-drop-target'));
+  }
+
+  function getSessionDropPlacement(entry, event) {
+    const rect = entry.getBoundingClientRect();
+    return event.clientY > rect.top + rect.height / 2 ? 'after' : 'before';
+  }
+
+  function getFolderById(folderId) {
+    return sessionFolders.find((folder) => folder.id === folderId) || null;
+  }
+
+  function persistSessionCollection(nextSessions, reason) {
+    latestSessions = nextSessions;
+    renderSessionList(latestSessions, searchInput?.value || '');
+    chrome.runtime.sendMessage(
+      { action: 'replace_sessions', sessions: nextSessions, reason },
+      (response) => {
+        if (chrome.runtime.lastError || !response?.success) {
+          console.error('[popup] Session update failed:', chrome.runtime.lastError || response);
+          loadSessions();
+        }
+      }
+    );
+  }
+
+  function sendRuntimeMessage(message) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage(message, (response) => {
+        if (chrome.runtime.lastError || !response?.success) {
+          reject(chrome.runtime.lastError || response || new Error('Request failed'));
+          return;
+        }
+        resolve(response);
+      });
+    });
+  }
+
+  function persistFolderCollection(nextFolders, reason) {
+    sessionFolders = normalizeSessionFolders(nextFolders, latestSessions);
+    renderSessionList(latestSessions, searchInput?.value || '');
+    chrome.runtime.sendMessage(
+      { action: 'replace_session_folders', folders: sessionFolders, reason },
+      (response) => {
+        if (chrome.runtime.lastError || !response?.success) {
+          console.error('[popup] Folder update failed:', chrome.runtime.lastError || response);
+          loadSessions();
+          return;
+        }
+        sessionFolders = normalizeSessionFolders(response.folders, latestSessions);
+        renderSessionList(latestSessions, searchInput?.value || '');
+      }
+    );
+  }
+
+  async function persistFolderAndSessionChanges(nextFolders, nextSessions, reason) {
+    const previousFolders = sessionFolders;
+    const previousSessions = latestSessions;
+    sessionFolders = normalizeSessionFolders(nextFolders, nextSessions);
+    latestSessions = nextSessions;
+    renderSessionList(latestSessions, searchInput?.value || '');
+
+    try {
+      const [folderResponse, sessionResponse] = await Promise.all([
+        sendRuntimeMessage({ action: 'replace_session_folders', folders: sessionFolders, reason }),
+        sendRuntimeMessage({ action: 'replace_sessions', sessions: nextSessions, reason })
+      ]);
+      sessionFolders = normalizeSessionFolders(folderResponse.folders, sessionResponse.sessions || nextSessions);
+      latestSessions = Array.isArray(sessionResponse.sessions) ? sessionResponse.sessions : nextSessions;
+      renderSessionList(latestSessions, searchInput?.value || '');
+    } catch (error) {
+      console.error('[popup] Folder/session update failed:', error);
+      sessionFolders = previousFolders;
+      latestSessions = previousSessions;
+      loadSessions();
+    }
+  }
+
+  function persistSessionReorder(fromIndex, toIndex, placement, targetFolderId = '') {
+    if (!Number.isInteger(fromIndex) || !Number.isInteger(toIndex) || fromIndex === toIndex) return;
+    const sourceFolderId = getSessionFolderId(latestSessions[fromIndex]);
+    const targetFolder = targetFolderId ? getFolderById(targetFolderId) : null;
+    const shouldMoveFolder = sourceFolderId !== targetFolderId;
+    const reordered = shouldMoveFolder
+      ? moveSessionToFolderCollection(latestSessions, fromIndex, targetFolder, toIndex, placement)
+      : reorderSessionCollection(latestSessions, fromIndex, toIndex, placement);
+    if (reordered === latestSessions || reordered.length !== latestSessions.length) return;
+    persistSessionCollection(
+      reordered,
+      shouldMoveFolder
+        ? (targetFolderId ? 'move_session_to_folder' : 'move_session_to_unfiled')
+        : 'reorder_sessions'
+    );
+  }
+
+  function persistSessionFolderMove(fromIndex, folderId = '') {
+    if (!Number.isInteger(fromIndex)) return;
+    const folder = folderId ? getFolderById(folderId) : null;
+    const moved = moveSessionToFolderCollection(latestSessions, fromIndex, folder);
+    if (moved.length !== latestSessions.length) return;
+    persistSessionCollection(moved, folderId ? 'move_session_to_folder' : 'move_session_to_unfiled');
+  }
+
+  function setFolderDropTargetState(folderEl, isActive) {
+    folderEl.classList.toggle('is-folder-drop-target', isActive);
+  }
+
+  function createFolderIconElement() {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.classList.add('session-folder-icon');
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', 'currentColor');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('d', 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z');
+    svg.appendChild(path);
+
+    return svg;
+  }
+
+  function createFolderDeleteIconElement() {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', 'currentColor');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('d', 'M3 6h18M8 6V4h8v2m-7 4v8m6-8v8M5 6l1 15h12l1-15');
+    svg.appendChild(path);
+
+    return svg;
+  }
+
+  function bindFolderDropTarget(folderEl, folderId = '') {
+    folderEl.addEventListener('dragover', (event) => {
+      if (!Number.isInteger(activeDragSessionIndex)) return;
+      event.preventDefault();
+      setFolderDropTargetState(folderEl, true);
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    });
+
+    folderEl.addEventListener('dragleave', (event) => {
+      if (folderEl.contains(event.relatedTarget)) return;
+      setFolderDropTargetState(folderEl, false);
+    });
+
+    folderEl.addEventListener('drop', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const transferredIndex = Number.parseInt(event.dataTransfer?.getData('text/plain') || '', 10);
+      const fromIndex = Number.isInteger(transferredIndex) ? transferredIndex : activeDragSessionIndex;
+      activeDragSessionIndex = null;
+      clearSessionDropTargets();
+      persistSessionFolderMove(fromIndex, folderId);
+    });
+  }
+
+  function createSessionFolderElement(folder, count, { unfiled = false } = {}) {
+    const details = document.createElement('details');
+    details.className = unfiled ? 'session-folder session-folder-unfiled' : 'session-folder';
+    details.open = true;
+    details.dataset.folderId = folder?.id || '';
+    bindFolderDropTarget(details, folder?.id || '');
+
+    const summary = document.createElement('summary');
+    summary.className = 'session-folder-summary';
+
+    const title = document.createElement('span');
+    title.className = 'session-folder-title';
+    title.textContent = unfiled ? getTranslation('unfiled_sessions_title') : folder.name;
+
+    const countBadge = document.createElement('span');
+    countBadge.className = 'session-folder-count';
+    countBadge.textContent = String(count);
+
+    summary.appendChild(createFolderIconElement());
+    summary.appendChild(title);
+    summary.appendChild(countBadge);
+
+    if (!unfiled) {
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'session-folder-delete';
+      deleteBtn.type = 'button';
+      deleteBtn.setAttribute('aria-label', getTranslation('delete_folder_label'));
+      deleteBtn.setAttribute('title', getTranslation('delete_folder_label'));
+      deleteBtn.appendChild(createFolderDeleteIconElement());
+      deleteBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        handleDeleteFolder(folder.id);
+      });
+      summary.appendChild(deleteBtn);
+    }
+
+    const sessionsEl = document.createElement('div');
+    sessionsEl.className = 'session-folder-sessions';
+
+    details.appendChild(summary);
+    details.appendChild(sessionsEl);
+
+    return { folderEl: details, sessionsEl };
+  }
+
+  function getFolderSessionCount(folderId) {
+    return latestSessions.filter((session) => getSessionFolderId(session) === folderId).length;
+  }
+
+  function handleDeleteFolder(folderId) {
+    const folder = getFolderById(folderId);
+    if (!folder) return;
+
+    const folderSessionCount = getFolderSessionCount(folder.id);
+    if (folderSessionCount === 0) {
+      const confirmed = confirm(formatTranslation('delete_folder_empty_confirm', { name: folder.name }));
+      if (!confirmed) return;
+      persistFolderCollection(
+        sessionFolders.filter((candidate) => candidate.id !== folder.id),
+        'delete_session_folder'
+      );
+      return;
+    }
+
+    const deleteSessions = confirm(formatTranslation('delete_folder_with_sessions_confirm', {
+      name: folder.name,
+      count: folderSessionCount
+    }));
+    let nextSessions = [];
+
+    if (deleteSessions) {
+      nextSessions = latestSessions.filter((session) => getSessionFolderId(session) !== folder.id);
+    } else {
+      const keepSessions = confirm(formatTranslation('delete_folder_keep_sessions_confirm', { name: folder.name }));
+      if (!keepSessions) return;
+      nextSessions = latestSessions.map((session) =>
+        getSessionFolderId(session) === folder.id ? setSessionFolder(session, null) : session
+      );
+    }
+
+    persistFolderAndSessionChanges(
+      sessionFolders.filter((candidate) => candidate.id !== folder.id),
+      nextSessions,
+      deleteSessions ? 'delete_session_folder_with_sessions' : 'delete_session_folder_keep_sessions'
+    );
+  }
+
+  function createFolderEmptyState() {
+    const emptyEl = document.createElement('div');
+    emptyEl.className = 'session-folder-empty';
+    emptyEl.textContent = getTranslation('folder_empty');
+    return emptyEl;
+  }
+
+  async function loadSessionFoldersFromStorage(sessions = []) {
+    return new Promise((resolve) => {
+      chrome.storage.local.get({ [SESSION_FOLDERS_KEY]: [] }, (result) => {
+        if (chrome.runtime.lastError) {
+          console.warn('[popup] Failed to load session folders:', chrome.runtime.lastError);
+          resolve(normalizeSessionFolders([], sessions));
+          return;
+        }
+        resolve(normalizeSessionFolders(result?.[SESSION_FOLDERS_KEY], sessions));
+      });
+    });
+  }
+
   async function loadSessionsFromStorageWithRetry(retries = 2) {
     for (let i = 0; i <= retries; i++) {
       try {
@@ -2396,12 +3038,50 @@ document.addEventListener('DOMContentLoaded', () => {
       }));
       searchEmptyState.style.display = matchingSessions.length === 0 ? 'block' : 'none';
 
+      const queryText = typeof query === 'string' ? query.trim() : '';
+      const folderMatches = new Map();
+      const unfiledMatches = [];
+      matchingSessions.forEach((match) => {
+        const folderId = getSessionFolderId(match.sessionData);
+        if (!folderId) {
+          unfiledMatches.push(match);
+          return;
+        }
+        if (!folderMatches.has(folderId)) folderMatches.set(folderId, []);
+        folderMatches.get(folderId).push(match);
+      });
+
+      const folderTargets = new Map();
+      const visibleFolders = sessionFolders.filter((folder) => folderMatches.has(folder.id) || !queryText);
+      visibleFolders.forEach((folder) => {
+        const matchCount = folderMatches.get(folder.id)?.length || 0;
+        const { folderEl, sessionsEl } = createSessionFolderElement(folder, matchCount);
+        if (matchCount === 0) sessionsEl.appendChild(createFolderEmptyState());
+        folderTargets.set(folder.id, sessionsEl);
+        container.appendChild(folderEl);
+      });
+
+      let unfiledSessionsTarget = container;
+      const shouldRenderUnfiledBucket = visibleFolders.length > 0 || sessionFolders.length > 0;
+      if (shouldRenderUnfiledBucket && (unfiledMatches.length > 0 || !queryText)) {
+        const { folderEl, sessionsEl } = createSessionFolderElement(
+          { id: '', name: getTranslation('unfiled_sessions_title') },
+          unfiledMatches.length,
+          { unfiled: true }
+        );
+        unfiledSessionsTarget = sessionsEl;
+        if (unfiledMatches.length === 0) sessionsEl.appendChild(createFolderEmptyState());
+        container.appendChild(folderEl);
+      }
+
       matchingSessions.forEach(({ sessionData: normalized, originalIndex: index }) => {
         const entry = document.createElement('div');
         entry.className = 'session-entry';
         entry.setAttribute('role', 'listitem');
+        entry.dataset.sessionIndex = String(index);
+        entry.dataset.folderId = getSessionFolderId(normalized);
 
-        const sessionPayload = normalized;
+        let sessionPayload = normalized;
         const sessionName =
           normalized.name && normalized.name.trim()
             ? normalized.name.trim()
@@ -2415,6 +3095,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (countInfo.groupsLabel) metaSegments.splice(3, 0, countInfo.groupsLabel);
         if (strategy === 'workspace') {
           metaSegments.push(getTranslation('desktop_scope_workspace'));
+        }
+
+        const dragHandle = document.createElement('button');
+        dragHandle.className = 'session-drag-handle';
+        dragHandle.type = 'button';
+        dragHandle.draggable = true;
+        dragHandle.setAttribute('aria-label', getTranslation('reorder_session_label'));
+        dragHandle.setAttribute('title', getTranslation('reorder_session_label'));
+        for (let dotIndex = 0; dotIndex < 6; dotIndex += 1) {
+          dragHandle.appendChild(document.createElement('span'));
         }
 
         const label = document.createElement('span');
@@ -2442,6 +3132,58 @@ document.addEventListener('DOMContentLoaded', () => {
         previewBtn.textContent = getTranslation('preview_button');
         previewBtn.setAttribute('data-role', 'preview-toggle');
 
+        const addItemBtn = document.createElement('button');
+        addItemBtn.textContent = getTranslation('add_session_item_button');
+        addItemBtn.addEventListener('click', () => {
+          closeAllMenus();
+          const itemInput = prompt(getTranslation('add_url_prompt'));
+          if (itemInput === null) return;
+          const updatedSession = addCustomUrlToSession(sessionPayload, itemInput, { newWindow: false });
+          if (!updatedSession) {
+            alert(getTranslation('add_url_invalid'));
+            return;
+          }
+          chrome.runtime.sendMessage({ action: 'update_session', index, session: updatedSession }, (res) => {
+            if (!res || !res.success) {
+              console.error('Failed to add item to session', res && res.error);
+              alert(getTranslation('add_url_failed'));
+              return;
+            }
+            sessionPayload = updatedSession;
+            latestSessions[index] = updatedSession;
+            updateSessionLabelMeta(sessionPayload, label);
+            if (previewContainer.classList.contains('is-open')) {
+              renderPreview(sessionPayload, previewContainer, index, label);
+            }
+          });
+        });
+
+        const addWindowBtn = document.createElement('button');
+        addWindowBtn.textContent = getTranslation('add_session_window_button');
+        addWindowBtn.addEventListener('click', () => {
+          closeAllMenus();
+          const itemInput = prompt(getTranslation('add_url_prompt'));
+          if (itemInput === null) return;
+          const updatedSession = addCustomUrlToSession(sessionPayload, itemInput, { newWindow: true });
+          if (!updatedSession) {
+            alert(getTranslation('add_url_invalid'));
+            return;
+          }
+          chrome.runtime.sendMessage({ action: 'update_session', index, session: updatedSession }, (res) => {
+            if (!res || !res.success) {
+              console.error('Failed to add window to session', res && res.error);
+              alert(getTranslation('add_url_failed'));
+              return;
+            }
+            sessionPayload = updatedSession;
+            latestSessions[index] = updatedSession;
+            updateSessionLabelMeta(sessionPayload, label);
+            if (previewContainer.classList.contains('is-open')) {
+              renderPreview(sessionPayload, previewContainer, index, label);
+            }
+          });
+        });
+
         const renameBtn = document.createElement('button');
         renameBtn.textContent = getTranslation('rename_button');
         renameBtn.addEventListener('click', () => {
@@ -2462,6 +3204,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         menu.appendChild(previewBtn);
+        menu.appendChild(addItemBtn);
+        menu.appendChild(addWindowBtn);
         menu.appendChild(renameBtn);
         menu.appendChild(deleteBtn);
 
@@ -2484,6 +3228,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const topRow = document.createElement('div');
         topRow.className = 'session-top';
+        topRow.appendChild(dragHandle);
         topRow.appendChild(label);
         topRow.appendChild(actions);
 
@@ -2513,6 +3258,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
         menu.addEventListener('click', (event) => event.stopPropagation());
 
+        dragHandle.addEventListener('click', (event) => event.stopPropagation());
+        dragHandle.addEventListener('dragstart', (event) => {
+          activeDragSessionIndex = index;
+          activeDropPlacement = 'before';
+          entry.classList.add('is-dragging');
+          closeAllMenus();
+          if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', String(index));
+          }
+        });
+        dragHandle.addEventListener('dragend', () => {
+          activeDragSessionIndex = null;
+          clearSessionDropTargets();
+        });
+
+        entry.addEventListener('dragover', (event) => {
+          if (!Number.isInteger(activeDragSessionIndex) || activeDragSessionIndex === index) return;
+          event.preventDefault();
+          activeDropPlacement = getSessionDropPlacement(entry, event);
+          document.querySelectorAll('.session-entry.drag-over-before, .session-entry.drag-over-after')
+            .forEach((target) => {
+              if (target !== entry) target.classList.remove('drag-over-before', 'drag-over-after');
+            });
+          entry.classList.toggle('drag-over-before', activeDropPlacement === 'before');
+          entry.classList.toggle('drag-over-after', activeDropPlacement === 'after');
+          if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+        });
+
+        entry.addEventListener('dragleave', (event) => {
+          if (entry.contains(event.relatedTarget)) return;
+          entry.classList.remove('drag-over-before', 'drag-over-after');
+        });
+
+        entry.addEventListener('drop', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const transferredIndex = Number.parseInt(event.dataTransfer?.getData('text/plain') || '', 10);
+          const fromIndex = Number.isInteger(transferredIndex) ? transferredIndex : activeDragSessionIndex;
+          const placement = activeDropPlacement;
+          activeDragSessionIndex = null;
+          clearSessionDropTargets();
+          persistSessionReorder(fromIndex, index, placement, entry.dataset.folderId || '');
+        });
+
         menuBtn.addEventListener('click', (event) => {
           try {
             event.stopPropagation();
@@ -2521,7 +3311,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!wasOpen) {
               // Position menu as fixed overlay using viewport coordinates
               const btnRect = menuBtn.getBoundingClientRect();
-              const menuHeight = 120; // Estimated height for flipping logic
+              const menuHeight = 220; // Estimated height for flipping logic
               
               // Position menu below button
               let top = btnRect.bottom + 6;
@@ -2579,13 +3369,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         entry.appendChild(topRow);
         entry.appendChild(previewContainer);
-        container.appendChild(entry);
+        const folderId = getSessionFolderId(normalized);
+        const target = folderId ? (folderTargets.get(folderId) || container) : unfiledSessionsTarget;
+        target.appendChild(entry);
       });
   }
 
   function loadSessions() {
-    loadSessionsFromStorageWithRetry().then((sessionsRaw) => {
+    loadSessionsFromStorageWithRetry().then(async (sessionsRaw) => {
       latestSessions = Array.isArray(sessionsRaw) ? sessionsRaw : [];
+      sessionFolders = await loadSessionFoldersFromStorage(latestSessions);
       renderSessionList(latestSessions, searchInput?.value || '');
     }).catch((err) => {
       console.error('[popup] Failed to load sessions:', err);
@@ -2611,23 +3404,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const autoSaveGroupMode = getAutoSaveGroupMode();
 
     if (savedAccent) {
-      const hasOption = Array.from(accentSelect.options).some(option => option.value === savedAccent);
-      if (!hasOption) {
-        const customOption = document.createElement('option');
-        customOption.value = savedAccent;
-        customOption.textContent = savedAccent;
-        accentSelect.appendChild(customOption);
+      if (accentSelect) {
+        const hasOption = Array.from(accentSelect.options).some(option => option.value === savedAccent);
+        if (!hasOption) {
+          const customOption = document.createElement('option');
+          customOption.value = savedAccent;
+          customOption.textContent = savedAccent;
+          accentSelect.appendChild(customOption);
+        }
+        accentSelect.value = savedAccent;
       }
-      accentSelect.value = savedAccent;
       document.documentElement.style.setProperty('--accent-color', savedAccent);
     }
     if (savedDark === 'true') {
-      darkToggle.checked = true;
+      if (darkToggle) darkToggle.checked = true;
       document.body.classList.add('dark-mode');
       document.body.classList.remove('light-mode');
     }
     if (savedLanguage) {
-      languageSelect.value = savedLanguage;
+      if (languageSelect) languageSelect.value = savedLanguage;
       translatePage(savedLanguage);
     } else {
       translatePage('en');
@@ -2638,22 +3433,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (autoSaveGroupModeSelect) {
       autoSaveGroupModeSelect.value = autoSaveGroupMode;
     }
-    chrome.runtime.sendMessage({ action: 'get_auto_save_settings' }, (response) => {
-      if (chrome.runtime.lastError || !response?.success) {
-        updateAutoSaveIntervalVisibility(normalizeAutoSaveSettings());
-        return;
-      }
-      updateAutoSaveIntervalVisibility(response.settings);
-    });
-    loadNewsletterSubscription();
-    loadCloudSyncSettings();
+    if (autoSaveEnabledToggle || autoSaveOnExitEnabledToggle || autoSaveIntervalInput) {
+      chrome.runtime.sendMessage({ action: 'get_auto_save_settings' }, (response) => {
+        if (chrome.runtime.lastError || !response?.success) {
+          updateAutoSaveIntervalVisibility(normalizeAutoSaveSettings());
+          return;
+        }
+        updateAutoSaveIntervalVisibility(response.settings);
+      });
+    }
+    if (newsletterForm || newsletterStatus) {
+      loadNewsletterSubscription();
+    }
+    if (cloudSyncForm || cloudSyncStatus) {
+      loadCloudSyncSettings();
+    }
   }
 
   restoreSettings();
-  loadSessions();
+  if (document.getElementById('sessions')) {
+    loadSessions();
+  }
 
   // Browser detection: supported Chrome stays silent; unsupported/unknown environments get details.
-  window.browserSupport.detectBrowserType().then((browserInfo) => {
+  window.browserSupport?.detectBrowserType().then((browserInfo) => {
     const supportGroupEl = document.getElementById('browser-support-group');
     const supportInfoEl = document.getElementById('browser-support-info');
     if (browserInfo.supported === true) {

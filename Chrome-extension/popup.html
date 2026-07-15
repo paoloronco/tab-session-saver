@@ -31,6 +31,7 @@
       min-height: 600px;
       max-height: 600px;
       overflow: hidden;
+      scrollbar-gutter: stable;
     }
 
     html.size-small {
@@ -76,6 +77,7 @@
       color: var(--text-primary);
       transition: background-color 0.3s ease, color 0.3s ease;
       overflow: hidden;
+      scrollbar-gutter: stable;
     }
 
     body.size-small {
@@ -137,11 +139,38 @@
       min-width: 420px;
       max-width: 420px;
       height: 600px;
+      min-height: 0;
       max-height: 600px;
       padding: 1.25rem 1.25rem 1.5rem;
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--accent-color) 45%, var(--border-color)) transparent;
+    }
+
+    .popup::-webkit-scrollbar,
+    body.size-huge #main-section::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .popup::-webkit-scrollbar-track,
+    body.size-huge #main-section::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .popup::-webkit-scrollbar-thumb,
+    body.size-huge #main-section::-webkit-scrollbar-thumb {
+      background: color-mix(in srgb, var(--accent-color) 38%, var(--border-color));
+      background-clip: content-box;
+      border: 3px solid transparent;
+      border-radius: 999px;
+    }
+
+    .popup::-webkit-scrollbar-thumb:hover,
+    body.size-huge #main-section::-webkit-scrollbar-thumb:hover {
+      background: color-mix(in srgb, var(--accent-color) 58%, var(--border-color));
+      background-clip: content-box;
     }
 
     body.size-small .popup {
@@ -161,9 +190,8 @@
     }
 
     /* =============================================
-       HUGE MODE — full sidebar layout
-       Left column: main sessions panel
-       Right column: settings panel (always visible)
+       HUGE MODE — full tab sessions layout
+       Settings now open in a dedicated browser tab.
        ============================================= */
     body.size-huge .popup {
       width: 100vw;
@@ -196,11 +224,11 @@
       z-index: 10;
     }
 
-    /* Content area below header: sessions + settings side by side */
+    /* Content area below header */
     body.size-huge .huge-content-area {
       display: grid;
-      grid-template-columns: 1fr 340px;
-      height: 100%;
+      grid-template-columns: 1fr;
+      height: auto;
       min-height: 0;
       overflow: hidden;
     }
@@ -214,9 +242,11 @@
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior: contain;
-      border-right: 1px solid var(--border-color);
-      height: 100%;
+      height: auto;
       min-height: 0;
+      max-height: 100%;
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--accent-color) 45%, var(--border-color)) transparent;
       border-radius: 0;
       box-shadow: none;
       border-top: none;
@@ -233,40 +263,9 @@
       align-content: start;
     }
 
-    /* Settings panel — right sidebar */
-    body.size-huge #settings-section {
-      display: flex !important;
-      flex-direction: column;
-      gap: 1rem;
-      padding: 1.25rem 1.25rem 1.5rem;
-      overflow-y: auto;
-      overflow-x: hidden;
-      overscroll-behavior: contain;
-      height: 100%;
-      min-height: 0;
-      border-radius: 0;
-      box-shadow: none;
-      border: none;
-      border-left: 1px solid var(--border-color);
-      background: var(--surface);
-    }
-
-    /* In huge mode settings title and gear button adapt */
+    /* Settings stay reachable from the gear button */
     body.size-huge #settings-icon {
-      display: none;
-    }
-
-    body.size-huge .huge-settings-label {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--text-secondary);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      padding: 0 0 0.5rem;
-      border-bottom: 1px solid var(--border-color);
+      display: inline-flex;
     }
 
     /* Hide huge label in normal popup modes */
@@ -274,22 +273,11 @@
       display: none;
     }
 
-    /* Hide h2 title in huge mode (label replaces it) */
-    body.size-huge .settings > h2 {
-      display: none;
-    }
-
     /* Responsive: stack vertically on narrow viewports */
     @media (max-width: 780px) {
       body.size-huge .huge-content-area {
         grid-template-columns: 1fr;
-        grid-template-rows: 1fr auto;
-      }
-
-      body.size-huge #settings-section {
-        border-left: none;
-        border-top: 1px solid var(--border-color);
-        max-height: 45vh;
+        grid-template-rows: 1fr;
       }
 
       body.size-huge #sessions {
@@ -303,7 +291,7 @@
       }
 
       body.size-huge .huge-content-area {
-        grid-template-columns: 1fr 380px;
+        grid-template-columns: 1fr;
       }
     }
 
@@ -388,14 +376,10 @@
       display: block;
     }
 
-    #settings-section {
-      display: none;
-    }
-
     .session-toolbar {
       position: relative;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 44px;
+      grid-template-columns: minmax(0, 1fr) 44px 44px;
       gap: 0.55rem;
       margin-bottom: 1rem;
     }
@@ -419,6 +403,33 @@
     .primary-btn:hover {
       transform: translateY(-1px);
       box-shadow: 0 12px 18px rgba(76, 110, 245, 0.24);
+    }
+
+    .folder-create-btn {
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      color: var(--accent-color);
+      cursor: pointer;
+      display: inline-flex;
+      height: 44px;
+      justify-content: center;
+      padding: 0;
+      transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+      width: 44px;
+    }
+
+    .folder-create-btn:hover {
+      background: var(--surface-alt);
+      border-color: var(--accent-color);
+      transform: translateY(-1px);
+    }
+
+    .folder-create-btn svg {
+      height: 21px;
+      stroke: currentColor;
+      width: 21px;
     }
 
     .session-list {
@@ -501,6 +512,133 @@
       border-left: 2px solid color-mix(in srgb, var(--accent-color) 35%, transparent);
     }
 
+    .session-folder {
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--surface-alt) 70%, var(--surface));
+      padding: 0.45rem;
+      transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .session-folder[open] {
+      padding-bottom: 0.65rem;
+    }
+
+    .session-folder.is-folder-drop-target {
+      border-color: var(--accent-color);
+      background: color-mix(in srgb, var(--accent-color) 8%, var(--surface));
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-color) 28%, transparent);
+    }
+
+    .session-folder-summary {
+      align-items: center;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      font-size: 0.84rem;
+      font-weight: 800;
+      gap: 0.65rem;
+      list-style: none;
+      min-height: 38px;
+      padding: 0.35rem 0.45rem;
+    }
+
+    .session-folder-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .session-folder-summary::before {
+      content: "›";
+      color: var(--accent-color);
+      display: inline-flex;
+      flex: 0 0 auto;
+      font-size: 1.05rem;
+      line-height: 1;
+      transition: transform 0.18s ease;
+    }
+
+    .session-folder[open] .session-folder-summary::before {
+      transform: rotate(90deg);
+    }
+
+    .session-folder-icon {
+      color: var(--accent-color);
+      flex: 0 0 auto;
+      height: 17px;
+      width: 17px;
+    }
+
+    .session-folder-title {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .session-folder-count {
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      color: var(--text-secondary);
+      flex: 0 0 auto;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.12rem 0.5rem;
+      white-space: nowrap;
+    }
+
+    .session-folder-delete {
+      align-items: center;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: inline-flex;
+      flex: 0 0 auto;
+      height: 30px;
+      justify-content: center;
+      margin-left: -0.2rem;
+      padding: 0;
+      width: 30px;
+    }
+
+    .session-folder-delete:hover,
+    .session-folder-delete:focus-visible {
+      background: color-mix(in srgb, #ef4444 10%, var(--surface));
+      border-color: color-mix(in srgb, #ef4444 28%, var(--border-color));
+      color: #b91c1c;
+      outline: none;
+    }
+
+    .session-folder-delete svg {
+      height: 15px;
+      width: 15px;
+    }
+
+    .session-folder-sessions {
+      border-left: 2px solid color-mix(in srgb, var(--accent-color) 30%, transparent);
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      margin-top: 0.35rem;
+      padding-left: 0.45rem;
+    }
+
+    .session-folder-empty {
+      border: 1px dashed var(--border-color);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      padding: 0.65rem 0.75rem;
+      text-align: center;
+    }
+
+    .session-folder-unfiled {
+      background: transparent;
+    }
+
     .session-category-tabs {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -581,12 +719,38 @@
       border: 1px solid var(--border-color);
       border-radius: 14px;
       padding: 0.9rem 0.85rem;
-      transition: border-color 0.2s ease, transform 0.2s ease;
+      transition: border-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
     }
 
     .session-entry:hover {
       border-color: var(--accent-color);
       transform: translateY(-1px);
+    }
+
+    .session-entry.is-dragging {
+      opacity: 0.46;
+      transform: scale(0.99);
+    }
+
+    .session-entry.drag-over-before::before,
+    .session-entry.drag-over-after::after {
+      content: "";
+      position: absolute;
+      left: 0.85rem;
+      right: 0.85rem;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--accent-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 18%, transparent);
+      pointer-events: none;
+    }
+
+    .session-entry.drag-over-before::before {
+      top: -0.42rem;
+    }
+
+    .session-entry.drag-over-after::after {
+      bottom: -0.42rem;
     }
 
     .session-entry.menu-open {
@@ -598,6 +762,46 @@
       align-items: flex-start;
       gap: 0.65rem;
       min-width: 0;
+    }
+
+    .session-drag-handle {
+      width: 24px;
+      min-width: 24px;
+      height: 34px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted-color);
+      cursor: grab;
+      display: grid;
+      grid-template-columns: repeat(2, 4px);
+      grid-auto-rows: 4px;
+      justify-content: center;
+      align-content: center;
+      gap: 4px;
+      padding: 0;
+      margin-top: 0.05rem;
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+      flex: 0 0 auto;
+    }
+
+    .session-drag-handle span {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .session-drag-handle:hover,
+    .session-drag-handle:focus-visible {
+      background: var(--surface-alt);
+      border-color: var(--border-color);
+      color: var(--accent-color);
+      outline: none;
+    }
+
+    .session-drag-handle:active {
+      cursor: grabbing;
     }
 
     .session-label {
@@ -794,6 +998,13 @@
       flex-wrap: wrap;
     }
 
+    .preview-window-actions {
+      align-items: center;
+      display: inline-flex;
+      flex: 0 0 auto;
+      gap: 0.35rem;
+    }
+
     body.dark-mode .preview-window {
       background: var(--surface);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
@@ -837,8 +1048,6 @@
       display: flex;
       flex-direction: column;
       gap: 0.4rem;
-      max-height: clamp(160px, 35vh, 320px);
-      overflow-y: auto;
       min-height: 0;
     }
 
@@ -925,6 +1134,30 @@
     .preview-remove-btn:hover {
       background: var(--surface-alt);
       color: var(--accent-color);
+    }
+
+    .preview-window-remove-btn {
+      align-items: center;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: inline-flex;
+      font-size: 1.05rem;
+      height: 30px;
+      justify-content: center;
+      line-height: 1;
+      padding: 0;
+      width: 30px;
+    }
+
+    .preview-window-remove-btn:hover,
+    .preview-window-remove-btn:focus-visible {
+      background: color-mix(in srgb, #ef4444 10%, var(--surface));
+      border-color: color-mix(in srgb, #ef4444 28%, var(--border-color));
+      color: #b91c1c;
+      outline: none;
     }
 
     .preview-item:hover {
@@ -1751,7 +1984,7 @@
           <p class="subtitle" data-translate="subtitle">Keep your workspaces ready in one click.</p>
         </div>
       </div>
-      <button id="settings-icon" class="icon-button" aria-label="Open settings" aria-expanded="false">
+      <button id="settings-icon" class="icon-button" aria-label="Open settings">
         <svg viewBox="0 0 24 24" fill="none">
           <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" stroke-width="1.6"></path>
           <path d="M19.4 9.5a7.97 7.97 0 0 1 0 5l2 3.46-2.8 2.8-3.46-2a7.97 7.97 0 0 1-5 0l-3.46 2-2.8-2.8 2-3.46a7.97 7.97 0 0 1 0-5l-2-3.46 2.8-2.8 3.46 2a7.97 7.97 0 0 1 5 0l3.46-2 2.8 2.8-2 3.46z" stroke-width="1.6" stroke-linecap="round"></path>
@@ -1770,6 +2003,13 @@
 
       <div class="session-toolbar">
         <button id="save" class="primary-btn" data-translate="save_button">Save current tabs</button>
+        <button id="create-folder" class="folder-create-btn" type="button" aria-label="Create folder" data-translate-aria-label="create_folder_label" title="Create folder">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3.8 6.5h6.1l1.6 2h8.7v9.2a2 2 0 0 1-2 2H5.8a2 2 0 0 1-2-2V6.5z" stroke-width="1.7" stroke-linejoin="round"></path>
+            <path d="M12 14h5" stroke-width="1.7" stroke-linecap="round"></path>
+            <path d="M14.5 11.5v5" stroke-width="1.7" stroke-linecap="round"></path>
+          </svg>
+        </button>
         <div class="session-search">
           <button id="session-search-toggle" class="session-search-toggle" type="button" aria-expanded="false" aria-controls="session-search-panel" aria-label="Search saved sessions" data-translate-aria-label="search_sessions_label">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1807,195 +2047,6 @@
       </div>
     </main>
 
-    <section id="settings-section" class="card settings">
-      <!-- Label visible only in Huge sidebar mode -->
-      <div class="huge-settings-label" aria-hidden="true">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path>
-          <path d="M19.4 9.5a7.97 7.97 0 0 1 0 5l2 3.46-2.8 2.8-3.46-2a7.97 7.97 0 0 1-5 0l-3.46 2-2.8-2.8 2-3.46a7.97 7.97 0 0 1 0-5l-2-3.46 2.8-2.8 3.46 2a7.97 7.97 0 0 1 5 0l3.46-2 2.8 2.8-2 3.46z"></path>
-        </svg>
-        <span data-translate="settings_title">Settings</span>
-      </div>
-      <h2 data-translate="settings_title">Settings</h2>
-
-      <div class="settings-group-card settings-language">
-        <label class="settings-group-title" for="language" data-translate="language_label">Language</label>
-        <select id="language">
-          <option value="en">English</option>
-          <option value="es">Espa&ntilde;ol</option>
-          <option value="it">Italiano</option>
-          <option value="fr">Fran&ccedil;ais</option>
-          <option value="de">Deutsch</option>
-        </select>
-      </div>
-
-      <section class="settings-group-card settings-appearance" aria-labelledby="appearance-title">
-        <h3 id="appearance-title" class="settings-group-title" data-translate="appearance_title">Appearance</h3>
-        <div class="setting-group">
-          <label for="popupSize" data-translate="popup_size_label">Popup size</label>
-          <select id="popupSize">
-            <option value="small" data-translate="popup_size_small">Small</option>
-            <option value="medium" data-translate="popup_size_medium">Medium</option>
-            <option value="large" data-translate="popup_size_large">Large</option>
-            <option value="huge" data-translate="popup_size_huge">Huge (Full tab)</option>
-          </select>
-        </div>
-        <div class="toggle-container">
-          <span data-translate="dark_mode_label">Dark mode</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="darkMode">
-            <span class="slider"></span>
-          </label>
-        </div>
-        <div class="setting-group">
-          <label for="accentColor" data-translate="color_label">Accent color</label>
-          <select id="accentColor">
-            <option value="#4c6ef5" data-translate="color_blue">Blue</option>
-            <option value="#228b22" data-translate="color_green">Green</option>
-            <option value="#ffb020" data-translate="color_yellow">Yellow</option>
-            <option value="#f35f5f" data-translate="color_red">Red</option>
-            <option value="#8b5cf6" data-translate="color_purple">Purple</option>
-          </select>
-        </div>
-      </section>
-
-      <section class="settings-group-card settings-restore" aria-labelledby="restore-behavior-title">
-        <h3 id="restore-behavior-title" class="settings-group-title" data-translate="restore_behavior_title">Restore behavior</h3>
-        <p class="settings-description" data-translate="restore_behavior_description">Choose where the last window of a restored session opens.</p>
-        <div class="restore-mode-options" role="radiogroup" aria-labelledby="restore-behavior-title">
-          <label class="restore-mode-option">
-            <input type="radio" name="restoreMode" value="new_windows">
-            <span class="restore-mode-copy">
-              <span class="restore-mode-label" data-translate="restore_new_windows_label">Restore in new windows</span>
-              <span class="restore-mode-detail" data-translate="restore_new_windows_description">Every saved window opens separately. Your current window stays unchanged.</span>
-            </span>
-          </label>
-          <label class="restore-mode-option">
-            <input type="radio" name="restoreMode" value="current_window">
-            <span class="restore-mode-copy">
-              <span class="restore-mode-label" data-translate="restore_current_window_label">Restore into the current window</span>
-              <span class="restore-mode-detail" data-translate="restore_current_window_description">The last saved window is added before your current tabs. Other saved windows still open separately.</span>
-            </span>
-          </label>
-        </div>
-      </section>
-
-      <section class="settings-group-card settings-autosave" aria-labelledby="auto-save-title">
-        <h3 id="auto-save-title" class="settings-group-title" data-translate="auto_save_title">Auto Save</h3>
-        <p class="settings-description" data-translate="auto_save_description">Automatically capture the current session on a schedule.</p>
-        <div class="toggle-container">
-          <span data-translate="auto_save_toggle_label">Enable Auto Save</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="autoSaveEnabled">
-            <span class="slider"></span>
-          </label>
-        </div>
-        <div class="toggle-container">
-          <span data-translate="auto_save_on_exit_toggle_label">Save when Chrome closes</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="autoSaveOnExitEnabled">
-            <span class="slider"></span>
-          </label>
-        </div>
-        <div id="autoSaveIntervalGroup" class="auto-save-interval">
-          <label for="autoSaveInterval" data-translate="auto_save_interval_label">Save every</label>
-          <input id="autoSaveInterval" type="number" min="10" step="1" value="10" inputmode="numeric">
-          <span class="settings-inline-unit" data-translate="auto_save_interval_unit">minutes</span>
-        </div>
-        <div class="setting-group">
-          <label for="autoSaveGroupMode" data-translate="auto_save_group_mode_label">Auto Save grouping</label>
-          <select id="autoSaveGroupMode">
-            <option value="smart" data-translate="auto_save_group_mode_smart">Smart</option>
-            <option value="day" data-translate="auto_save_group_mode_day">By day</option>
-            <option value="session" data-translate="auto_save_group_mode_session">By browser session</option>
-            <option value="none" data-translate="auto_save_group_mode_none">No grouping</option>
-          </select>
-        </div>
-      </section>
-
-      <section class="settings-group-card settings-backup" aria-labelledby="backup-title">
-        <h3 id="backup-title" class="settings-group-title" data-translate="backup_title">Backup</h3>
-        <p class="settings-description" data-translate="backup_description">Export a backup or import saved sessions.</p>
-        <div class="settings-actions">
-          <button id="exportSessions" data-translate="export_button">Export saved sessions (JSON)</button>
-          <button id="importSessions" data-translate="import_button">Import sessions (JSON)</button>
-          <input type="file" id="importFileInput" accept="application/json" style="display: none;">
-        </div>
-      </section>
-
-      <section class="settings-group-card settings-cloud-sync" aria-labelledby="cloud-sync-title">
-        <h3 id="cloud-sync-title" class="settings-group-title" data-translate="cloud_sync_title">Cloud Sync</h3>
-        <p class="settings-description" data-translate="cloud_sync_description">Optional multi-device sync. Core sessions still work locally without an account.</p>
-        <p class="settings-description" data-translate="cloud_sync_limits_note">Current cloud storage limit: up to 10 synced sessions, 300 total URLs, and a 512 KB snapshot.</p>
-        <p class="settings-description" data-translate="cloud_sync_auto_note">After local changes, Cloud Sync pushes automatically after about 10 minutes. Manual Push is rate-limited.</p>
-        <form id="cloud-sync-form" class="cloud-sync-form" novalidate>
-          <p id="cloudSyncAccount" class="cloud-sync-account"></p>
-          <div class="cloud-sync-secondary-actions">
-            <button id="cloudSyncLogin" type="button" data-translate="cloud_sync_register_button">Create sync account / Login</button>
-            <button id="cloudSyncPush" type="button" data-translate="cloud_sync_push_button">Push</button>
-            <button id="cloudSyncPull" type="button" data-translate="cloud_sync_pull_button">Pull</button>
-            <button id="cloudSyncDisconnect" type="button" data-translate="cloud_sync_disconnect_button">Disable</button>
-          </div>
-          <p id="cloudSyncStatus" class="cloud-sync-status" role="status" aria-live="polite"></p>
-        </form>
-      </section>
-
-      <section class="settings-group-card settings-newsletter" aria-labelledby="newsletter-title">
-        <h3 id="newsletter-title" class="settings-group-title" data-translate="newsletter_title">Newsletter</h3>
-        <p class="settings-description" data-translate="newsletter_description">Get updates about new Tab Session Saver features.</p>
-        <form id="newsletter-form" class="newsletter-form" novalidate>
-          <div class="setting-group">
-            <label for="newsletterEmail" data-translate="newsletter_email_label">Email address</label>
-            <input id="newsletterEmail" type="email" autocomplete="email" spellcheck="false" placeholder="you@example.com" data-translate-placeholder="newsletter_email_placeholder">
-          </div>
-          <div class="newsletter-actions">
-            <button id="newsletterSubmit" type="submit" data-translate="newsletter_subscribe_button">Subscribe</button>
-          </div>
-          <p id="newsletterStatus" class="newsletter-status" role="status" aria-live="polite"></p>
-        </form>
-      </section>
-
-      <div id="browser-support-group" class="settings-group-card settings-browser-support" style="display: none;">
-        <h3 class="settings-group-title" data-translate="browser_support_label">Browser Support</h3>
-        <div id="browser-support-info" class="browser-support-info">
-          <span data-translate="browser_support_loading">Detecting browser&hellip;</span>
-        </div>
-      </div>
-
-      <div class="footer-section">
-        <h3 class="footer-title" data-translate="resources_title">Get the extension</h3>
-        <div class="footer-cta-card">
-          <div class="extension-primary-links">
-            <a class="extension-primary-link" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=it" target="_blank" rel="noopener">
-              Chrome Web Store
-            </a>
-            <a class="extension-primary-link" href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener">
-              <span data-translate="github_link">Source code on GitHub</span>
-            </a>
-          </div>
-        </div>
-        <div class="footer-info">
-          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.15.3</div>
-          <div class="footer-secondary-links">
-            <a class="footer-secondary-link" href="https://tabsessionsaver.paoloronco.it/" target="_blank" rel="noopener">Website</a>
-            <a class="footer-secondary-link" href="https://tabsessionsaver.paoloronco.it/legal" target="_blank" rel="noopener">Legal</a>
-            <a class="footer-secondary-link" href="https://tabsessionsaver.paoloronco.it/privacy" target="_blank" rel="noopener" data-translate="privacy_policy_link">Privacy Policy</a>
-            <a class="footer-secondary-link" href="https://tabsessionsaver.paoloronco.it/terms" target="_blank" rel="noopener">Terms</a>
-            <a class="footer-secondary-link" href="https://tabsessionsaver.paoloronco.it/oauth-disclosure" target="_blank" rel="noopener">OAuth</a>
-            <a class="footer-secondary-link" href="https://tabsessionsaver.paoloronco.it/data-deletion" target="_blank" rel="noopener">Data deletion</a>
-          </div>
-          <div class="footer-contact-line">
-            <span>Email</span>
-            <a href="mailto:info@paoloronco.it">info@paoloronco.it</a>
-          </div>
-          <div class="footer-copyright-line">
-            <span>&copy; 2025 Paolo Ronco</span>
-            <span class="footer-meta-separator" aria-hidden="true">&middot;</span>
-            <span data-translate="rights_reserved">All rights reserved</span>
-          </div>
-        </div>
-      </div>
-    </section>
     </div><!-- /.huge-content-area -->
   </div><!-- /.popup -->
 </body>

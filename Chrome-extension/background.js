@@ -10,8 +10,10 @@ const CLOUD_SYNC_ALARM_NAME = 'cloud-sync-push';
 const AUTO_SAVE_SETTINGS_KEY = 'autoSaveSettings';
 const AUTO_SAVE_EXIT_SNAPSHOT_KEY = 'autoSaveExitSnapshot';
 const AUTO_SAVE_RUN_ID_KEY = 'autoSaveRunId';
+const POPUP_SIZE_KEY = 'popupSize';
 const CLOUD_SYNC_SETTINGS_KEY = 'cloudSyncSettings';
 const CLOUD_SYNC_STATE_KEY = 'cloudSyncState';
+const SESSION_FOLDERS_KEY = 'sessionFolders';
 const CLOUD_SYNC_DEFAULT_API_BASE_URL = 'https://tabsessionsaver-cloudsync.paolo-ronco2000.workers.dev';
 const CLOUD_SYNC_AUTO_PUSH_DELAY_MINUTES = 10;
 const CLOUD_SYNC_MANUAL_PUSH_MIN_INTERVAL_MS = 2 * 60 * 1000;
@@ -45,6 +47,10 @@ let activeAutoSaveSettings = null;
 let exitSnapshotRefreshTimer = null;
 let cloudSyncPushTimer = null;
 
+initializeActionPopupForStoredSize().catch((error) => {
+  console.warn('[background] action popup initialization failed:', error);
+});
+
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
     chrome.runtime.setUninstallURL('https://forms.gle/sbMUP5JrwYubSA2m6');
@@ -54,10 +60,16 @@ chrome.runtime.onInstalled.addListener((details) => {
   initializeAutoSaveSchedule().catch((error) => {
     console.warn('[background] auto save schedule initialization failed:', error);
   });
+  initializeActionPopupForStoredSize().catch((error) => {
+    console.warn('[background] action popup install initialization failed:', error);
+  });
 });
 
 if (chrome.runtime.onStartup) {
   chrome.runtime.onStartup.addListener(() => {
+    initializeActionPopupForStoredSize().catch((error) => {
+      console.warn('[background] action popup startup initialization failed:', error);
+    });
     resetAutoSaveRunId().then(() => initializeAutoSaveSchedule()).catch((error) => {
       console.warn('[background] auto save startup scheduling failed:', error);
     });
@@ -123,19 +135,44 @@ if (chrome.windows) {
   });
   if (chrome.windows.onRemoved?.addListener) {
     chrome.windows.onRemoved.addListener(() => {
-      handleWindowRemovedForAutoSaveExit().catch((error) => {
-        console.warn('[background] exit auto save failed:', error);
+      handleWindowRemovedForBrowserClose().catch((error) => {
+        console.warn('[background] browser close sync failed:', error);
       });
     });
   }
 }
 
+if (chrome.action?.onClicked) {
+  chrome.action.onClicked.addListener(() => {
+    openActionFullTabIfHuge().catch((error) => {
+      console.warn('[background] action click failed:', error);
+    });
+  });
+}
+
+if (chrome.runtime.onSuspend?.addListener) {
+  chrome.runtime.onSuspend.addListener(() => {
+    runCloudSyncPush({ reason: 'runtime_suspend' }).catch((error) => {
+      console.warn('[background] cloud sync suspend push failed:', error);
+    });
+  });
+}
+
 if (chrome.storage?.onChanged) {
   chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName !== 'local' || !changes[AUTO_SAVE_SETTINGS_KEY]) return;
-    applyAutoSaveSchedule(changes[AUTO_SAVE_SETTINGS_KEY].newValue).catch((error) => {
-      console.warn('[background] auto save reschedule failed:', error);
-    });
+    if (areaName !== 'local') return;
+
+    if (changes[AUTO_SAVE_SETTINGS_KEY]) {
+      applyAutoSaveSchedule(changes[AUTO_SAVE_SETTINGS_KEY].newValue).catch((error) => {
+        console.warn('[background] auto save reschedule failed:', error);
+      });
+    }
+
+    if (changes[POPUP_SIZE_KEY]) {
+      configureActionPopupForSize(changes[POPUP_SIZE_KEY].newValue).catch((error) => {
+        console.warn('[background] action popup size update failed:', error);
+      });
+    }
   });
 }
 
@@ -165,6 +202,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           await chrome.storage.local.set({ [AUTO_SAVE_SETTINGS_KEY]: settings });
           await applyAutoSaveSchedule(settings);
           sendResponse({ success: true, settings });
+          break;
+        }
+        case 'set_popup_size': {
+          const size = normalizePopupSize(request.size);
+          await chrome.storage.local.set({ [POPUP_SIZE_KEY]: size });
+          await configureActionPopupForSize(size);
+          sendResponse({ success: true, size });
           break;
         }
         case 'get_cloud_sync_settings': {
@@ -243,6 +287,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           sendResponse({ success: true, sessions });
           break;
         }
+        case 'replace_session_folders': {
+          const folders = normalizeSessionFoldersForStorage(request.folders);
+          await persistSessionFolders(folders, { reason: request.reason || 'replace_session_folders' });
+          sendResponse({ success: true, folders });
+          break;
+        }
         default:
           sendResponse({ success: false, error: 'Unknown action' });
       }
@@ -263,6 +313,34 @@ function normalizeNewsletterEmail(value) {
   const email = value.trim().toLowerCase();
   if (!email || email.length > 254) return null;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+}
+
+function normalizePopupSize(value) {
+  return ['small', 'medium', 'large', 'huge'].includes(value) ? value : 'medium';
+}
+
+async function configureActionPopupForSize(value) {
+  if (!chrome.action?.setPopup) return normalizePopupSize(value);
+  const size = normalizePopupSize(value);
+  await chrome.action.setPopup({ popup: size === 'huge' ? '' : 'popup.html' });
+  return size;
+}
+
+async function initializeActionPopupForStoredSize() {
+  if (!chrome.storage?.local) return;
+  const stored = await chrome.storage.local.get({ [POPUP_SIZE_KEY]: 'medium' });
+  await configureActionPopupForSize(stored[POPUP_SIZE_KEY]);
+}
+
+async function openActionFullTabIfHuge() {
+  if (!chrome.storage?.local || !chrome.tabs?.create) return;
+  const stored = await chrome.storage.local.get({ [POPUP_SIZE_KEY]: 'medium' });
+  const size = normalizePopupSize(stored[POPUP_SIZE_KEY]);
+  if (size !== 'huge') {
+    await configureActionPopupForSize(size);
+    return;
+  }
+  await chrome.tabs.create({ url: chrome.runtime.getURL('popup.html?view=tab') });
 }
 
 function normalizeNewsletterSubscription(rawState = {}) {
@@ -584,6 +662,46 @@ async function persistSessions(sessions, options = {}) {
   }
 }
 
+function normalizeSessionFolderName(value) {
+  return typeof value === 'string' && value.trim()
+    ? clampString(value.trim(), 80)
+    : '';
+}
+
+function normalizeSessionFoldersForStorage(rawFolders) {
+  const folders = [];
+  const seen = new Set();
+  (Array.isArray(rawFolders) ? rawFolders : []).forEach((rawFolder) => {
+    const folder = rawFolder && typeof rawFolder === 'object' ? rawFolder : {};
+    const id = typeof folder.id === 'string' && folder.id.trim() ? folder.id.trim() : '';
+    const name = normalizeSessionFolderName(folder.name);
+    if (!id || !name || seen.has(id)) return;
+    seen.add(id);
+    folders.push({
+      id,
+      name,
+      createdAt: typeof folder.createdAt === 'string' ? folder.createdAt : new Date().toISOString()
+    });
+  });
+  return folders;
+}
+
+async function loadSessionFoldersFromStorage() {
+  const stored = await chrome.storage.local.get({ [SESSION_FOLDERS_KEY]: [] });
+  return normalizeSessionFoldersForStorage(stored[SESSION_FOLDERS_KEY]);
+}
+
+async function persistSessionFolders(folders, options = {}) {
+  const { reason = 'session_folders_changed', sync = true } = options;
+  const normalizedFolders = normalizeSessionFoldersForStorage(folders);
+  await chrome.storage.local.set({ [SESSION_FOLDERS_KEY]: normalizedFolders });
+  if (sync) {
+    await markCloudSyncPending(reason);
+    scheduleCloudSyncPush();
+  }
+  return normalizedFolders;
+}
+
 function normalizeSessionCollectionForStorage(rawSessions) {
   const source = Array.isArray(rawSessions) ? rawSessions : [];
   return source
@@ -621,11 +739,14 @@ async function runCloudSyncPush(options = {}) {
   }
 
   const sessions = await loadSessionsFromStorage();
+  const folders = await loadSessionFoldersFromStorage();
   const payload = {
     deviceId: await getCloudSyncDeviceId(),
     baseRevision: state.revision,
     updatedAt: new Date().toISOString(),
-    sessions
+    syncReason: typeof options.reason === 'string' ? options.reason : '',
+    sessions,
+    folders
   };
 
   if (estimateJsonBytes(payload) > CLOUD_SYNC_MAX_PAYLOAD_BYTES) {
@@ -674,8 +795,10 @@ async function runCloudSyncPull(options = {}) {
   try {
     const remote = await requestCloudSync(settings, '/v1/sync/snapshot', { method: 'GET' });
     const remoteSessions = normalizeSessionCollectionForStorage(remote.sessions || []);
+    const remoteFolders = normalizeSessionFoldersForStorage(remote.folders || []);
     if (options.applyRemote && Number.isInteger(remote.revision) && remote.revision > state.revision) {
       await persistSessions(remoteSessions, { reason: 'cloud_pull', sync: false });
+      await persistSessionFolders(remoteFolders, { reason: 'cloud_pull_folders', sync: false });
     }
     const nextState = await saveCloudSyncState({
       revision: Number.isInteger(remote.revision) ? remote.revision : state.revision,
@@ -683,7 +806,7 @@ async function runCloudSyncPull(options = {}) {
       lastPulledAt: new Date().toISOString(),
       lastError: ''
     });
-    return { success: true, sessions: remoteSessions, state: nextState };
+    return { success: true, sessions: remoteSessions, folders: remoteFolders, state: nextState };
   } catch (error) {
     const nextState = await saveCloudSyncState({
       lastError: error?.message || String(error)
@@ -1246,18 +1369,38 @@ function scheduleAutoSaveExitSnapshotRefresh() {
   }, AUTO_SAVE_EXIT_DEBOUNCE_MS);
 }
 
+async function hasRemainingNormalBrowserWindows() {
+  const remainingWindows = chrome.windows?.getAll
+    ? await chrome.windows.getAll({ populate: true, windowTypes: ['normal'] })
+    : [];
+  return remainingWindows.some((win) =>
+    (!win.type || win.type === 'normal') && Array.isArray(win.tabs) && win.tabs.length > 0
+  );
+}
+
+async function handleWindowRemovedForBrowserClose() {
+  if (await hasRemainingNormalBrowserWindows()) {
+    scheduleAutoSaveExitSnapshotRefresh();
+    return { success: false, skipped: true, reason: 'windows_remaining' };
+  }
+
+  const autoSaveResult = await runAutoSaveOnExit();
+  const cloudSyncResult = await runCloudSyncPush({ reason: 'browser_close' });
+
+  return {
+    success: autoSaveResult.success === true || cloudSyncResult.success === true,
+    autoSave: autoSaveResult,
+    cloudSync: cloudSyncResult
+  };
+}
+
 async function handleWindowRemovedForAutoSaveExit() {
   const settings = await loadAutoSaveSettings();
   if (!settings.exitEnabled) {
     return { success: false, skipped: true, reason: 'disabled' };
   }
 
-  const remainingWindows = chrome.windows?.getAll
-    ? await chrome.windows.getAll({ populate: true, windowTypes: ['normal'] })
-    : [];
-  const hasRemainingNormalWindows = remainingWindows.some((win) =>
-    (!win.type || win.type === 'normal') && Array.isArray(win.tabs) && win.tabs.length > 0
-  );
+  const hasRemainingNormalWindows = await hasRemainingNormalBrowserWindows();
   if (hasRemainingNormalWindows) {
     scheduleAutoSaveExitSnapshotRefresh();
     return { success: false, skipped: true, reason: 'windows_remaining' };

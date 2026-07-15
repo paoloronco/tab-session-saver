@@ -64,6 +64,14 @@ test('custom URL input rejects unsupported explicit protocols', () => {
   assert.equal(getCustomUrlTabFromInput('javascript:alert(1)'), null);
 });
 
+test('plain text session item input becomes a restorable search URL', () => {
+  const { getCustomUrlTabFromInput } = loadCustomUrlBindings();
+  const tab = getCustomUrlTabFromInput('quarterly planning notes');
+
+  assert.equal(tab.title, 'quarterly planning notes');
+  assert.equal(tab.url, 'https://www.google.com/search?q=quarterly%20planning%20notes');
+});
+
 test('custom URL can be appended to the last saved window in a session', () => {
   const { addCustomUrlToSession } = loadCustomUrlBindings();
   const session = {
@@ -88,13 +96,46 @@ test('custom URL can be appended to the last saved window in a session', () => {
   assert.equal(updated.windows[0].tabs[1].title, 'https://new.test/page');
 });
 
+test('custom item input can be added as a new saved window', () => {
+  const { addCustomUrlToSession } = loadCustomUrlBindings();
+  const session = {
+    name: 'Work',
+    timestamp: '2026-06-30T10:00:00.000Z',
+    windows: [
+      {
+        tabs: [{ title: 'Existing', url: 'https://existing.test', groupId: -1 }],
+        groups: []
+      }
+    ]
+  };
+
+  const updated = addCustomUrlToSession(session, 'project roadmap', { newWindow: true });
+
+  assert.equal(updated.windows.length, 2);
+  assert.equal(updated.windows[1].tabs.length, 1);
+  assert.equal(updated.windows[1].tabs[0].url, 'https://www.google.com/search?q=project%20roadmap');
+});
+
+test('session menu exposes item and window add actions', () => {
+  const popupScript = readExtensionFile('popup.js');
+
+  assert.match(popupScript, /addItemBtn\.textContent = getTranslation\('add_session_item_button'\)/);
+  assert.match(popupScript, /addWindowBtn\.textContent = getTranslation\('add_session_window_button'\)/);
+  assert.match(popupScript, /addCustomUrlToSession\(sessionPayload, itemInput, \{ newWindow: true \}\)/);
+});
+
 test('every language includes custom URL session copy', () => {
   const { translations } = loadCustomUrlBindings();
   const keys = [
     'add_url_button',
+    'add_session_item_button',
+    'add_session_window_button',
     'add_url_prompt',
     'add_url_invalid',
-    'add_url_failed'
+    'add_url_failed',
+    'remove_window_button',
+    'remove_window_confirm',
+    'remove_tab_confirm'
   ];
 
   for (const language of ['en', 'es', 'it', 'fr', 'de']) {

@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabs Session Saver Settings</title>
+  <style>
+    :root {
+      --accent-color: #4c6ef5;
+      --bg-color: #f6f8fb;
+      --surface: #ffffff;
+      --surface-alt: #f1f4f9;
+      --text-primary: #182033;
+      --text-secondary: #5d687c;
+      --border-color: #dce3ee;
+      --shadow: 0 18px 48px rgba(24, 32, 51, 0.08);
+      --radius: 8px;
+      --sidebar-width: 286px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-primary);
+      letter-spacing: 0;
+    }
+
+    body.dark-mode {
+      --bg-color: #111827;
+      --surface: #182235;
+      --surface-alt: #202c43;
+      --text-primary: #f8fafc;
+      --text-secondary: #aeb9cc;
+      --border-color: #334155;
+      --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button,
+    .extension-primary-link {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      min-height: 42px;
+      padding: 0.7rem 0.95rem;
+      text-decoration: none;
+      transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease, border-color 120ms ease;
+    }
+
+    button,
+    .extension-primary-link:first-child {
+      background: var(--accent-color);
+      color: #ffffff;
+      box-shadow: 0 10px 24px rgba(76, 110, 245, 0.22);
+    }
+
+    button:hover,
+    .extension-primary-link:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(76, 110, 245, 0.26);
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text-primary);
+      min-height: 42px;
+      padding: 0.62rem 0.75rem;
+    }
+
+    input:focus,
+    select:focus,
+    button:focus-visible,
+    a:focus-visible {
+      outline: 3px solid rgba(76, 110, 245, 0.22);
+      outline-offset: 2px;
+    }
+
+    .settings-shell {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .settings-sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      border-right: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(14px);
+      padding: 1.35rem;
+      overflow-y: auto;
+    }
+
+    body.dark-mode .settings-sidebar {
+      background: rgba(24, 34, 53, 0.9);
+    }
+
+    .settings-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1.6rem;
+    }
+
+    .settings-brand img {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      box-shadow: 0 8px 20px rgba(24, 32, 51, 0.12);
+    }
+
+    .settings-brand h1 {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .settings-brand span {
+      display: block;
+      margin-top: 0.2rem;
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .settings-nav {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .settings-nav a {
+      align-items: center;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 0.7rem;
+      min-height: 40px;
+      padding: 0.62rem 0.75rem;
+      text-decoration: none;
+    }
+
+    .settings-nav a:hover {
+      background: var(--surface-alt);
+      color: var(--text-primary);
+    }
+
+    .settings-nav svg {
+      color: var(--accent-color);
+      height: 18px;
+      width: 18px;
+      flex: 0 0 auto;
+    }
+
+    .settings-main {
+      min-width: 0;
+      padding: clamp(1.5rem, 3.6vw, 3.25rem);
+    }
+
+    .settings-hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 1.5rem;
+      align-items: flex-end;
+      max-width: 1080px;
+      margin: 0 auto 1.3rem;
+    }
+
+    .settings-hero h2 {
+      margin: 0 0 0.45rem;
+      font-size: clamp(2rem, 4vw, 3.25rem);
+      line-height: 1.03;
+    }
+
+    .settings-hero p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.55;
+      margin: 0;
+      max-width: 640px;
+    }
+
+    .settings-version-pill {
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      color: var(--text-secondary);
+      flex: 0 0 auto;
+      font-size: 0.86rem;
+      font-weight: 700;
+      padding: 0.55rem 0.8rem;
+    }
+
+    .settings-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    .settings-group-card {
+      background: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 28px rgba(24, 32, 51, 0.06);
+      padding: clamp(1rem, 2vw, 1.35rem);
+      scroll-margin-top: 1.4rem;
+    }
+
+    .settings-language,
+    .settings-appearance,
+    .settings-restore,
+    .settings-autosave,
+    .settings-backup,
+    .settings-cloud-sync,
+    .settings-newsletter {
+      grid-column: 1 / -1;
+    }
+
+    .settings-info-break {
+      grid-column: 1 / -1;
+      border-top: 1px solid var(--border-color);
+      margin: 0.55rem 0 0.15rem;
+      min-height: 1px;
+    }
+
+    .settings-browser-support,
+    .footer-section {
+      grid-column: 1 / -1;
+      background: transparent;
+      border: 1px dashed color-mix(in srgb, var(--border-color) 82%, var(--text-secondary));
+      border-radius: var(--radius);
+      box-shadow: none;
+      padding: clamp(0.95rem, 2vw, 1.2rem);
+      scroll-margin-top: 1.4rem;
+    }
+
+    .settings-language select {
+      max-width: 360px;
+    }
+
+    .settings-group-title,
+    .footer-title {
+      color: var(--text-primary);
+      display: block;
+      font-size: 1.02rem;
+      font-weight: 800;
+      margin: 0 0 0.65rem;
+    }
+
+    .settings-description {
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin: 0 0 0.8rem;
+      max-width: 68ch;
+    }
+
+    .setting-group {
+      display: grid;
+      gap: 0.45rem;
+      margin-top: 0.9rem;
+      max-width: 520px;
+    }
+
+    .setting-group:first-of-type {
+      margin-top: 0;
+    }
+
+    .setting-group label,
+    .auto-save-interval label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .toggle-container {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      max-width: 520px;
+      min-height: 48px;
+      padding: 0.35rem 0;
+    }
+
+    .toggle-container span {
+      color: var(--text-secondary);
+      font-weight: 700;
+    }
+
+    .toggle-switch {
+      display: inline-block;
+      height: 28px;
+      position: relative;
+      width: 52px;
+      flex: 0 0 auto;
+    }
+
+    .toggle-switch input {
+      height: 0;
+      opacity: 0;
+      width: 0;
+    }
+
+    .slider {
+      background: #c6cfdd;
+      border-radius: 999px;
+      inset: 0;
+      position: absolute;
+      transition: background 150ms ease;
+    }
+
+    .slider::before {
+      background: #ffffff;
+      border-radius: 50%;
+      content: "";
+      height: 22px;
+      left: 3px;
+      position: absolute;
+      top: 3px;
+      transition: transform 150ms ease;
+      width: 22px;
+      box-shadow: 0 2px 8px rgba(24, 32, 51, 0.2);
+    }
+
+    .toggle-switch input:checked + .slider {
+      background: var(--accent-color);
+    }
+
+    .toggle-switch input:checked + .slider::before {
+      transform: translateX(24px);
+    }
+
+    .restore-mode-options {
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .restore-mode-option {
+      align-items: flex-start;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.9rem;
+    }
+
+    .restore-mode-option input {
+      margin-top: 0.2rem;
+      min-height: auto;
+      width: auto;
+    }
+
+    .restore-mode-copy {
+      display: grid;
+      gap: 0.25rem;
+    }
+
+    .restore-mode-label {
+      font-weight: 800;
+    }
+
+    .restore-mode-detail {
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+
+    .auto-save-interval {
+      align-items: center;
+      display: grid;
+      grid-template-columns: minmax(120px, 180px) 110px auto;
+      gap: 0.7rem;
+      margin: 0.55rem 0 0.95rem;
+      max-width: 440px;
+    }
+
+    .settings-inline-unit {
+      color: var(--text-secondary);
+      font-weight: 700;
+    }
+
+    .settings-actions,
+    .cloud-sync-secondary-actions,
+    .newsletter-actions,
+    .extension-primary-links,
+    .footer-secondary-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+    }
+
+    .settings-actions button,
+    .cloud-sync-secondary-actions button,
+    .newsletter-actions button {
+      flex: 0 0 auto;
+      width: auto;
+    }
+
+    .cloud-sync-secondary-actions {
+      margin-top: 0.85rem;
+    }
+
+    .cloud-sync-account,
+    .cloud-sync-status,
+    .newsletter-status {
+      color: var(--text-secondary);
+      line-height: 1.45;
+      margin: 0.7rem 0 0;
+      min-height: 1.25rem;
+    }
+
+    .cloud-sync-form,
+    .newsletter-form {
+      margin-top: 0.9rem;
+      max-width: 720px;
+    }
+
+    .browser-support-info {
+      background: var(--surface-alt);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      line-height: 1.5;
+      padding: 0.75rem;
+    }
+
+    .browser-support-info strong {
+      color: var(--text-primary);
+    }
+
+    .browser-support-status-ok {
+      color: #228b22;
+    }
+
+    .browser-support-status-warn {
+      color: #c07000;
+    }
+
+    body.dark-mode .browser-support-status-ok {
+      color: #6fcf6f;
+    }
+
+    body.dark-mode .browser-support-status-warn {
+      color: #ffd070;
+    }
+
+    .extension-primary-link {
+      align-items: center;
+      display: inline-flex;
+      justify-content: center;
+    }
+
+    .extension-primary-link + .extension-primary-link {
+      background: var(--surface-alt);
+      border-color: var(--border-color);
+      color: var(--text-primary);
+      box-shadow: none;
+    }
+
+    .footer-info {
+      border-top: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      display: grid;
+      gap: 0.55rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+    }
+
+    .footer-secondary-link,
+    .footer-contact-line a {
+      color: var(--accent-color);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .footer-contact-line,
+    .footer-copyright-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      align-items: center;
+    }
+
+    .footer-meta-separator {
+      color: var(--border-color);
+    }
+
+    @media (max-width: 940px) {
+      .settings-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .settings-sidebar {
+        height: auto;
+        position: static;
+        border-right: 0;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .settings-nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 680px) {
+      .settings-main {
+        padding: 1rem;
+      }
+
+      .settings-hero {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .settings-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .settings-nav {
+        grid-template-columns: 1fr;
+      }
+
+      .auto-save-interval {
+        grid-template-columns: 1fr;
+      }
+
+      .restore-mode-options {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <script src="browser-support.js" defer></script>
+  <script src="popup.js" defer></script>
+</head>
+<body class="light-mode">
+  <div class="settings-shell">
+    <aside class="settings-sidebar" aria-label="Settings sections">
+      <div class="settings-brand">
+        <img src="img-4848.png" alt="" aria-hidden="true">
+        <div>
+          <h1>Tabs Session Saver</h1>
+          <span data-translate="settings_title">Settings</span>
+        </div>
+      </div>
+      <nav class="settings-nav">
+        <a href="#general">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7" stroke-linecap="round"></path></svg>
+          <span data-translate="language_label">Language</span>
+        </a>
+        <a href="#appearance">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9c0-1.1-.9-2-2-2h-2.2c-.9 0-1.4-1-.9-1.7l1.1-1.8C15.5 4.3 13.8 3 12 3z"></path><circle cx="7.5" cy="10.5" r=".8"></circle><circle cx="10.5" cy="7.5" r=".8"></circle><circle cx="14" cy="7.8" r=".8"></circle></svg>
+          <span data-translate="appearance_title">Appearance</span>
+        </a>
+        <a href="#restore">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8.6"></path><path d="M4 4v4.6h4.6"></path></svg>
+          <span data-translate="restore_behavior_title">Restore behavior</span>
+        </a>
+        <a href="#automation">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="8"></circle></svg>
+          <span data-translate="auto_save_title">Auto Save</span>
+        </a>
+        <a href="#data">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v12"></path><path d="m8 11 4 4 4-4"></path><path d="M5 19h14"></path></svg>
+          <span data-translate="backup_title">Backup</span>
+        </a>
+        <a href="#cloud">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .6-8 6 6 0 0 0-11.2-2A5 5 0 0 0 7 18z"></path></svg>
+          <span data-translate="cloud_sync_title">Cloud Sync</span>
+        </a>
+        <a href="#newsletter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16v12H4z"></path><path d="m4 7 8 6 8-6"></path></svg>
+          <span data-translate="newsletter_title">Newsletter</span>
+        </a>
+        <a href="#resources">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"></path><path d="M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 0 0 12 20.1l1.1-1.1"></path></svg>
+          <span data-translate="resources_title">Resources</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="settings-main">
+      <section class="settings-hero" aria-labelledby="settings-page-title">
+        <div>
+          <h2 id="settings-page-title" data-translate="settings_title">Settings</h2>
+          <p>Manage the extension layout, restore behavior, automatic saves, cloud sync, backup, and support links from a full browser page.</p>
+        </div>
+        <div class="settings-version-pill"><span data-translate="version_label">Version:</span> 7.15.4</div>
+      </section>
+
+      <div class="settings-grid">
+        <section id="general" class="settings-group-card settings-language">
+          <label class="settings-group-title" for="language" data-translate="language_label">Language</label>
+          <select id="language">
+            <option value="en">English</option>
+            <option value="es">Espa&ntilde;ol</option>
+            <option value="it">Italiano</option>
+            <option value="fr">Fran&ccedil;ais</option>
+            <option value="de">Deutsch</option>
+          </select>
+        </section>
+
+        <section id="appearance" class="settings-group-card settings-appearance" aria-labelledby="appearance-title">
+          <h3 id="appearance-title" class="settings-group-title" data-translate="appearance_title">Appearance</h3>
+          <div class="setting-group">
+            <label for="popupSize" data-translate="popup_size_label">Popup size</label>
+            <select id="popupSize">
+              <option value="small" data-translate="popup_size_small">Small</option>
+              <option value="medium" data-translate="popup_size_medium">Medium</option>
+              <option value="large" data-translate="popup_size_large">Large</option>
+              <option value="huge" data-translate="popup_size_huge">Huge (Full tab)</option>
+            </select>
+          </div>
+          <div class="toggle-container">
+            <span data-translate="dark_mode_label">Dark mode</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="darkMode">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-group">
+            <label for="accentColor" data-translate="color_label">Accent color</label>
+            <select id="accentColor">
+              <option value="#4c6ef5" data-translate="color_blue">Blue</option>
+              <option value="#228b22" data-translate="color_green">Green</option>
+              <option value="#ffb020" data-translate="color_yellow">Yellow</option>
+              <option value="#f35f5f" data-translate="color_red">Red</option>
+              <option value="#8b5cf6" data-translate="color_purple">Purple</option>
+            </select>
+          </div>
+        </section>
+
+        <section id="restore" class="settings-group-card settings-restore" aria-labelledby="restore-behavior-title">
+          <h3 id="restore-behavior-title" class="settings-group-title" data-translate="restore_behavior_title">Restore behavior</h3>
+          <p class="settings-description" data-translate="restore_behavior_description">Choose where the last window of a restored session opens.</p>
+          <div class="restore-mode-options" role="radiogroup" aria-labelledby="restore-behavior-title">
+            <label class="restore-mode-option">
+              <input type="radio" name="restoreMode" value="new_windows">
+              <span class="restore-mode-copy">
+                <span class="restore-mode-label" data-translate="restore_new_windows_label">Restore in new windows</span>
+                <span class="restore-mode-detail" data-translate="restore_new_windows_description">Every saved window opens separately. Your current window stays unchanged.</span>
+              </span>
+            </label>
+            <label class="restore-mode-option">
+              <input type="radio" name="restoreMode" value="current_window">
+              <span class="restore-mode-copy">
+                <span class="restore-mode-label" data-translate="restore_current_window_label">Restore into the current window</span>
+                <span class="restore-mode-detail" data-translate="restore_current_window_description">The last saved window is added before your current tabs. Other saved windows still open separately.</span>
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <section id="automation" class="settings-group-card settings-autosave" aria-labelledby="auto-save-title">
+          <h3 id="auto-save-title" class="settings-group-title" data-translate="auto_save_title">Auto Save</h3>
+          <p class="settings-description" data-translate="auto_save_description">Automatically capture the current session on a schedule.</p>
+          <div class="toggle-container">
+            <span data-translate="auto_save_toggle_label">Enable Auto Save</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="autoSaveEnabled">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="toggle-container">
+            <span data-translate="auto_save_on_exit_toggle_label">Save when Chrome closes</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="autoSaveOnExitEnabled">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div id="autoSaveIntervalGroup" class="auto-save-interval">
+            <label for="autoSaveInterval" data-translate="auto_save_interval_label">Save every</label>
+            <input id="autoSaveInterval" type="number" min="10" step="1" value="10" inputmode="numeric">
+            <span class="settings-inline-unit" data-translate="auto_save_interval_unit">minutes</span>
+          </div>
+          <div class="setting-group">
+            <label for="autoSaveGroupMode" data-translate="auto_save_group_mode_label">Auto Save grouping</label>
+            <select id="autoSaveGroupMode">
+              <option value="smart" data-translate="auto_save_group_mode_smart">Smart</option>
+              <option value="day" data-translate="auto_save_group_mode_day">By day</option>
+              <option value="session" data-translate="auto_save_group_mode_session">By browser session</option>
+              <option value="none" data-translate="auto_save_group_mode_none">No grouping</option>
+            </select>
+          </div>
+        </section>
+
+        <section id="data" class="settings-group-card settings-backup" aria-labelledby="backup-title">
+          <h3 id="backup-title" class="settings-group-title" data-translate="backup_title">Backup</h3>
+          <p class="settings-description" data-translate="backup_description">Export a backup or import saved sessions.</p>
+          <div class="settings-actions">
+            <button id="exportSessions" data-translate="export_button">Export saved sessions (JSON)</button>
+            <button id="importSessions" data-translate="import_button">Import sessions (JSON)</button>
+            <input type="file" id="importFileInput" accept="application/json" style="display: none;">
+          </div>
+        </section>
+
+        <section id="cloud" class="settings-group-card settings-cloud-sync" aria-labelledby="cloud-sync-title">
+          <h3 id="cloud-sync-title" class="settings-group-title" data-translate="cloud_sync_title">Cloud Sync</h3>
+          <p class="settings-description" data-translate="cloud_sync_description">Optional multi-device sync. Core sessions still work locally without an account.</p>
+          <p class="settings-description" data-translate="cloud_sync_limits_note">Current cloud storage limit: up to 10 synced sessions, 300 total URLs, and a 512 KB snapshot.</p>
+          <p class="settings-description" data-translate="cloud_sync_auto_note">After local changes, Cloud Sync pushes automatically after about 10 minutes and also tries to sync when the browser closes. Push writes are rate-limited by the cloud service.</p>
+          <form id="cloud-sync-form" class="cloud-sync-form" novalidate>
+            <p id="cloudSyncAccount" class="cloud-sync-account"></p>
+            <div class="cloud-sync-secondary-actions">
+              <button id="cloudSyncLogin" type="button" data-translate="cloud_sync_register_button">Create sync account / Login</button>
+              <button id="cloudSyncPush" type="button" data-translate="cloud_sync_push_button">Push</button>
+              <button id="cloudSyncPull" type="button" data-translate="cloud_sync_pull_button">Pull</button>
+              <button id="cloudSyncDisconnect" type="button" data-translate="cloud_sync_disconnect_button">Disable</button>
+            </div>
+            <p id="cloudSyncStatus" class="cloud-sync-status" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section id="newsletter" class="settings-group-card settings-newsletter" aria-labelledby="newsletter-title">
+          <h3 id="newsletter-title" class="settings-group-title" data-translate="newsletter_title">Newsletter</h3>
+          <p class="settings-description" data-translate="newsletter_description">Get updates about new Tab Session Saver features.</p>
+          <form id="newsletter-form" class="newsletter-form" novalidate>
+            <div class="setting-group">
+              <label for="newsletterEmail" data-translate="newsletter_email_label">Email address</label>
+              <input id="newsletterEmail" type="email" autocomplete="email" spellcheck="false" placeholder="you@example.com" data-translate-placeholder="newsletter_email_placeholder">
+            </div>
+            <div class="newsletter-actions">
+              <button id="newsletterSubmit" type="submit" data-translate="newsletter_subscribe_button">Subscribe</button>
+            </div>
+            <p id="newsletterStatus" class="newsletter-status" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <div class="settings-info-break" aria-hidden="true"></div>
+
+        <section id="browser-support-group" class="settings-group-card settings-browser-support" style="display: none;">
+          <h3 class="settings-group-title" data-translate="browser_support_label">Browser Support</h3>
+          <div id="browser-support-info" class="browser-support-info">
+            <span data-translate="browser_support_loading">Detecting browser&hellip;</span>
+          </div>
+        </section>
+
+        <section id="resources" class="footer-section">
+          <h3 class="footer-title" data-translate="resources_title">Get the extension</h3>
+          <div class="footer-cta-card">
+            <div class="extension-primary-links">
+              <a class="extension-primary-link" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=it" target="_blank" rel="noopener">
+                Chrome Web Store
+              </a>
+              <a class="extension-primary-link" href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener">
+                <span data-translate="github_link">Source code on GitHub</span>
+              </a>
+            </div>
+          </div>
+          <div class="footer-info">
+            <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.15.4</div>
+            <div class="footer-secondary-links">
+              <a class="footer-secondary-link" href="https://tabsessionsaver.paoloronco.it/" target="_blank" rel="noopener">Website</a>
+              <a class="footer-secondary-link" href="https://tabsessionsaver.paoloronco.it/legal" target="_blank" rel="noopener">Legal</a>
+              <a class="footer-secondary-link" href="https://tabsessionsaver.paoloronco.it/privacy" target="_blank" rel="noopener" data-translate="privacy_policy_link">Privacy Policy</a>
+              <a class="footer-secondary-link" href="https://tabsessionsaver.paoloronco.it/terms" target="_blank" rel="noopener">Terms</a>
+              <a class="footer-secondary-link" href="https://tabsessionsaver.paoloronco.it/oauth-disclosure" target="_blank" rel="noopener">OAuth</a>
+              <a class="footer-secondary-link" href="https://tabsessionsaver.paoloronco.it/data-deletion" target="_blank" rel="noopener">Data deletion</a>
+            </div>
+            <div class="footer-contact-line">
+              <span>Email</span>
+              <a href="mailto:info@paoloronco.it">info@paoloronco.it</a>
+            </div>
+            <div class="footer-copyright-line">
+              <span>&copy; 2025 Paolo Ronco</span>
+              <span class="footer-meta-separator" aria-hidden="true">&middot;</span>
+              <span data-translate="rights_reserved">All rights reserved</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

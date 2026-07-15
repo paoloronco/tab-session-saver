@@ -53,9 +53,11 @@ test('saving or importing sessions preserves every existing and new entry', () =
 test('popup no longer exposes or reads a saved-session limit', () => {
   const popupScript = readExtensionFile('popup.js');
   const popupMarkup = readExtensionFile('popup.html');
+  const settingsMarkup = readExtensionFile('settings.html');
 
   assert.doesNotMatch(popupScript, /maxSessions|sessions_limit_label|getMaxSessionsLimit|setMaxSessionsLimit/);
   assert.doesNotMatch(popupMarkup, /maxSessions|sessions_limit_label|Saved sessions limit/i);
+  assert.doesNotMatch(settingsMarkup, /maxSessions|sessions_limit_label|Saved sessions limit/i);
 });
 
 test('onboarding no longer describes a configurable session limit', () => {

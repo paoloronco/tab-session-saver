@@ -20,7 +20,7 @@ test('active version references match the manifest version', () => {
 
   assert.match(version, /^\d+\.\d+\.\d+$/);
   assert.match(readRepoFile('README.md'), new RegExp(`version-${escapedVersion}`));
-  assert.match(readRepoFile('Chrome-extension/popup.html'), new RegExp(`Version:</span> ${escapedVersion}`));
+  assert.match(readRepoFile('Chrome-extension/settings.html'), new RegExp(`Version:</span> ${escapedVersion}`));
   assert.match(readRepoFile('Chrome-extension/welcome.html'), new RegExp(`Version ${escapedVersion}`));
 });
 

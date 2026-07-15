@@ -17,19 +17,24 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Authorization, Content-Type'
 };
 
-function jsonResponse(payload, status = 200, origin = '*') {
+function jsonResponse(payload, status = 200, origin = '*', extraHeaders = {}) {
   return new Response(JSON.stringify(payload), {
     status,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       'Access-Control-Allow-Origin': origin,
-      ...CORS_HEADERS
+      ...CORS_HEADERS,
+      ...extraHeaders
     }
   });
 }
 
 function errorResponse(message, status = 400, origin = '*', extra = {}) {
-  return jsonResponse({ success: false, error: message, ...extra }, status, origin);
+  const headers = {};
+  if (status === 429 && Number.isFinite(extra.retryAfterSeconds)) {
+    headers['Retry-After'] = String(Math.max(1, Math.ceil(extra.retryAfterSeconds)));
+  }
+  return jsonResponse({ success: false, error: message, ...extra }, status, origin, headers);
 }
 
 function getRequestOrigin(request) {
@@ -59,6 +64,41 @@ function normalizeSessions(value) {
   return value
     .slice(0, HARD_MAX_SESSIONS_PER_SNAPSHOT)
     .filter((session) => session && typeof session === 'object');
+}
+
+function normalizeFolderName(value) {
+  return typeof value === 'string' && value.trim()
+    ? value.trim().slice(0, 80)
+    : '';
+}
+
+function normalizeFolders(value) {
+  const folders = [];
+  const seen = new Set();
+  (Array.isArray(value) ? value : []).forEach((rawFolder) => {
+    const folder = rawFolder && typeof rawFolder === 'object' ? rawFolder : {};
+    const id = typeof folder.id === 'string' && folder.id.trim() ? folder.id.trim().slice(0, 160) : '';
+    const name = normalizeFolderName(folder.name);
+    if (!id || !name || seen.has(id)) return;
+    seen.add(id);
+    folders.push({
+      id,
+      name,
+      createdAt: typeof folder.createdAt === 'string' ? folder.createdAt.slice(0, 64) : new Date().toISOString()
+    });
+  });
+  return folders;
+}
+
+function normalizeSnapshotRecord(value) {
+  if (Array.isArray(value)) {
+    return { sessions: normalizeSessions(value), folders: [] };
+  }
+  const snapshot = value && typeof value === 'object' ? value : {};
+  return {
+    sessions: normalizeSessions(snapshot.sessions),
+    folders: normalizeFolders(snapshot.folders)
+  };
 }
 
 function getPlanLimits(plan) {
@@ -245,22 +285,24 @@ async function loadSnapshot(env, userId) {
       revision: 0,
       updatedAt: null,
       updatedByDevice: '',
-      sessions: []
+      sessions: [],
+      folders: []
     };
   }
 
-  let sessions = [];
+  let snapshot = { sessions: [], folders: [] };
   try {
-    sessions = JSON.parse(row.sessions_json || '[]');
+    snapshot = normalizeSnapshotRecord(JSON.parse(row.sessions_json || '[]'));
   } catch (_) {
-    sessions = [];
+    snapshot = { sessions: [], folders: [] };
   }
 
   return {
     revision: row.revision || 0,
     updatedAt: row.updated_at || null,
     updatedByDevice: row.updated_by_device || '',
-    sessions: normalizeSessions(sessions)
+    sessions: snapshot.sessions,
+    folders: snapshot.folders
   };
 }
 
@@ -268,7 +310,8 @@ async function saveSnapshot(env, account, payload) {
   const profile = account.profile;
   const plan = account.plan || DEFAULT_PLAN;
   const sessions = normalizeSessions(payload?.sessions);
-  const sessionsJson = JSON.stringify(sessions);
+  const folders = normalizeFolders(payload?.folders);
+  const sessionsJson = JSON.stringify({ version: 2, sessions, folders });
   const snapshotBytes = estimateUtf8Bytes(sessionsJson);
 
   if (snapshotBytes > HARD_MAX_SNAPSHOT_BYTES) {
@@ -343,11 +386,16 @@ async function handleGetSnapshot(request, env, origin) {
     profile: publicProfile(account.profile),
     plan: account.plan,
     limits: getPlanLimits(account.plan),
-    usage: getSnapshotUsage(snapshot.sessions, estimateUtf8Bytes(JSON.stringify(snapshot.sessions))),
+    usage: getSnapshotUsage(snapshot.sessions, estimateUtf8Bytes(JSON.stringify({
+      version: 2,
+      sessions: snapshot.sessions,
+      folders: snapshot.folders
+    }))),
     revision: snapshot.revision,
     updatedAt: snapshot.updatedAt,
     updatedByDevice: snapshot.updatedByDevice,
-    sessions: snapshot.sessions
+    sessions: snapshot.sessions,
+    folders: snapshot.folders
   }, 200, origin);
 }
 

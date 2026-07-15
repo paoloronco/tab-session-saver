@@ -34,9 +34,9 @@ function loadTranslations() {
 }
 
 test('settings controls are grouped in a clear feature order', () => {
-  const markup = readExtensionFile('popup.html');
+  const markup = readExtensionFile('settings.html');
 
-  assert.match(markup, /class="settings-group-card settings-language"[\s\S]*?id="language"[\s\S]*?<\/div>/);
+  assert.match(markup, /class="settings-group-card settings-language"[\s\S]*?id="language"[\s\S]*?<\/section>/);
   assert.match(markup, /class="settings-group-card settings-appearance"[\s\S]*?id="darkMode"[\s\S]*?id="accentColor"[\s\S]*?<\/section>/);
   assert.match(markup, /class="settings-group-card settings-autosave"[\s\S]*?id="autoSaveEnabled"[\s\S]*?id="autoSaveOnExitEnabled"[\s\S]*?id="autoSaveInterval"[\s\S]*?<\/section>/);
   assert.match(markup, /class="settings-group-card settings-backup"[\s\S]*?id="exportSessions"[\s\S]*?id="importSessions"[\s\S]*?<\/section>/);
@@ -46,6 +46,58 @@ test('settings controls are grouped in a clear feature order', () => {
   assert.match(markup, /id="browser-support-group" class="settings-group-card settings-browser-support"/);
   assert.ok(markup.indexOf('settings-backup') < markup.indexOf('settings-cloud-sync'));
   assert.ok(markup.indexOf('settings-cloud-sync') < markup.indexOf('settings-newsletter'));
+});
+
+test('popup opens settings in a dedicated browser tab', () => {
+  const popupMarkup = readExtensionFile('popup.html');
+  const popupScript = readExtensionFile('popup.js');
+  const manifest = JSON.parse(readExtensionFile('manifest.json'));
+
+  assert.match(popupMarkup, /id="settings-icon"/);
+  assert.doesNotMatch(popupMarkup, /id="settings-section"/);
+  assert.match(popupScript, /chrome\.tabs\.create\(\{\s*url:\s*chrome\.runtime\.getURL\('settings\.html'\)\s*\}\)/);
+  assert.equal(manifest.options_page, 'settings.html');
+});
+
+test('settings page uses a sidebar navigation for feature sections', () => {
+  const markup = readExtensionFile('settings.html');
+
+  assert.match(markup, /class="settings-shell"/);
+  assert.match(markup, /class="settings-sidebar"/);
+  assert.match(markup, /class="settings-nav"[\s\S]*href="#general"[\s\S]*href="#appearance"[\s\S]*href="#restore"[\s\S]*href="#automation"[\s\S]*href="#data"[\s\S]*href="#cloud"[\s\S]*href="#newsletter"[\s\S]*href="#resources"/);
+});
+
+test('settings page keeps controls readable and separates informational sections', () => {
+  const markup = readExtensionFile('settings.html');
+
+  assert.match(markup, /\.settings-appearance,\s*[\s\S]*?\.settings-restore,/);
+  assert.match(markup, /\.setting-group\s*\{[\s\S]*?max-width:\s*520px;/);
+  assert.match(markup, /\.settings-actions button,\s*[\s\S]*?\.newsletter-actions button\s*\{[\s\S]*?flex:\s*0 0 auto;/);
+  assert.match(markup, /class="settings-info-break"/);
+  assert.match(markup, /\.settings-browser-support,\s*[\s\S]*?\.footer-section\s*\{[\s\S]*?border:\s*1px dashed/);
+});
+
+test('huge popup size routes the extension action to a full browser tab', () => {
+  const background = readExtensionFile('background.js');
+  const popupScript = readExtensionFile('popup.js');
+
+  assert.match(background, /chrome\.action\.setPopup\(\{\s*popup:\s*size === 'huge' \? '' : 'popup\.html'\s*\}\)/);
+  assert.match(background, /chrome\.action\.onClicked\.addListener/);
+  assert.match(background, /chrome\.tabs\.create\(\{\s*url:\s*chrome\.runtime\.getURL\('popup\.html\?view=tab'\)/);
+  assert.match(popupScript, /isFullTabPopupView[\s\S]*?new URLSearchParams\(window\.location\.search\)\.get\('view'\) === 'tab'/);
+  assert.match(popupScript, /selectedSize === 'huge' && isPopupPage && !isFullTabPopupView[\s\S]*?\? 'large'/);
+  assert.match(popupScript, /chrome\.storage\.local\.set\(\{\s*popupSize:\s*storedSize\s*\}\)/);
+});
+
+test('popup uses a single vertical scroll owner per layout mode', () => {
+  const markup = readExtensionFile('popup.html');
+  const previewItemsRule = markup.match(/\.preview-items\s*\{[\s\S]*?\}/)?.[0] || '';
+
+  assert.match(markup, /\.popup\s*\{[\s\S]*?overflow-y:\s*auto;[\s\S]*?overflow-x:\s*hidden;/);
+  assert.match(markup, /body\.size-huge \.popup\s*\{[\s\S]*?overflow:\s*hidden;/);
+  assert.match(markup, /body\.size-huge #main-section\s*\{[\s\S]*?overflow-y:\s*auto;[\s\S]*?overflow-x:\s*hidden;/);
+  assert.doesNotMatch(previewItemsRule, /overflow-y:\s*auto/);
+  assert.doesNotMatch(previewItemsRule, /max-height:/);
 });
 
 test('auto saved sessions expose scheduled and on-exit filters', () => {
@@ -58,7 +110,7 @@ test('auto saved sessions expose scheduled and on-exit filters', () => {
 });
 
 test('auto save on exit toggle uses the same simple layout as the main auto save toggle', () => {
-  const markup = readExtensionFile('popup.html');
+  const markup = readExtensionFile('settings.html');
   const exitToggle = markup.match(
     /<div class="toggle-container">\s*<span data-translate="auto_save_on_exit_toggle_label">[\s\S]*?<input type="checkbox" id="autoSaveOnExitEnabled">[\s\S]*?<\/div>/
   )?.[0] || '';
@@ -69,8 +121,8 @@ test('auto save on exit toggle uses the same simple layout as the main auto save
 });
 
 test('settings footer separates extension links from secondary links without resource cards', () => {
-  const markup = readExtensionFile('popup.html');
-  const footer = markup.match(/<div class="footer-section">([\s\S]*?)<\/div>\s*<\/section>/)?.[1] || '';
+  const markup = readExtensionFile('settings.html');
+  const footer = markup.match(/<section id="resources" class="footer-section">([\s\S]*?)<\/section>/)?.[1] || '';
 
   assert.match(footer, /class="extension-primary-links"/);
   assert.match(footer, /class="footer-secondary-links"/);
@@ -96,6 +148,11 @@ test('every language translates the new settings group headings', () => {
   const translations = loadTranslations();
   const keys = [
     'appearance_title',
+    'popup_size_label',
+    'popup_size_small',
+    'popup_size_medium',
+    'popup_size_large',
+    'popup_size_huge',
     'backup_title',
     'backup_description',
     'resources_title',

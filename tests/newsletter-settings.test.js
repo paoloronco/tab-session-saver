@@ -46,7 +46,7 @@ function plain(value) {
 }
 
 test('newsletter settings expose email, subscribe, and status controls', () => {
-  const markup = readExtensionFile('popup.html');
+  const markup = readExtensionFile('settings.html');
   const manifest = JSON.parse(readExtensionFile('manifest.json'));
 
   assert.match(markup, /class="settings-group-card settings-newsletter"/);

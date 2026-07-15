@@ -11,6 +11,7 @@ The Worker:
 - stores and returns the latest full session snapshot;
 - enforces the current server-side Cloud Sync limits;
 - rate-limits accepted snapshot writes per account;
+- returns `Retry-After` on rate-limited writes;
 - returns structured quota errors to the extension.
 
 The Worker does not trust the extension for limit enforcement. The extension is open source and can be modified by users, so quotas must stay server-side.
