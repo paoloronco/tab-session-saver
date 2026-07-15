@@ -34,17 +34,23 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Verify release tag is new
+      - name: Check release tag
+        id: release_state
         shell: bash
         env:
           TAG: ${{ steps.version.outputs.tag }}
         run: |
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            echo "::error::Tag $TAG already exists. Bump Chrome-extension/manifest.json before pushing a release."
-            exit 1
+            EXISTING_SHA="$(git rev-list -n 1 "$TAG")"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "existing_sha=$EXISTING_SHA" >> "$GITHUB_OUTPUT"
+            echo "::notice::Tag $TAG already exists at $EXISTING_SHA; skipping release creation."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Package Chrome extension
+        if: steps.release_state.outputs.exists != 'true'
         shell: bash
         run: |
           mkdir -p dist
@@ -53,6 +59,7 @@ jobs:
           unzip -l dist/tab-session-saver-chrome-extension.zip | grep -q "manifest.json"
 
       - name: Create GitHub release
+        if: steps.release_state.outputs.exists != 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}

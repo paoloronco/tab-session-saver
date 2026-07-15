@@ -31,6 +31,9 @@ test('release workflow tags the manifest version and uploads the extension zip',
   assert.match(workflow, /contents:\s*write/);
   assert.match(workflow, /require\('\.\/Chrome-extension\/manifest\.json'\)\.version/);
   assert.match(workflow, /tag=v\$VERSION/);
+  assert.match(workflow, /id:\s*release_state/);
+  assert.match(workflow, /exists=true/);
+  assert.match(workflow, /skipping release creation/);
   assert.match(workflow, /tab-session-saver-chrome-extension\.zip/);
   assert.match(workflow, /gh release create "\$TAG"/);
 });
