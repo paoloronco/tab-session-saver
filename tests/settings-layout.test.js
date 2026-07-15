@@ -75,13 +75,17 @@ test('settings footer separates extension links from secondary links without res
   assert.doesNotMatch(footer, /<br\s*\/?\s*>/i);
   assert.match(footer, /chromewebstore\.google\.com/);
   assert.match(footer, /github\.com\/paoloronco\/tab-session-saver/);
-  assert.match(footer, /paoloronco\.it/);
-  assert.match(footer, /sites\.google\.com\/view\/pp-tabssessionsaver/);
+  assert.match(footer, /tabsessionsaver\.paoloronco\.it\//);
+  assert.match(footer, /tabsessionsaver\.paoloronco\.it\/legal/);
+  assert.match(footer, /tabsessionsaver\.paoloronco\.it\/privacy/);
+  assert.match(footer, /tabsessionsaver\.paoloronco\.it\/terms/);
+  assert.match(footer, /tabsessionsaver\.paoloronco\.it\/oauth-disclosure/);
+  assert.match(footer, /tabsessionsaver\.paoloronco\.it\/data-deletion/);
   assert.match(footer, /class="footer-version-line"/);
   assert.match(footer, /class="footer-copyright-line"/);
   assert.ok(
     footer.indexOf('class="footer-version-line"') < footer.indexOf('class="footer-secondary-links"'),
-    'expected paoloronco.it and Privacy Policy links to appear below the version line'
+    'expected website and legal links to appear below the version line'
   );
 });
 
