@@ -121,9 +121,9 @@ function renderMarkdown(markdown) {
 function docFromLocation() {
   const path = window.location.pathname.replace(/\/$/, "");
   const hash = window.location.hash.replace("#", "");
-  if (path === "/terms" || hash === "terms") return "terms";
-  if (path === "/oauth-disclosure" || hash === "oauth") return "oauth";
-  if (path === "/data-deletion" || hash === "deletion") return "deletion";
+  if (path === "/terms" || path === "/terms.html" || hash === "terms") return "terms";
+  if (path === "/oauth-disclosure" || path === "/oauth-disclosure.html" || hash === "oauth") return "oauth";
+  if (path === "/data-deletion" || path === "/data-deletion.html" || hash === "deletion") return "deletion";
   return "privacy";
 }
 
