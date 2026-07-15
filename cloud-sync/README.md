@@ -12,6 +12,8 @@ This is the current pre-production backend:
 - real Cloudflare D1 storage;
 - full-snapshot sync;
 - server-side usage limit enforcement;
+- conservative automatic push from the extension after local changes;
+- server-side write rate limiting for snapshot updates;
 - last-write-wins conflict behavior across devices.
 
 ## Current Usage Limits
@@ -22,9 +24,12 @@ The Worker enforces these limits per Google account:
 max cloud sessions: 10
 max URLs across the cloud snapshot: 300
 max serialized snapshot size: 512 KB
+minimum time between accepted cloud snapshot writes: 120 seconds
 ```
 
 These limits are enforced by the Worker, not by the extension UI. This means they still apply if someone modifies the open-source extension or calls the API directly.
+
+The extension schedules automatic pushes after local session changes with a conservative delay of about 10 minutes. Manual Push is skipped when there are no pending local changes and is also rate-limited client-side before reaching the Worker.
 
 ## Structure
 
@@ -77,7 +82,7 @@ For the current Cloud Sync model:
 3. Cloudflare D1 must have the schema from `cloudflare-d1/schema.sql`.
 4. The Worker code in `cloudflare-worker/src/index.js` must be deployed.
 
-No extra Google configuration, account tokens, or visible user endpoints are required.
+No extra Google configuration, account tokens, visible user endpoints, or D1 migration are required for automatic push rate limiting.
 
 ## Dashboard Deploy Path
 

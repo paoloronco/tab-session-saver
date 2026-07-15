@@ -29,7 +29,7 @@
     "applicationCategory": "BrowserApplication",
     "applicationSubCategory": "Productivity",
     "operatingSystem": "Chrome",
-    "softwareVersion": "7.15.2",
+    "softwareVersion": "7.15.3",
     "isAccessibleForFree": true,
     "author": { "@type": "Person", "name": "Paolo Ronco", "email": "info@paoloronco.it" },
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -142,12 +142,12 @@
         <article class="workflow-card">
           <span>3</span>
           <h3>Sync optionally</h3>
-          <p>Cloud Sync uses Google Sign-In and the Tabs Session Saver Cloudflare backend. It is useful for multi-device sync, but it is not required.</p>
+          <p>Cloud Sync uses Google Sign-In and the Tabs Session Saver Cloudflare backend. Local changes are pushed automatically after a conservative delay.</p>
         </article>
       </div>
       <div class="limit-note">
         <strong>Current Cloud Sync limits:</strong>
-        up to 10 synced sessions, 300 total URLs, and a 512 KB cloud snapshot. Local storage and JSON backups are separate from these cloud limits.
+        up to 10 synced sessions, 300 total URLs, and a 512 KB cloud snapshot. Automatic pushes wait about 10 minutes after changes, and manual Push is rate-limited.
       </div>
     </section>
 

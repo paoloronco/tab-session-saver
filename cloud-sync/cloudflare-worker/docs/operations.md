@@ -102,3 +102,17 @@ Fix:
 
 - delete or reduce saved sessions locally, then push again;
 - increase `PLAN_LIMITS.free` in [../src/index.js](../src/index.js) if the current limits should change for everyone.
+
+### rate_limited
+
+The signed-in account pushed a snapshot too soon after the previous accepted write.
+
+Current write limit:
+
+- minimum `120` seconds between accepted snapshot writes per account.
+
+Fix:
+
+- wait for the returned `retryAfterSeconds` value;
+- avoid repeatedly pressing Push in the extension;
+- deploy the latest extension code so local changes use the automatic 10-minute push cadence.

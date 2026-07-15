@@ -171,6 +171,18 @@ If the snapshot exceeds the current server-side Cloud Sync limits:
 }
 ```
 
+If the account pushes another snapshot too soon after the previous accepted write:
+
+```json
+{
+  "success": false,
+  "error": "Cloud Sync push rate limit exceeded.",
+  "code": "rate_limited",
+  "retryAfterSeconds": 87,
+  "minIntervalSeconds": 120
+}
+```
+
 ## Limits
 
 Current Cloud Sync limits:
@@ -178,10 +190,11 @@ Current Cloud Sync limits:
 - max sessions per cloud snapshot: `10`
 - max URLs across all saved sessions in the snapshot: `300`
 - max serialized snapshot size: `512 KB`
+- min interval between accepted snapshot writes per account: `120 seconds`
 
 Current hard safety limits:
 
 - max sessions per snapshot: `10000`
 - max serialized snapshot size: `4 MB`
 
-The Cloud Sync limits are enforced server-side. The hard safety limits are an additional protection against malformed or unexpectedly large payloads.
+The Cloud Sync limits are enforced server-side. The hard safety limits are an additional protection against malformed or unexpectedly large payloads. The write rate limit protects the backend from repeated manual Push clicks or modified open-source clients.

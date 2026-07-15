@@ -13,7 +13,8 @@ const AUTO_SAVE_RUN_ID_KEY = 'autoSaveRunId';
 const CLOUD_SYNC_SETTINGS_KEY = 'cloudSyncSettings';
 const CLOUD_SYNC_STATE_KEY = 'cloudSyncState';
 const CLOUD_SYNC_DEFAULT_API_BASE_URL = 'https://tabsessionsaver-cloudsync.paolo-ronco2000.workers.dev';
-const CLOUD_SYNC_PUSH_DEBOUNCE_MS = 1500;
+const CLOUD_SYNC_AUTO_PUSH_DELAY_MINUTES = 10;
+const CLOUD_SYNC_MANUAL_PUSH_MIN_INTERVAL_MS = 2 * 60 * 1000;
 const CLOUD_SYNC_MAX_SESSIONS = 10000;
 const CLOUD_SYNC_MAX_PAYLOAD_BYTES = 4 * 1024 * 1024;
 const AUTO_SAVE_MIN_INTERVAL_MINUTES = 10;
@@ -178,7 +179,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           break;
         }
         case 'cloud_sync_push': {
-          const result = await runCloudSyncPush({ force: true });
+          const result = await runCloudSyncPush({ force: true, manual: true });
           sendResponse(result);
           break;
         }
@@ -561,10 +562,11 @@ function scheduleCloudSyncPush() {
     runCloudSyncPush().catch((error) => {
       console.warn('[background] cloud sync push failed:', error);
     });
-  }, CLOUD_SYNC_PUSH_DEBOUNCE_MS);
+  }, CLOUD_SYNC_AUTO_PUSH_DELAY_MINUTES * 60 * 1000);
+  cloudSyncPushTimer?.unref?.();
 
   if (chrome.alarms?.create) {
-    chrome.alarms.create(CLOUD_SYNC_ALARM_NAME, { delayInMinutes: 1 }).catch?.(() => {});
+    chrome.alarms.create(CLOUD_SYNC_ALARM_NAME, { delayInMinutes: CLOUD_SYNC_AUTO_PUSH_DELAY_MINUTES }).catch?.(() => {});
   }
 }
 
@@ -596,8 +598,26 @@ async function runCloudSyncPush(options = {}) {
   if (!hasCloudSyncCredentials(settings)) {
     return { success: false, skipped: true, reason: 'not_configured', state };
   }
-  if (!options.force && !state.pending) {
+  if (!state.pending) {
     return { success: true, skipped: true, reason: 'no_pending_changes', state };
+  }
+
+  const now = Date.now();
+  const lastPushedTime = Date.parse(state.lastPushedAt || state.lastSyncedAt || '');
+  const manualPushIsTooSoon =
+    options.manual === true &&
+    Number.isFinite(lastPushedTime) &&
+    now - lastPushedTime < CLOUD_SYNC_MANUAL_PUSH_MIN_INTERVAL_MS;
+  if (manualPushIsTooSoon) {
+    const retryAfterSeconds = Math.ceil((CLOUD_SYNC_MANUAL_PUSH_MIN_INTERVAL_MS - (now - lastPushedTime)) / 1000);
+    return {
+      success: false,
+      skipped: true,
+      reason: 'rate_limited',
+      code: 'rate_limited',
+      retryAfterSeconds,
+      state
+    };
   }
 
   const sessions = await loadSessionsFromStorage();

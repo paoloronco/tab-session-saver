@@ -120,6 +120,7 @@ test('every language translates the new settings group headings', () => {
     'cloud_sync_title',
     'cloud_sync_description',
     'cloud_sync_limits_note',
+    'cloud_sync_auto_note',
     'cloud_sync_register_button',
     'cloud_sync_push_button',
     'cloud_sync_pull_button',
@@ -132,6 +133,8 @@ test('every language translates the new settings group headings', () => {
     'cloud_sync_disconnected',
     'cloud_sync_request_error',
     'cloud_sync_quota_exceeded',
+    'cloud_sync_rate_limited',
+    'cloud_sync_no_pending_changes',
     'cloud_sync_status_idle',
     'cloud_sync_status_pending',
     'cloud_sync_status_synced'

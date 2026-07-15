@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.15.2-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.15.3-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -50,7 +50,7 @@ Sessions are saved directly on your device using Chrome's built-in storage by de
 | Tab groups | Preserve Chrome tab group names, colors, and membership during save and restore. |
 | Backup | Export and import JSON backups for manual transfer or recovery. |
 | Appearance | Choose popup size, full-tab mode, dark mode, accent color, and UI language. |
-| Cloud Sync | Sign in with Google to push or pull saved sessions through the hosted sync backend. |
+| Cloud Sync | Sign in with Google to push or pull saved sessions through the hosted sync backend. Local changes are pushed automatically after a conservative delay. |
 | Newsletter | Subscribe from Settings to receive product updates. |
 | Browser support | Shows Chrome support status and warns when running on unsupported Chromium-derived browsers. |
 
@@ -71,6 +71,8 @@ Current hosted Cloud Sync limits:
 | Synced URLs | 300 total URLs across synced sessions |
 | Snapshot size | 512 KB |
 | Conflict handling | Latest update wins |
+| Automatic push cadence | Local changes are pushed after about 10 minutes |
+| Manual Push throttle | Push is skipped when there are no pending changes and rate-limited when repeated too quickly |
 
 These limits apply only to Cloud Sync. Local sessions and JSON backups are separate.
 
@@ -144,6 +146,13 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 7.15.3
+- added conservative automatic Cloud Sync push after local session changes
+- added client-side manual Push throttling so repeated clicks do not create unnecessary sync writes
+- added server-side Cloud Sync snapshot write rate limiting in the Cloudflare Worker
+- documented automatic sync cadence and push rate limits
+- updated extension version to `7.15.3`
 
 ### 7.15.2
 - clarified the public website with a local-first workflow section and visible Cloud Sync limits

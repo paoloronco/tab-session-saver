@@ -3,6 +3,7 @@ const GOOGLE_USERINFO_ENDPOINT = 'https://openidconnect.googleapis.com/v1/userin
 const DEFAULT_PLAN = 'free';
 const HARD_MAX_SNAPSHOT_BYTES = 4 * 1024 * 1024;
 const HARD_MAX_SESSIONS_PER_SNAPSHOT = 10000;
+const SNAPSHOT_WRITE_MIN_INTERVAL_SECONDS = 120;
 const PLAN_LIMITS = {
   free: {
     maxSessions: 10,
@@ -102,6 +103,26 @@ function enforcePlanLimits(plan, sessions, snapshotBytes) {
   }
 
   return null;
+}
+
+function getWriteRateLimitError(currentSnapshot, now) {
+  const revision = Number(currentSnapshot?.revision || 0);
+  if (revision <= 0 || !currentSnapshot?.updated_at) return null;
+
+  const lastWriteMs = Date.parse(currentSnapshot.updated_at);
+  const nowMs = Date.parse(now);
+  if (!Number.isFinite(lastWriteMs) || !Number.isFinite(nowMs)) return null;
+
+  const elapsedSeconds = Math.floor((nowMs - lastWriteMs) / 1000);
+  if (elapsedSeconds >= SNAPSHOT_WRITE_MIN_INTERVAL_SECONDS) return null;
+
+  return {
+    error: 'Cloud Sync push rate limit exceeded.',
+    status: 429,
+    code: 'rate_limited',
+    retryAfterSeconds: SNAPSHOT_WRITE_MIN_INTERVAL_SECONDS - Math.max(0, elapsedSeconds),
+    minIntervalSeconds: SNAPSHOT_WRITE_MIN_INTERVAL_SECONDS
+  };
 }
 
 function publicProfile(profile) {
@@ -258,11 +279,14 @@ async function saveSnapshot(env, account, payload) {
   if (quotaError) return quotaError;
 
   const current = await env.DB.prepare(
-    'SELECT revision FROM sync_snapshots WHERE user_id = ?'
+    'SELECT revision, updated_at FROM sync_snapshots WHERE user_id = ?'
   ).bind(profile.userId).first();
 
-  const revision = (current?.revision || 0) + 1;
   const now = new Date().toISOString();
+  const rateLimitError = getWriteRateLimitError(current, now);
+  if (rateLimitError) return rateLimitError;
+
+  const revision = (current?.revision || 0) + 1;
   const deviceId = typeof payload?.deviceId === 'string'
     ? payload.deviceId.slice(0, 128)
     : '';
@@ -340,6 +364,8 @@ async function handlePutSnapshot(request, env, origin) {
   if (result.error) {
     return errorResponse(result.error, result.status, origin, {
       ...(result.code ? { code: result.code } : {}),
+      ...(result.retryAfterSeconds ? { retryAfterSeconds: result.retryAfterSeconds } : {}),
+      ...(result.minIntervalSeconds ? { minIntervalSeconds: result.minIntervalSeconds } : {}),
       ...(result.plan ? { plan: result.plan } : {}),
       ...(result.limits ? { limits: result.limits } : {}),
       ...(result.usage ? { usage: result.usage } : {})

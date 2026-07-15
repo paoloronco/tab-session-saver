@@ -45,6 +45,7 @@ const translations = {
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Optional multi-device sync. Core sessions still work locally without an account.",
     cloud_sync_limits_note: "Current cloud storage limit: up to 10 synced sessions, 300 total URLs, and a 512 KB snapshot.",
+    cloud_sync_auto_note: "After local changes, Cloud Sync pushes automatically after about 10 minutes. Manual Push is rate-limited.",
     cloud_sync_register_button: "Create sync account / Login",
     cloud_sync_push_button: "Push",
     cloud_sync_pull_button: "Pull",
@@ -57,6 +58,8 @@ const translations = {
     cloud_sync_disconnected: "Cloud Sync disabled on this device.",
     cloud_sync_request_error: "Cloud Sync request failed. Sign in again and retry.",
     cloud_sync_quota_exceeded: "Cloud Sync limit reached. Keep up to {sessions} synced sessions and {urls} total URLs in cloud.",
+    cloud_sync_rate_limited: "Push is temporarily limited. Try again in about {minutes} min.",
+    cloud_sync_no_pending_changes: "No local changes to push.",
     cloud_sync_status_idle: "Not connected.",
     cloud_sync_status_pending: "Pending upload.",
     cloud_sync_status_synced: "Last synced {time}.",
@@ -171,6 +174,7 @@ const translations = {
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Sincronizaci\u00F3n opcional entre dispositivos. Las sesiones locales funcionan sin cuenta.",
     cloud_sync_limits_note: "L\u00EDmite actual en la nube: hasta 10 sesiones sincronizadas, 300 URL en total y una captura de 512 KB.",
+    cloud_sync_auto_note: "Tras cambios locales, Cloud Sync sube los datos autom\u00E1ticamente en unos 10 minutos. La subida manual tiene l\u00EDmite.",
     cloud_sync_register_button: "Crear cuenta sync / Iniciar sesi\u00F3n",
     cloud_sync_push_button: "Subir",
     cloud_sync_pull_button: "Descargar",
@@ -183,6 +187,8 @@ const translations = {
     cloud_sync_disconnected: "Cloud Sync desactivado en este dispositivo.",
     cloud_sync_request_error: "La solicitud de Cloud Sync fall\u00F3. Inicia sesi\u00F3n de nuevo e int\u00E9ntalo otra vez.",
     cloud_sync_quota_exceeded: "L\u00EDmite de Cloud Sync alcanzado. Mant\u00E9n hasta {sessions} sesiones sincronizadas y {urls} URL en total.",
+    cloud_sync_rate_limited: "La subida est\u00E1 limitada temporalmente. Int\u00E9ntalo de nuevo en unos {minutes} min.",
+    cloud_sync_no_pending_changes: "No hay cambios locales que subir.",
     cloud_sync_status_idle: "No conectado.",
     cloud_sync_status_pending: "Subida pendiente.",
     cloud_sync_status_synced: "\u00DAltima sincronizaci\u00F3n {time}.",
@@ -297,6 +303,7 @@ const translations = {
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Sync opzionale tra dispositivi. Le sessioni locali funzionano anche senza account.",
     cloud_sync_limits_note: "Limite cloud attuale: fino a 10 sessioni sincronizzate, 300 URL totali e snapshot da 512 KB.",
+    cloud_sync_auto_note: "Dopo modifiche locali, Cloud Sync invia automaticamente dopo circa 10 minuti. Il Push manuale ha un limite.",
     cloud_sync_register_button: "Crea account sync / Login",
     cloud_sync_push_button: "Invia",
     cloud_sync_pull_button: "Scarica",
@@ -309,6 +316,8 @@ const translations = {
     cloud_sync_disconnected: "Cloud Sync disabilitato su questo dispositivo.",
     cloud_sync_request_error: "Richiesta Cloud Sync non riuscita. Accedi di nuovo e riprova.",
     cloud_sync_quota_exceeded: "Limite Cloud Sync raggiunto. Mantieni fino a {sessions} sessioni sincronizzate e {urls} URL totali nel cloud.",
+    cloud_sync_rate_limited: "Push temporaneamente limitato. Riprova tra circa {minutes} min.",
+    cloud_sync_no_pending_changes: "Nessuna modifica locale da inviare.",
     cloud_sync_status_idle: "Non connesso.",
     cloud_sync_status_pending: "Upload in attesa.",
     cloud_sync_status_synced: "Ultimo sync {time}.",
@@ -423,6 +432,7 @@ const translations = {
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Synchronisation optionnelle entre appareils. Les sessions locales fonctionnent sans compte.",
     cloud_sync_limits_note: "Limite cloud actuelle : jusqu'\u00E0 10 sessions synchronis\u00E9es, 300 URL au total et un instantan\u00E9 de 512 Ko.",
+    cloud_sync_auto_note: "Apr\u00E8s des changements locaux, Cloud Sync envoie automatiquement dans environ 10 minutes. L'envoi manuel est limit\u00E9.",
     cloud_sync_register_button: "Cr\u00E9er un compte sync / Connexion",
     cloud_sync_push_button: "Envoyer",
     cloud_sync_pull_button: "R\u00E9cup\u00E9rer",
@@ -435,6 +445,8 @@ const translations = {
     cloud_sync_disconnected: "Cloud Sync d\u00E9sactiv\u00E9 sur cet appareil.",
     cloud_sync_request_error: "La requ\u00EAte Cloud Sync a \u00E9chou\u00E9. Reconnectez-vous puis r\u00E9essayez.",
     cloud_sync_quota_exceeded: "Limite Cloud Sync atteinte. Gardez jusqu'\u00E0 {sessions} sessions synchronis\u00E9es et {urls} URL au total.",
+    cloud_sync_rate_limited: "L'envoi est temporairement limit\u00E9. R\u00E9essayez dans environ {minutes} min.",
+    cloud_sync_no_pending_changes: "Aucun changement local \u00E0 envoyer.",
     cloud_sync_status_idle: "Non connect\u00E9.",
     cloud_sync_status_pending: "Envoi en attente.",
     cloud_sync_status_synced: "Derni\u00E8re synchronisation {time}.",
@@ -549,6 +561,7 @@ const translations = {
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Optionale Synchronisierung zwischen Ger\u00E4ten. Lokale Sitzungen funktionieren ohne Konto.",
     cloud_sync_limits_note: "Aktuelles Cloud-Limit: bis zu 10 synchronisierte Sitzungen, 300 URLs insgesamt und ein 512-KB-Snapshot.",
+    cloud_sync_auto_note: "Nach lokalen \u00C4nderungen l\u00E4dt Cloud Sync nach etwa 10 Minuten automatisch hoch. Manuelles Pushen ist begrenzt.",
     cloud_sync_register_button: "Sync-Konto erstellen / Anmelden",
     cloud_sync_push_button: "Hochladen",
     cloud_sync_pull_button: "Herunterladen",
@@ -561,6 +574,8 @@ const translations = {
     cloud_sync_disconnected: "Cloud Sync auf diesem Ger\u00E4t deaktiviert.",
     cloud_sync_request_error: "Cloud-Sync-Anfrage fehlgeschlagen. Melde dich erneut an und versuche es noch einmal.",
     cloud_sync_quota_exceeded: "Cloud-Sync-Limit erreicht. Behalte bis zu {sessions} synchronisierte Sitzungen und {urls} URLs insgesamt.",
+    cloud_sync_rate_limited: "Push ist vor\u00FCbergehend begrenzt. Versuche es in etwa {minutes} Min. erneut.",
+    cloud_sync_no_pending_changes: "Keine lokalen \u00C4nderungen zum Hochladen.",
     cloud_sync_status_idle: "Nicht verbunden.",
     cloud_sync_status_pending: "Upload ausstehend.",
     cloud_sync_status_synced: "Zuletzt synchronisiert {time}.",
@@ -1896,6 +1911,21 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     }
 
+    if (response?.code === 'rate_limited') {
+      const retryAfterSeconds =
+        Number.isInteger(response.retryAfterSeconds)
+          ? response.retryAfterSeconds
+          : Number.isInteger(response.details?.retryAfterSeconds)
+          ? response.details.retryAfterSeconds
+          : 120;
+      return {
+        key: 'cloud_sync_rate_limited',
+        replacements: {
+          minutes: Math.max(1, Math.ceil(retryAfterSeconds / 60))
+        }
+      };
+    }
+
     return { key: 'cloud_sync_request_error', replacements: {} };
   }
 
@@ -1989,6 +2019,10 @@ document.addEventListener('DOMContentLoaded', () => {
       setCloudSyncBusy(false);
       if (chrome.runtime.lastError || !response?.success) {
         setCloudSyncErrorStatus(response);
+        return;
+      }
+      if (response.skipped && response.reason === 'no_pending_changes') {
+        renderCloudSyncState({ success: true, settings: cloudSyncSettingsState, state: response.state }, 'cloud_sync_no_pending_changes');
         return;
       }
       renderCloudSyncState({ success: true, settings: cloudSyncSettingsState, state: response.state }, 'cloud_sync_pushed');
