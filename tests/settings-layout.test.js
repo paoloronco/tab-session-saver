@@ -33,16 +33,19 @@ function loadTranslations() {
   return context.__settingsTest.translations;
 }
 
-test('settings controls are grouped by language, appearance, backup, and browser support', () => {
+test('settings controls are grouped in a clear feature order', () => {
   const markup = readExtensionFile('popup.html');
 
   assert.match(markup, /class="settings-group-card settings-language"[\s\S]*?id="language"[\s\S]*?<\/div>/);
   assert.match(markup, /class="settings-group-card settings-appearance"[\s\S]*?id="darkMode"[\s\S]*?id="accentColor"[\s\S]*?<\/section>/);
   assert.match(markup, /class="settings-group-card settings-autosave"[\s\S]*?id="autoSaveEnabled"[\s\S]*?id="autoSaveOnExitEnabled"[\s\S]*?id="autoSaveInterval"[\s\S]*?<\/section>/);
+  assert.match(markup, /class="settings-group-card settings-backup"[\s\S]*?id="exportSessions"[\s\S]*?id="importSessions"[\s\S]*?<\/section>/);
+  assert.match(markup, /class="settings-group-card settings-cloud-sync"[\s\S]*?data-translate="cloud_sync_limits_note"[\s\S]*?id="cloudSyncLogin"[\s\S]*?id="cloudSyncPush"[\s\S]*?id="cloudSyncPull"[\s\S]*?id="cloudSyncDisconnect"[\s\S]*?<\/section>/);
   assert.match(markup, /class="settings-group-card settings-newsletter"[\s\S]*?id="newsletterEmail"[\s\S]*?id="newsletterSubmit"[\s\S]*?<\/section>/);
   assert.doesNotMatch(markup, /id="newsletterUnsubscribe"/);
-  assert.match(markup, /class="settings-group-card settings-backup"[\s\S]*?id="exportSessions"[\s\S]*?id="importSessions"[\s\S]*?<\/section>/);
   assert.match(markup, /id="browser-support-group" class="settings-group-card settings-browser-support"/);
+  assert.ok(markup.indexOf('settings-backup') < markup.indexOf('settings-cloud-sync'));
+  assert.ok(markup.indexOf('settings-cloud-sync') < markup.indexOf('settings-newsletter'));
 });
 
 test('auto saved sessions expose scheduled and on-exit filters', () => {
@@ -113,7 +116,25 @@ test('every language translates the new settings group headings', () => {
     'newsletter_invalid_email',
     'newsletter_subscribe_loading',
     'newsletter_configuration_error',
-    'newsletter_request_error'
+    'newsletter_request_error',
+    'cloud_sync_title',
+    'cloud_sync_description',
+    'cloud_sync_limits_note',
+    'cloud_sync_register_button',
+    'cloud_sync_push_button',
+    'cloud_sync_pull_button',
+    'cloud_sync_disconnect_button',
+    'cloud_sync_not_configured',
+    'cloud_sync_registered',
+    'cloud_sync_account_label',
+    'cloud_sync_pushed',
+    'cloud_sync_pulled',
+    'cloud_sync_disconnected',
+    'cloud_sync_request_error',
+    'cloud_sync_quota_exceeded',
+    'cloud_sync_status_idle',
+    'cloud_sync_status_pending',
+    'cloud_sync_status_synced'
   ];
 
   for (const language of ['en', 'es', 'it', 'fr', 'de']) {

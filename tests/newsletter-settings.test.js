@@ -98,7 +98,7 @@ test('newsletter translations and state normalization are available for every la
 test('newsletter webhook secret is not committed to extension or proxy sources', () => {
   const background = readExtensionFile('background.js');
   const proxy = readProjectFile('newsletter-proxy', 'cloudflare-worker.js');
-  const docs = readProjectFile('docs', 'newsletter-proxy.md');
+  const docs = readProjectFile('newsletter-proxy', 'newsletter-proxy.md');
   const combinedSource = [background, proxy, docs].join('\n');
 
   assert.doesNotMatch(combinedSource, /Bearer\s+[A-Za-z0-9_-]{16,}/);

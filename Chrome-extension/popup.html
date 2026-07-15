@@ -1913,16 +1913,27 @@
         </div>
       </section>
 
+      <section class="settings-group-card settings-backup" aria-labelledby="backup-title">
+        <h3 id="backup-title" class="settings-group-title" data-translate="backup_title">Backup</h3>
+        <p class="settings-description" data-translate="backup_description">Export a backup or import saved sessions.</p>
+        <div class="settings-actions">
+          <button id="exportSessions" data-translate="export_button">Export saved sessions (JSON)</button>
+          <button id="importSessions" data-translate="import_button">Import sessions (JSON)</button>
+          <input type="file" id="importFileInput" accept="application/json" style="display: none;">
+        </div>
+      </section>
+
       <section class="settings-group-card settings-cloud-sync" aria-labelledby="cloud-sync-title">
         <h3 id="cloud-sync-title" class="settings-group-title" data-translate="cloud_sync_title">Cloud Sync</h3>
-        <p class="settings-description" data-translate="cloud_sync_description">Sync saved sessions through your Cloudflare backend.</p>
+        <p class="settings-description" data-translate="cloud_sync_description">Optional multi-device sync. Core sessions still work locally without an account.</p>
+        <p class="settings-description" data-translate="cloud_sync_limits_note">Current cloud storage limit: up to 10 synced sessions, 300 total URLs, and a 512 KB snapshot.</p>
         <form id="cloud-sync-form" class="cloud-sync-form" novalidate>
           <p id="cloudSyncAccount" class="cloud-sync-account"></p>
           <div class="cloud-sync-secondary-actions">
             <button id="cloudSyncLogin" type="button" data-translate="cloud_sync_register_button">Create sync account / Login</button>
-            <button id="cloudSyncPush" type="button" data-translate="cloud_sync_push_button">Push now</button>
-            <button id="cloudSyncPull" type="button" data-translate="cloud_sync_pull_button">Pull now</button>
-            <button id="cloudSyncDisconnect" type="button" data-translate="cloud_sync_disconnect_button">Disconnect</button>
+            <button id="cloudSyncPush" type="button" data-translate="cloud_sync_push_button">Push</button>
+            <button id="cloudSyncPull" type="button" data-translate="cloud_sync_pull_button">Pull</button>
+            <button id="cloudSyncDisconnect" type="button" data-translate="cloud_sync_disconnect_button">Disable</button>
           </div>
           <p id="cloudSyncStatus" class="cloud-sync-status" role="status" aria-live="polite"></p>
         </form>
@@ -1941,16 +1952,6 @@
           </div>
           <p id="newsletterStatus" class="newsletter-status" role="status" aria-live="polite"></p>
         </form>
-      </section>
-
-      <section class="settings-group-card settings-backup" aria-labelledby="backup-title">
-        <h3 id="backup-title" class="settings-group-title" data-translate="backup_title">Backup</h3>
-        <p class="settings-description" data-translate="backup_description">Export a backup or import saved sessions.</p>
-        <div class="settings-actions">
-          <button id="exportSessions" data-translate="export_button">Export saved sessions (JSON)</button>
-          <button id="importSessions" data-translate="import_button">Import sessions (JSON)</button>
-          <input type="file" id="importFileInput" accept="application/json" style="display: none;">
-        </div>
       </section>
 
       <div id="browser-support-group" class="settings-group-card settings-browser-support" style="display: none;">
@@ -1973,7 +1974,7 @@
           </div>
         </div>
         <div class="footer-info">
-          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.15.1</div>
+          <div class="footer-version-line"><span data-translate="version_label">Version:</span> 7.15.2</div>
           <div class="footer-secondary-links">
             <a class="footer-secondary-link" href="https://tabsessionsaver.paoloronco.it/" target="_blank" rel="noopener">Website</a>
             <a class="footer-secondary-link" href="https://tabsessionsaver.paoloronco.it/legal" target="_blank" rel="noopener">Legal</a>

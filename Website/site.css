@@ -334,6 +334,64 @@ button, summary { font: inherit; }
   color: var(--ink);
 }
 
+.workflow-section {
+  text-align: center;
+}
+
+.workflow-section h2 {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 36px;
+  text-align: left;
+}
+
+.workflow-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  padding: 24px;
+  box-shadow: 0 12px 26px rgba(20, 35, 68, 0.06);
+}
+
+.workflow-card span {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  border-radius: 999px;
+  background: var(--surface-blue);
+  color: var(--blue-dark);
+  font-weight: 850;
+}
+
+.workflow-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.limit-note {
+  max-width: 860px;
+  margin: 22px auto 0;
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  border-radius: 12px;
+  background: var(--surface-blue);
+  color: var(--ink-soft);
+  padding: 16px 18px;
+  text-align: left;
+}
+
+.limit-note strong {
+  color: var(--ink);
+}
+
 .features-band {
   background: #f1f4ff;
   border-block: 1px solid var(--line);
@@ -841,6 +899,7 @@ h3 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .screenshot-grid,
+  .workflow-grid,
   .feature-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -886,6 +945,7 @@ h3 {
   .quick-bar,
   .benefit-grid,
   .screenshot-grid,
+  .workflow-grid,
   .feature-card-grid,
   .tech-grid,
   .legal-tabs {

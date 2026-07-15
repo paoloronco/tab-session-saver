@@ -71,8 +71,24 @@
       </article>
       <article class="tech-card">
         <h2>Cloud Sync</h2>
-        <p>Optional Google Sign-In authenticates sync requests to the configured Cloudflare backend.</p>
+        <p>Optional Google Sign-In authenticates sync requests to the Tabs Session Saver Cloudflare backend.</p>
       </article>
+    </section>
+
+    <section class="section detail-section">
+      <div class="section-head tight">
+        <div>
+          <p class="kicker">Cloud Sync limits</p>
+          <h2>Small, predictable sync snapshots.</h2>
+        </div>
+        <p>These limits apply only to hosted Cloud Sync. Local sessions and JSON backups remain separate.</p>
+      </div>
+      <div class="permission-table" role="table" aria-label="Current Cloud Sync usage limits">
+        <div role="row"><strong role="cell">Sessions</strong><span role="cell">Up to 10 synced sessions in the cloud snapshot.</span></div>
+        <div role="row"><strong role="cell">URLs</strong><span role="cell">Up to 300 total URLs across the synced sessions.</span></div>
+        <div role="row"><strong role="cell">Snapshot size</strong><span role="cell">Up to 512 KB per cloud snapshot.</span></div>
+        <div role="row"><strong role="cell">Conflict model</strong><span role="cell">Latest update wins if multiple devices push changes close together.</span></div>
+      </div>
     </section>
 
     <section class="section detail-section">

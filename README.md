@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.15.1-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.15.2-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -37,19 +37,42 @@ Tabs Session Saver lets you snapshot your entire browsing state in one click and
 
 Sessions are saved directly on your device using Chrome's built-in storage by default. Optional Cloud Sync can be enabled through the included Cloudflare Worker and D1 backend.
 
-**Key features:**
+## Feature Overview
 
-- Save your current tabs as a named session from the popup
-- Restore sessions in new windows or merge them into your current window
-- Auto Save on a schedule or automatically when Chrome closes, with configurable grouping
-- Live search across session names, tab titles, URLs, and domains
-- Preview a session before restoring it, restore individual windows
-- Add custom URLs to saved sessions and remove single tabs from saved sessions
-- Rename, delete, and reorder sessions
-- Export and import sessions as JSON for backup or transfer
-- Preserves Chrome tab groups (colors and names) during save and restore
-- Optional Cloud Sync with Google sign-in and server-side usage limits
-- Multi-language UI: English, Italian, Spanish, French, German
+| Area | What users can do |
+| --- | --- |
+| Manual sessions | Save the current browser workspace as a named session. |
+| Restore | Reopen sessions in new windows or merge the last saved window into the current window. |
+| Preview | Inspect saved tabs before restoring, and restore individual windows from a session. |
+| Search | Filter saved sessions by session name, tab title, full URL, or domain. |
+| Auto Save | Capture sessions on a schedule or when Chrome closes, with grouping by smart topic, day, browser session, or no grouping. |
+| Session editing | Rename, delete, reorder, remove individual tabs, and add custom URLs to saved sessions. |
+| Tab groups | Preserve Chrome tab group names, colors, and membership during save and restore. |
+| Backup | Export and import JSON backups for manual transfer or recovery. |
+| Appearance | Choose popup size, full-tab mode, dark mode, accent color, and UI language. |
+| Cloud Sync | Sign in with Google to push or pull saved sessions through the hosted sync backend. |
+| Newsletter | Subscribe from Settings to receive product updates. |
+| Browser support | Shows Chrome support status and warns when running on unsupported Chromium-derived browsers. |
+
+## Local Storage, Backup, and Cloud Sync
+
+The core extension is local-first:
+
+- No account is needed to save, preview, search, restore, import, or export sessions.
+- Local sessions are stored in `chrome.storage.local`.
+- JSON export/import is the full manual backup path.
+- Cloud Sync is optional and must be enabled by the user with Google Sign-In.
+
+Current hosted Cloud Sync limits:
+
+| Limit | Current value |
+| --- | --- |
+| Synced sessions | 10 sessions |
+| Synced URLs | 300 total URLs across synced sessions |
+| Snapshot size | 512 KB |
+| Conflict handling | Latest update wins |
+
+These limits apply only to Cloud Sync. Local sessions and JSON backups are separate.
 
 ---
 
@@ -106,7 +129,7 @@ tabs-session-saver/
 │   ├── browser-support.js     # Browser detection utility (Chrome vs Chromium)
 │   └── img-*.png              # Extension icons (16, 32, 48, 128px)
 ├── tests/                     # Automated test suite
-├── docs/                      # Project documentation
+├── Website/                   # Static website and legal pages
 ├── cloud-sync/                # Optional Cloudflare Worker + D1 sync backend
 │   ├── cloudflare-worker/     # Worker API source and deploy config
 │   └── cloudflare-d1/         # D1 schema and database notes
@@ -121,6 +144,14 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 7.15.2
+- clarified the public website with a local-first workflow section and visible Cloud Sync limits
+- reorganized extension Settings so backup and sync controls are easier to understand
+- added Cloud Sync limit copy directly inside Settings
+- completed Cloud Sync translations for Spanish, French, and German
+- expanded README feature documentation so recent features are not only listed in the changelog
+- updated extension version to `7.15.2`
 
 ### 7.15.1
 - updated footer links to the official Tabs Session Saver website and legal pages

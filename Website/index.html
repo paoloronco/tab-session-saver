@@ -29,7 +29,7 @@
     "applicationCategory": "BrowserApplication",
     "applicationSubCategory": "Productivity",
     "operatingSystem": "Chrome",
-    "softwareVersion": "7.15.1",
+    "softwareVersion": "7.15.2",
     "isAccessibleForFree": true,
     "author": { "@type": "Person", "name": "Paolo Ronco", "email": "info@paoloronco.it" },
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -50,6 +50,7 @@
       </a>
       <div class="nav-links">
         <a href="#screenshots">Screenshots</a>
+        <a href="#how-it-works">How it works</a>
         <a href="#features">Features</a>
         <a href="/technical">Technical</a>
         <details class="nav-menu">
@@ -70,13 +71,13 @@
   <main id="main">
     <section class="hero-old">
       <div class="hero-old-inner">
-        <p class="hero-badge">Chrome extension - Free</p>
+        <p class="hero-badge">Chrome extension</p>
         <h1>Keep your workspaces ready, always.</h1>
-        <p class="hero-subtitle">Save all your Chrome tabs with one click. Restore the exact session whenever you need it.</p>
+        <p class="hero-subtitle">Save all your Chrome tabs with one click, keep them local by default, and restore the exact session whenever you need it.</p>
         <div class="hero-actions center-actions">
           <a class="btn btn-primary light-cta" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=en" target="_blank" rel="noopener noreferrer">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z" stroke="currentColor" stroke-width="2"/><path d="m8 12 2.4 2.4L16 8.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Add to Chrome - Free
+            Add to Chrome
           </a>
           <a class="btn btn-ghost-dark" href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener noreferrer">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 8.36 22.9c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.29-1.68-1.29-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.04 1.76 2.7 1.25 3.37.96.1-.75.4-1.25.73-1.54-2.55-.3-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.12-3.04 0 0 .96-.31 3.16 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.64 1.58.24 2.75.12 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.7 5.38-5.27 5.67.42.36.79 1.07.79 2.15v3c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
@@ -87,8 +88,8 @@
           <span>Local-first</span>
           <span>Open source</span>
           <span>5 languages</span>
-          <span>Dark mode</span>
           <span>Auto Save</span>
+          <span>Optional Cloud Sync</span>
         </div>
       </div>
     </section>
@@ -124,17 +125,46 @@
       </div>
     </section>
 
+    <section id="how-it-works" class="section workflow-section">
+      <p class="kicker">How it works</p>
+      <h2>Local first. Sync only when you choose it.</h2>
+      <div class="workflow-grid">
+        <article class="workflow-card">
+          <span>1</span>
+          <h3>Save locally</h3>
+          <p>Manual sessions, Auto Save sessions, tab groups, preview data, and settings are stored in Chrome extension storage on your device.</p>
+        </article>
+        <article class="workflow-card">
+          <span>2</span>
+          <h3>Back up anytime</h3>
+          <p>Export a JSON file for a full portable backup, or import a backup into another Chrome profile when you need to move data manually.</p>
+        </article>
+        <article class="workflow-card">
+          <span>3</span>
+          <h3>Sync optionally</h3>
+          <p>Cloud Sync uses Google Sign-In and the Tabs Session Saver Cloudflare backend. It is useful for multi-device sync, but it is not required.</p>
+        </article>
+      </div>
+      <div class="limit-note">
+        <strong>Current Cloud Sync limits:</strong>
+        up to 10 synced sessions, 300 total URLs, and a 512 KB cloud snapshot. Local storage and JSON backups are separate from these cloud limits.
+      </div>
+    </section>
+
     <section id="features" class="features-band">
       <div class="section">
         <p class="kicker">Features</p>
-        <h2>Everything you need</h2>
+        <h2>Everything in the extension</h2>
         <div class="feature-card-grid">
-          <article class="feature-card"><span>Save</span><h3>One-click sessions</h3><p>Capture tabs, windows, and groups.</p></article>
-          <article class="feature-card"><span>Restore</span><h3>Instant restore</h3><p>Reopen saved workspaces when needed.</p></article>
-          <article class="feature-card"><span>Preview</span><h3>Tab preview panel</h3><p>Check what is inside before restoring.</p></article>
+          <article class="feature-card"><span>Save</span><h3>One-click sessions</h3><p>Capture tabs, windows, pinned state, and groups.</p></article>
+          <article class="feature-card"><span>Restore</span><h3>Flexible restore</h3><p>Open sessions in new windows or merge the last saved window into the current one.</p></article>
+          <article class="feature-card"><span>Preview</span><h3>Preview before restore</h3><p>Inspect tabs and restore individual windows.</p></article>
           <article class="feature-card"><span>Search</span><h3>Live session search</h3><p>Find by title, URL, domain, or name.</p></article>
+          <article class="feature-card"><span>Auto</span><h3>Auto Save</h3><p>Save on a schedule or when Chrome closes, with grouping options.</p></article>
           <article class="feature-card"><span>Backup</span><h3>Export & import</h3><p>Keep portable JSON backups.</p></article>
-          <article class="feature-card"><span>Sync</span><h3>Optional Cloud Sync</h3><p>Enable it only if you want multi-device sync.</p></article>
+          <article class="feature-card"><span>Edit</span><h3>Manage sessions</h3><p>Rename, delete, reorder, remove tabs, and add custom URLs.</p></article>
+          <article class="feature-card"><span>Groups</span><h3>Tab group support</h3><p>Preserve Chrome tab group names, colors, and membership.</p></article>
+          <article class="feature-card"><span>Sync</span><h3>Optional Cloud Sync</h3><p>Sign in with Google when you want multi-device sync.</p></article>
         </div>
       </div>
     </section>
