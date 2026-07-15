@@ -11,11 +11,10 @@ This is the current pre-production backend:
 - real Google OAuth authentication;
 - real Cloudflare D1 storage;
 - full-snapshot sync;
-- server-side `free` plan quota enforcement;
-- last-write-wins conflict behavior across devices;
-- no Stripe or paid plan enforcement yet.
+- server-side usage limit enforcement;
+- last-write-wins conflict behavior across devices.
 
-## Free Plan
+## Current Usage Limits
 
 The Worker enforces these limits per Google account:
 
@@ -71,14 +70,14 @@ Database: tabsessionsaver-sync
 
 ## What You Need To Configure
 
-For the current free-only model:
+For the current Cloud Sync model:
 
 1. Google OAuth must have a Chrome Extension OAuth client for the production extension ID.
 2. Cloudflare Worker must have the `DB` D1 binding.
 3. Cloudflare D1 must have the schema from `cloudflare-d1/schema.sql`.
 4. The Worker code in `cloudflare-worker/src/index.js` must be deployed.
 
-No extra Google configuration, Stripe configuration, account tokens, or visible user endpoints are required.
+No extra Google configuration, account tokens, or visible user endpoints are required.
 
 ## Dashboard Deploy Path
 

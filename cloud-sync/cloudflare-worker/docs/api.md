@@ -150,12 +150,12 @@ Response:
 }
 ```
 
-If the snapshot exceeds the server-side free plan quota:
+If the snapshot exceeds the current server-side Cloud Sync limits:
 
 ```json
 {
   "success": false,
-  "error": "Free Cloud Sync limit exceeded.",
+  "error": "Cloud Sync limit exceeded.",
   "code": "quota_exceeded",
   "plan": "free",
   "limits": {
@@ -173,7 +173,7 @@ If the snapshot exceeds the server-side free plan quota:
 
 ## Limits
 
-Current free plan limits:
+Current Cloud Sync limits:
 
 - max sessions per cloud snapshot: `10`
 - max URLs across all saved sessions in the snapshot: `300`
@@ -184,4 +184,4 @@ Current hard safety limits:
 - max sessions per snapshot: `10000`
 - max serialized snapshot size: `4 MB`
 
-The free plan limits are enforced server-side. The hard safety limits are an additional protection against malformed or unexpectedly large payloads.
+The Cloud Sync limits are enforced server-side. The hard safety limits are an additional protection against malformed or unexpectedly large payloads.

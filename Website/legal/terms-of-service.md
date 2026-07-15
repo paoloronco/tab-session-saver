@@ -15,11 +15,11 @@ Tabs Session Saver helps users save, manage, restore, export, import, and option
 
 The Extension works locally by default. Optional Cloud Sync allows users to sign in with Google and synchronize saved sessions across devices through the Tabs Session Saver sync backend.
 
-## 3. Free Use
+## 3. Availability
 
-Tabs Session Saver and Cloud Sync are currently offered for free.
+Tabs Session Saver and Cloud Sync are currently available as part of the Extension.
 
-We may introduce paid plans, limits, or premium features in the future. If that happens, users will receive clear notice before any paid feature is required. Existing local functionality will not require payment unless explicitly stated in a future version and policy update.
+Cloud Sync may apply usage limits to protect service stability and keep storage predictable. Any material changes to availability, limits, or service terms will be reflected in the published policies.
 
 ## 4. User Responsibility
 

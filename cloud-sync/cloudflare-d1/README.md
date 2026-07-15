@@ -51,7 +51,7 @@ Important columns:
 | `email` | Google account email. |
 | `name` | Google display name. |
 | `picture` | Google profile picture URL. |
-| `plan` | Currently `free`; the Worker uses it to enforce server-side quota. Future Stripe integration can update this. |
+| `plan` | Internal account tier value. Currently `free`; the Worker uses it to enforce server-side limits. |
 | `revision_seed` | Latest known snapshot revision. |
 | `created_at` | Account creation timestamp. |
 | `updated_at` | Last account/profile update timestamp. |
@@ -88,7 +88,7 @@ FROM sync_snapshots
 ORDER BY updated_at DESC;
 ```
 
-Inspect approximate free-plan usage:
+Inspect approximate Cloud Sync usage:
 
 ```sql
 SELECT
@@ -109,12 +109,12 @@ DELETE FROM sync_snapshots WHERE user_id = 'google:USER_SUB';
 DELETE FROM sync_accounts WHERE user_id = 'google:USER_SUB';
 ```
 
-## Future Billing Fields
+## Future Account Fields
 
-The `plan` column is intentionally present now. A Stripe integration can later add:
+The `plan` column is intentionally present now so the backend can evolve without changing account identity. Future account management can add fields such as:
 
 - `stripe_customer_id`
 - `stripe_subscription_id`
 - `subscription_status`
 - `current_period_end`
-- per-plan cloud quota fields
+- custom cloud limit fields

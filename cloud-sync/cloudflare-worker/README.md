@@ -9,10 +9,10 @@ The Worker:
 - validates Google OAuth access tokens through Google UserInfo;
 - creates or refreshes a Cloud Sync account in D1;
 - stores and returns the latest full session snapshot;
-- enforces the server-side free plan limits;
+- enforces the current server-side Cloud Sync limits;
 - returns structured quota errors to the extension.
 
-The Worker does not trust the extension for plan enforcement. The extension is open source and can be modified by users, so quotas and future billing checks must stay server-side.
+The Worker does not trust the extension for limit enforcement. The extension is open source and can be modified by users, so quotas must stay server-side.
 
 ## Files
 

@@ -92,7 +92,7 @@ function enforcePlanLimits(plan, sessions, snapshotBytes) {
     usage.bytes > limits.maxSnapshotBytes
   ) {
     return {
-      error: 'Free Cloud Sync limit exceeded.',
+      error: 'Cloud Sync limit exceeded.',
       status: 403,
       code: 'quota_exceeded',
       plan,

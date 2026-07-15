@@ -90,9 +90,9 @@ Fix:
 
 ### quota_exceeded
 
-The signed-in account exceeded the server-side free plan.
+The signed-in account exceeded the current server-side Cloud Sync limits.
 
-Current free limits:
+Current Cloud Sync limits:
 
 - max `10` saved sessions in the cloud snapshot;
 - max `300` URLs across all saved sessions;
@@ -101,5 +101,4 @@ Current free limits:
 Fix:
 
 - delete or reduce saved sessions locally, then push again;
-- increase `PLAN_LIMITS.free` in [../src/index.js](../src/index.js) if the free quota should change for everyone;
-- later, add a paid plan by updating `sync_accounts.plan` and extending `PLAN_LIMITS`.
+- increase `PLAN_LIMITS.free` in [../src/index.js](../src/index.js) if the current limits should change for everyone.

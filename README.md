@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.15.0-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.15.1-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -48,7 +48,7 @@ Sessions are saved directly on your device using Chrome's built-in storage by de
 - Rename, delete, and reorder sessions
 - Export and import sessions as JSON for backup or transfer
 - Preserves Chrome tab groups (colors and names) during save and restore
-- Optional Cloud Sync with Google sign-in and a server-side free plan
+- Optional Cloud Sync with Google sign-in and server-side usage limits
 - Multi-language UI: English, Italian, Spanish, French, German
 
 ---
@@ -122,11 +122,17 @@ tabs-session-saver/
 <details>
 <summary>View full changelog</summary>
 
+### 7.15.1
+- updated footer links to the official Tabs Session Saver website and legal pages
+- replaced the promotional website mark with the real extension logo
+- clarified Cloud Sync documentation to describe current usage limits without introducing paid-plan language
+- updated extension version to `7.15.1`
+
 ### 7.15.0
 - added optional Cloud Sync client settings with Google sign-in
 - added the Cloudflare Worker and D1 backend for real cloud sync storage
 - reorganized the Cloud Sync backend into separate Cloudflare Worker and D1 folders
-- documented the server-side free Cloud Sync model and quota behavior
+- documented the current Cloud Sync usage limits and quota behavior
 - removed the direct newsletter provider host permission from the extension manifest
 - updated extension version to `7.15.0`
 
