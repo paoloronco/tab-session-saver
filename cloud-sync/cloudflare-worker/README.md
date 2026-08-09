@@ -8,7 +8,7 @@ The Worker:
 
 - validates Google OAuth access tokens through Google UserInfo;
 - creates or refreshes a Cloud Sync account in D1;
-- stores and returns the latest full session snapshot;
+- stores and returns only the 10 most recent manually saved sessions;
 - enforces the current server-side Cloud Sync limits;
 - rate-limits accepted snapshot writes per account;
 - returns `Retry-After` on rate-limited writes;

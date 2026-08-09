@@ -68,7 +68,7 @@ Important columns:
 | `revision` | Incremented on every successful push. |
 | `updated_at` | Last cloud snapshot update timestamp. |
 | `updated_by_device` | Extension-generated device ID that last pushed. |
-| `sessions_json` | Full JSON snapshot of saved sessions. |
+| `sessions_json` | JSON snapshot containing only the 10 most recent manually saved sessions. |
 
 ## Useful Queries
 

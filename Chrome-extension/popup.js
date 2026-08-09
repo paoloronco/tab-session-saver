@@ -59,7 +59,7 @@ const translations = {
     newsletter_request_error: "Unable to update newsletter subscription. Please try again.",
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Optional multi-device sync. Core sessions still work locally without an account.",
-    cloud_sync_limits_note: "Current cloud storage limit: up to 10 synced sessions, 300 total URLs, and a 512 KB snapshot.",
+    cloud_sync_limits_note: "Cloud Sync stores only your 10 most recent manually saved sessions. Auto Save and Save on Exit stay on this device (up to 300 URLs and 512 KB in cloud).",
     cloud_sync_auto_note: "After local changes, Cloud Sync pushes automatically after about 10 minutes and also tries to sync when the browser closes. Push writes are rate-limited by the cloud service.",
     cloud_sync_register_button: "Create sync account / Login",
     cloud_sync_push_button: "Push",
@@ -68,8 +68,8 @@ const translations = {
     cloud_sync_not_configured: "Sign in before using Cloud Sync.",
     cloud_sync_registered: "Cloud Sync is enabled.",
     cloud_sync_account_label: "Signed in as {email}.",
-    cloud_sync_pushed: "Local sessions pushed to cloud.",
-    cloud_sync_pulled: "Cloud sessions pulled.",
+    cloud_sync_pushed: "Latest manual sessions pushed to cloud.",
+    cloud_sync_pulled: "Manual cloud sessions merged locally.",
     cloud_sync_disconnected: "Cloud Sync disabled on this device.",
     cloud_sync_request_error: "Cloud Sync request failed. Sign in again and retry.",
     cloud_sync_quota_exceeded: "Cloud Sync limit reached. Keep up to {sessions} synced sessions and {urls} total URLs in cloud.",
@@ -208,7 +208,7 @@ const translations = {
     newsletter_request_error: "No se pudo actualizar la suscripci\u00F3n. Int\u00E9ntalo de nuevo.",
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Sincronizaci\u00F3n opcional entre dispositivos. Las sesiones locales funcionan sin cuenta.",
-    cloud_sync_limits_note: "L\u00EDmite actual en la nube: hasta 10 sesiones sincronizadas, 300 URL en total y una captura de 512 KB.",
+    cloud_sync_limits_note: "Cloud Sync guarda solo tus 10 sesiones manuales m\u00E1s recientes. Auto Save y Save on Exit permanecen en este dispositivo (hasta 300 URL y 512 KB en la nube).",
     cloud_sync_auto_note: "Tras cambios locales, Cloud Sync sube los datos autom\u00E1ticamente en unos 10 minutos y tambi\u00E9n intenta sincronizar al cerrar el navegador. Las escrituras Push est\u00E1n limitadas por el servicio cloud.",
     cloud_sync_register_button: "Crear cuenta sync / Iniciar sesi\u00F3n",
     cloud_sync_push_button: "Subir",
@@ -217,8 +217,8 @@ const translations = {
     cloud_sync_not_configured: "Inicia sesi\u00F3n antes de usar Cloud Sync.",
     cloud_sync_registered: "Cloud Sync est\u00E1 activado.",
     cloud_sync_account_label: "Sesi\u00F3n iniciada como {email}.",
-    cloud_sync_pushed: "Sesiones locales subidas a la nube.",
-    cloud_sync_pulled: "Sesiones de la nube descargadas.",
+    cloud_sync_pushed: "Sesiones manuales recientes subidas a la nube.",
+    cloud_sync_pulled: "Sesiones manuales de la nube combinadas localmente.",
     cloud_sync_disconnected: "Cloud Sync desactivado en este dispositivo.",
     cloud_sync_request_error: "La solicitud de Cloud Sync fall\u00F3. Inicia sesi\u00F3n de nuevo e int\u00E9ntalo otra vez.",
     cloud_sync_quota_exceeded: "L\u00EDmite de Cloud Sync alcanzado. Mant\u00E9n hasta {sessions} sesiones sincronizadas y {urls} URL en total.",
@@ -357,7 +357,7 @@ const translations = {
     newsletter_request_error: "Impossibile aggiornare l'iscrizione. Riprova.",
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Sync opzionale tra dispositivi. Le sessioni locali funzionano anche senza account.",
-    cloud_sync_limits_note: "Limite cloud attuale: fino a 10 sessioni sincronizzate, 300 URL totali e snapshot da 512 KB.",
+    cloud_sync_limits_note: "Cloud Sync salva solo le 10 sessioni manuali pi\u00F9 recenti. Auto Save e Save on Exit restano su questo dispositivo (fino a 300 URL e 512 KB nel cloud).",
     cloud_sync_auto_note: "Dopo modifiche locali, Cloud Sync invia automaticamente dopo circa 10 minuti e prova anche a sincronizzare alla chiusura del browser. Le scritture Push sono limitate dal servizio cloud.",
     cloud_sync_register_button: "Crea account sync / Login",
     cloud_sync_push_button: "Invia",
@@ -366,8 +366,8 @@ const translations = {
     cloud_sync_not_configured: "Accedi prima di usare Cloud Sync.",
     cloud_sync_registered: "Cloud Sync \u00E8 abilitato.",
     cloud_sync_account_label: "Accesso effettuato come {email}.",
-    cloud_sync_pushed: "Sessioni locali inviate al cloud.",
-    cloud_sync_pulled: "Sessioni cloud scaricate.",
+    cloud_sync_pushed: "Sessioni manuali recenti inviate al cloud.",
+    cloud_sync_pulled: "Sessioni manuali cloud unite a quelle locali.",
     cloud_sync_disconnected: "Cloud Sync disabilitato su questo dispositivo.",
     cloud_sync_request_error: "Richiesta Cloud Sync non riuscita. Accedi di nuovo e riprova.",
     cloud_sync_quota_exceeded: "Limite Cloud Sync raggiunto. Mantieni fino a {sessions} sessioni sincronizzate e {urls} URL totali nel cloud.",
@@ -506,7 +506,7 @@ const translations = {
     newsletter_request_error: "Impossible de mettre \u00E0 jour l'abonnement. R\u00E9essayez.",
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Synchronisation optionnelle entre appareils. Les sessions locales fonctionnent sans compte.",
-    cloud_sync_limits_note: "Limite cloud actuelle : jusqu'\u00E0 10 sessions synchronis\u00E9es, 300 URL au total et un instantan\u00E9 de 512 Ko.",
+    cloud_sync_limits_note: "Cloud Sync conserve uniquement vos 10 sessions manuelles les plus r\u00E9centes. Auto Save et Save on Exit restent sur cet appareil (jusqu'\u00E0 300 URL et 512 Ko dans le cloud).",
     cloud_sync_auto_note: "Apr\u00E8s des changements locaux, Cloud Sync envoie automatiquement dans environ 10 minutes et tente aussi une synchronisation \u00E0 la fermeture du navigateur. Les \u00E9critures Push sont limit\u00E9es par le service cloud.",
     cloud_sync_register_button: "Cr\u00E9er un compte sync / Connexion",
     cloud_sync_push_button: "Envoyer",
@@ -515,8 +515,8 @@ const translations = {
     cloud_sync_not_configured: "Connectez-vous avant d'utiliser Cloud Sync.",
     cloud_sync_registered: "Cloud Sync est activ\u00E9.",
     cloud_sync_account_label: "Connect\u00E9 avec {email}.",
-    cloud_sync_pushed: "Sessions locales envoy\u00E9es vers le cloud.",
-    cloud_sync_pulled: "Sessions cloud r\u00E9cup\u00E9r\u00E9es.",
+    cloud_sync_pushed: "Sessions manuelles r\u00E9centes envoy\u00E9es vers le cloud.",
+    cloud_sync_pulled: "Sessions manuelles du cloud fusionn\u00E9es localement.",
     cloud_sync_disconnected: "Cloud Sync d\u00E9sactiv\u00E9 sur cet appareil.",
     cloud_sync_request_error: "La requ\u00EAte Cloud Sync a \u00E9chou\u00E9. Reconnectez-vous puis r\u00E9essayez.",
     cloud_sync_quota_exceeded: "Limite Cloud Sync atteinte. Gardez jusqu'\u00E0 {sessions} sessions synchronis\u00E9es et {urls} URL au total.",
@@ -655,7 +655,7 @@ const translations = {
     newsletter_request_error: "Newsletter-Abonnement konnte nicht aktualisiert werden. Bitte versuche es erneut.",
     cloud_sync_title: "Cloud Sync",
     cloud_sync_description: "Optionale Synchronisierung zwischen Ger\u00E4ten. Lokale Sitzungen funktionieren ohne Konto.",
-    cloud_sync_limits_note: "Aktuelles Cloud-Limit: bis zu 10 synchronisierte Sitzungen, 300 URLs insgesamt und ein 512-KB-Snapshot.",
+    cloud_sync_limits_note: "Cloud Sync speichert nur die 10 neuesten manuell gespeicherten Sitzungen. Auto Save und Save on Exit bleiben auf diesem Ger\u00E4t (bis zu 300 URLs und 512 KB in der Cloud).",
     cloud_sync_auto_note: "Nach lokalen \u00C4nderungen l\u00E4dt Cloud Sync nach etwa 10 Minuten automatisch hoch und versucht auch beim Schlie\u00DFen des Browsers zu synchronisieren. Push-Schreibvorg\u00E4nge werden vom Cloud-Dienst begrenzt.",
     cloud_sync_register_button: "Sync-Konto erstellen / Anmelden",
     cloud_sync_push_button: "Hochladen",
@@ -664,8 +664,8 @@ const translations = {
     cloud_sync_not_configured: "Melde dich an, bevor du Cloud Sync verwendest.",
     cloud_sync_registered: "Cloud Sync ist aktiviert.",
     cloud_sync_account_label: "Angemeldet als {email}.",
-    cloud_sync_pushed: "Lokale Sitzungen in die Cloud hochgeladen.",
-    cloud_sync_pulled: "Cloud-Sitzungen heruntergeladen.",
+    cloud_sync_pushed: "Neueste manuelle Sitzungen in die Cloud hochgeladen.",
+    cloud_sync_pulled: "Manuelle Cloud-Sitzungen lokal zusammengef\u00FChrt.",
     cloud_sync_disconnected: "Cloud Sync auf diesem Ger\u00E4t deaktiviert.",
     cloud_sync_request_error: "Cloud-Sync-Anfrage fehlgeschlagen. Melde dich erneut an und versuche es noch einmal.",
     cloud_sync_quota_exceeded: "Cloud-Sync-Limit erreicht. Behalte bis zu {sessions} synchronisierte Sitzungen und {urls} URLs insgesamt.",
@@ -1010,7 +1010,11 @@ function normalizeNewsletterSubscription(rawState = {}) {
 function getSessionSaveType(session) {
   const metadataType = session?.metadata?.saveType;
   const topLevelType = session?.saveType;
-  return topLevelType === SAVE_TYPE_AUTO || metadataType === SAVE_TYPE_AUTO
+  const saveTrigger = session?.saveTrigger ?? session?.metadata?.saveTrigger;
+  return topLevelType === SAVE_TYPE_AUTO ||
+    metadataType === SAVE_TYPE_AUTO ||
+    saveTrigger === AUTO_SAVE_TRIGGER_SCHEDULED ||
+    saveTrigger === AUTO_SAVE_TRIGGER_EXIT
     ? SAVE_TYPE_AUTO
     : SAVE_TYPE_MANUAL;
 }

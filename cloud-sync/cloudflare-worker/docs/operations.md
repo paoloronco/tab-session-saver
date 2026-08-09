@@ -94,7 +94,7 @@ The signed-in account exceeded the current server-side Cloud Sync limits.
 
 Current Cloud Sync limits:
 
-- max `10` saved sessions in the cloud snapshot;
+- max `10` manually saved sessions in the cloud snapshot; Auto Save and Save on Exit remain local;
 - max `300` URLs across all saved sessions;
 - max `512 KB` serialized snapshot JSON.
 

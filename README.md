@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.15.4-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.15.5-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -50,7 +50,7 @@ Sessions are saved directly on your device using Chrome's built-in storage by de
 | Tab groups | Preserve Chrome tab group names, colors, and membership during save and restore. |
 | Backup | Export and import JSON backups for manual transfer or recovery. |
 | Appearance | Choose popup size, full-tab mode, dark mode, accent color, and UI language. |
-| Cloud Sync | Sign in with Google to push or pull saved sessions through the hosted sync backend. Local changes are pushed automatically after a conservative delay. |
+| Cloud Sync | Sign in with Google to sync only the 10 most recent manually saved sessions. Auto Save and Save on Exit remain local. |
 | Newsletter | Subscribe from Settings to receive product updates. |
 | Browser support | Shows Chrome support status and warns when running on unsupported Chromium-derived browsers. |
 
@@ -113,7 +113,7 @@ Tabs Session Saver requests only what it needs to function. Here's exactly what 
 | `alarms` | Schedule periodic Auto Save at the interval you configure |
 | `identity` | Let users sign in with Google for optional Cloud Sync |
 
-By default, session data stays in `chrome.storage.local` on your machine only. If Cloud Sync is enabled, saved sessions are sent to the configured sync endpoint.
+By default, session data stays in `chrome.storage.local` on your machine only. If Cloud Sync is enabled, only the 10 most recent manually saved sessions are sent to the configured sync endpoint; Auto Save and Save on Exit remain local.
 
 ---
 
@@ -146,6 +146,18 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 7.15.5
+- changed Save on Exit to retain one dated snapshot per browser run instead of overwriting the previous browser run
+- kept the active run snapshot rolling so tab and window changes do not create duplicates before the browser closes
+- used Chromium session storage to detect browser restarts even when the extension service worker is recreated
+- preserved session rename support for custom Save on Exit names
+- limited Cloud Sync to the 10 most recent manually saved sessions while keeping automatic and exit saves local
+- preserved local automatic and exit saves when pulling manual sessions from the cloud
+- made first sign-in pull and merge an existing cloud snapshot before any push, preventing an empty new device from overwriting cloud data
+- limited synced folder metadata to folders referenced by the selected manual sessions while preserving local-only folders on pull
+- clarified the Cloud Sync scope and limits in Settings in all supported languages
+- updated extension version to `7.15.5`
 
 ### 7.15.4
 - added saved session folders with drag-and-drop organization

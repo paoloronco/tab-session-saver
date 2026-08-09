@@ -18,6 +18,7 @@ const CLOUD_SYNC_DEFAULT_API_BASE_URL = 'https://tabsessionsaver-cloudsync.paolo
 const CLOUD_SYNC_AUTO_PUSH_DELAY_MINUTES = 10;
 const CLOUD_SYNC_MANUAL_PUSH_MIN_INTERVAL_MS = 2 * 60 * 1000;
 const CLOUD_SYNC_MAX_SESSIONS = 10000;
+const CLOUD_SYNC_MAX_MANUAL_SESSIONS = 10;
 const CLOUD_SYNC_MAX_PAYLOAD_BYTES = 4 * 1024 * 1024;
 const AUTO_SAVE_MIN_INTERVAL_MINUTES = 10;
 const SAVE_TYPE_AUTO = 'auto';
@@ -598,16 +599,46 @@ async function loginCloudSync() {
     apiBaseUrl: settings.apiBaseUrl,
     profile: payload.profile || {}
   });
+
+  // A newly connected device must reconcile the remote snapshot before it can
+  // push. Otherwise an empty local profile could overwrite an existing cloud
+  // snapshot shortly after login.
   await saveCloudSyncState({
-    revision: Number.isInteger(payload.revision) ? payload.revision : 0,
-    pending: true,
+    revision: 0,
+    pending: false,
     lastError: ''
   });
-  scheduleCloudSyncPush();
+
+  const remoteRevision = Number.isInteger(payload.revision) ? payload.revision : 0;
+  let syncedRevision = remoteRevision;
+  let remoteSessions = [];
+  if (remoteRevision > 0) {
+    const pullResult = await runCloudSyncPull({ applyRemote: true });
+    if (!pullResult.success) {
+      return {
+        ...pullResult,
+        settings: redactCloudSyncSettings(savedSettings)
+      };
+    }
+    remoteSessions = pullResult.sessions || [];
+    if (Number.isInteger(pullResult.state?.revision)) {
+      syncedRevision = pullResult.state.revision;
+    }
+  }
+
+  const localManualSessions = selectCloudSyncManualSessions(await loadSessionsFromStorage());
+  const pending = JSON.stringify(localManualSessions) !== JSON.stringify(remoteSessions);
+  const state = await saveCloudSyncState({
+    revision: syncedRevision,
+    pending,
+    lastError: ''
+  });
+  if (pending) scheduleCloudSyncPush();
+
   return {
     success: true,
     settings: redactCloudSyncSettings(savedSettings),
-    state: await loadCloudSyncState()
+    state
   };
 }
 
@@ -655,8 +686,15 @@ function estimateJsonBytes(value) {
 
 async function persistSessions(sessions, options = {}) {
   const { reason = 'sessions_changed', sync = true } = options;
+  const stored = sync
+    ? await chrome.storage.local.get({ sessions: [] })
+    : { sessions: [] };
+  const previousCloudSessions = sync
+    ? selectCloudSyncManualSessions(stored.sessions)
+    : [];
   await chrome.storage.local.set({ sessions });
-  if (sync) {
+  const nextCloudSessions = sync ? selectCloudSyncManualSessions(sessions) : [];
+  if (sync && JSON.stringify(previousCloudSessions) !== JSON.stringify(nextCloudSessions)) {
     await markCloudSyncPending(reason);
     scheduleCloudSyncPush();
   }
@@ -693,9 +731,17 @@ async function loadSessionFoldersFromStorage() {
 
 async function persistSessionFolders(folders, options = {}) {
   const { reason = 'session_folders_changed', sync = true } = options;
+  const previousFolders = sync ? await loadSessionFoldersFromStorage() : [];
+  const sessions = sync ? await loadSessionsFromStorage() : [];
+  const previousCloudFolders = sync
+    ? selectCloudSyncManualSessionFolders(previousFolders, sessions)
+    : [];
   const normalizedFolders = normalizeSessionFoldersForStorage(folders);
   await chrome.storage.local.set({ [SESSION_FOLDERS_KEY]: normalizedFolders });
-  if (sync) {
+  const nextCloudFolders = sync
+    ? selectCloudSyncManualSessionFolders(normalizedFolders, sessions)
+    : [];
+  if (sync && JSON.stringify(previousCloudFolders) !== JSON.stringify(nextCloudFolders)) {
     await markCloudSyncPending(reason);
     scheduleCloudSyncPush();
   }
@@ -708,6 +754,77 @@ function normalizeSessionCollectionForStorage(rawSessions) {
     .slice(0, CLOUD_SYNC_MAX_SESSIONS)
     .map((session, index) => normalizeSessionForStorage(session, `${DEFAULT_SESSION_NAME} ${index + 1}`))
     .filter((session) => Array.isArray(session.windows) && session.windows.length > 0);
+}
+
+function getCloudSyncSessionTimestamp(session) {
+  const parsed = Date.parse(typeof session?.timestamp === 'string' ? session.timestamp : '');
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function selectCloudSyncManualSessions(rawSessions) {
+  return normalizeSessionCollectionForStorage(rawSessions)
+    .map((session, index) => ({ session, index }))
+    .filter(({ session }) => getSessionSaveType(session) === SAVE_TYPE_MANUAL)
+    .sort((left, right) =>
+      getCloudSyncSessionTimestamp(right.session) - getCloudSyncSessionTimestamp(left.session) ||
+      right.index - left.index
+    )
+    .slice(0, CLOUD_SYNC_MAX_MANUAL_SESSIONS)
+    .map(({ session }) => session);
+}
+
+function getCloudSyncSessionFolderId(session) {
+  const folderId = session?.metadata?.folderId ?? session?.folderId;
+  return typeof folderId === 'string' ? folderId.trim() : '';
+}
+
+function selectCloudSyncManualSessionFolders(rawFolders, manualSessions) {
+  const referencedFolderIds = new Set(
+    selectCloudSyncManualSessions(manualSessions)
+      .map(getCloudSyncSessionFolderId)
+      .filter(Boolean)
+  );
+  return normalizeSessionFoldersForStorage(rawFolders)
+    .filter((folder) => referencedFolderIds.has(folder.id));
+}
+
+function mergeCloudSyncSessionFolders(localFolders, remoteFolders) {
+  const local = normalizeSessionFoldersForStorage(localFolders);
+  const remote = normalizeSessionFoldersForStorage(remoteFolders);
+  const remoteById = new Map(remote.map((folder) => [folder.id, folder]));
+  const merged = local.map((folder) => {
+    const remoteFolder = remoteById.get(folder.id);
+    if (!remoteFolder) return folder;
+    remoteById.delete(folder.id);
+    return remoteFolder;
+  });
+  merged.push(...remoteById.values());
+  return merged;
+}
+
+function getCloudSyncSessionMergeKey(session) {
+  const timestamp = typeof session?.timestamp === 'string' ? session.timestamp.trim() : '';
+  if (timestamp) return `timestamp:${timestamp}`;
+  return `legacy:${session?.name || ''}:${JSON.stringify(session?.windows || [])}`;
+}
+
+function mergeCloudSyncManualSessions(localSessions, remoteSessions) {
+  const local = normalizeSessionCollectionForStorage(localSessions);
+  const remoteManual = selectCloudSyncManualSessions(remoteSessions);
+  const remoteByKey = new Map(
+    remoteManual.map((session) => [getCloudSyncSessionMergeKey(session), session])
+  );
+  const merged = local.map((session) => {
+    if (getSessionSaveType(session) === SAVE_TYPE_AUTO) return session;
+    const key = getCloudSyncSessionMergeKey(session);
+    const remote = remoteByKey.get(key);
+    if (!remote) return session;
+    remoteByKey.delete(key);
+    return remote;
+  });
+
+  merged.push(...remoteByKey.values());
+  return merged;
 }
 
 async function runCloudSyncPush(options = {}) {
@@ -738,8 +855,11 @@ async function runCloudSyncPush(options = {}) {
     };
   }
 
-  const sessions = await loadSessionsFromStorage();
-  const folders = await loadSessionFoldersFromStorage();
+  const sessions = selectCloudSyncManualSessions(await loadSessionsFromStorage());
+  const folders = selectCloudSyncManualSessionFolders(
+    await loadSessionFoldersFromStorage(),
+    sessions
+  );
   const payload = {
     deviceId: await getCloudSyncDeviceId(),
     baseRevision: state.revision,
@@ -794,11 +914,18 @@ async function runCloudSyncPull(options = {}) {
 
   try {
     const remote = await requestCloudSync(settings, '/v1/sync/snapshot', { method: 'GET' });
-    const remoteSessions = normalizeSessionCollectionForStorage(remote.sessions || []);
-    const remoteFolders = normalizeSessionFoldersForStorage(remote.folders || []);
+    const remoteSessions = selectCloudSyncManualSessions(remote.sessions || []);
+    const remoteFolders = selectCloudSyncManualSessionFolders(
+      remote.folders || [],
+      remoteSessions
+    );
     if (options.applyRemote && Number.isInteger(remote.revision) && remote.revision > state.revision) {
-      await persistSessions(remoteSessions, { reason: 'cloud_pull', sync: false });
-      await persistSessionFolders(remoteFolders, { reason: 'cloud_pull_folders', sync: false });
+      const localSessions = await loadSessionsFromStorage();
+      const localFolders = await loadSessionFoldersFromStorage();
+      const mergedSessions = mergeCloudSyncManualSessions(localSessions, remoteSessions);
+      const mergedFolders = mergeCloudSyncSessionFolders(localFolders, remoteFolders);
+      await persistSessions(mergedSessions, { reason: 'cloud_pull', sync: false });
+      await persistSessionFolders(mergedFolders, { reason: 'cloud_pull_folders', sync: false });
     }
     const nextState = await saveCloudSyncState({
       revision: Number.isInteger(remote.revision) ? remote.revision : state.revision,
@@ -1269,7 +1396,11 @@ async function applyAutoSaveSchedule(rawSettings = {}) {
 function getSessionSaveType(session) {
   const metadataType = session?.metadata?.saveType;
   const topLevelType = session?.saveType;
-  return topLevelType === SAVE_TYPE_AUTO || metadataType === SAVE_TYPE_AUTO
+  const saveTrigger = session?.saveTrigger ?? session?.metadata?.saveTrigger;
+  return topLevelType === SAVE_TYPE_AUTO ||
+    metadataType === SAVE_TYPE_AUTO ||
+    saveTrigger === AUTO_SAVE_TRIGGER_SCHEDULED ||
+    saveTrigger === AUTO_SAVE_TRIGGER_EXIT
     ? SAVE_TYPE_AUTO
     : SAVE_TYPE_MANUAL;
 }
@@ -1282,11 +1413,26 @@ async function resetAutoSaveRunId() {
   if (!chrome.storage?.local) return null;
   const runId = createAutoSaveRunId();
   await chrome.storage.local.set({ [AUTO_SAVE_RUN_ID_KEY]: runId });
+  if (chrome.storage.session?.set) {
+    await chrome.storage.session.set({ [AUTO_SAVE_RUN_ID_KEY]: runId });
+  }
   return runId;
 }
 
 async function getCurrentAutoSaveRunId() {
   if (!chrome.storage?.local) return createAutoSaveRunId();
+
+  // storage.session survives MV3 service-worker restarts but is cleared when
+  // the browser exits, making it a reliable browser-run boundary on Chromium.
+  if (chrome.storage.session?.get) {
+    const sessionStored = await chrome.storage.session.get(AUTO_SAVE_RUN_ID_KEY);
+    const sessionRunId = sessionStored[AUTO_SAVE_RUN_ID_KEY];
+    if (typeof sessionRunId === 'string' && sessionRunId.trim()) {
+      return sessionRunId.trim();
+    }
+    return resetAutoSaveRunId();
+  }
+
   const stored = await chrome.storage.local.get(AUTO_SAVE_RUN_ID_KEY);
   const existing = stored[AUTO_SAVE_RUN_ID_KEY];
   if (typeof existing === 'string' && existing.trim()) {
@@ -1378,6 +1524,18 @@ async function hasRemainingNormalBrowserWindows() {
   );
 }
 
+function formatAutoSaveSessionDateTime(timestamp) {
+  const date = new Date(timestamp);
+  if (!Number.isFinite(date.getTime())) return '';
+
+  const pad = (value) => String(value).padStart(2, '0');
+  return [
+    date.getFullYear(),
+    pad(date.getMonth() + 1),
+    pad(date.getDate())
+  ].join('-') + ` ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
 async function handleWindowRemovedForBrowserClose() {
   if (await hasRemainingNormalBrowserWindows()) {
     scheduleAutoSaveExitSnapshotRefresh();
@@ -1448,10 +1606,14 @@ async function storeAutoSaveSessionFromSnapshot(snapshot, trigger, options = {})
   const autoSaveTopicSignature = getAutoSaveTopicSignature(snapshot);
   const existingExitIndex =
     upsertExitSnapshot && saveTrigger === AUTO_SAVE_TRIGGER_EXIT
-      ? findRollingExitSessionIndex(sessions)
+      ? findRollingExitSessionIndex(sessions, autoSaveRunId)
       : -1;
   const autoSaveCount = sessions.filter((session) => getSessionSaveType(session) === SAVE_TYPE_AUTO).length;
   const existingExitSession = existingExitIndex >= 0 ? sessions[existingExitIndex] : null;
+  const exitDateTime = formatAutoSaveSessionDateTime(timestamp);
+  const useGeneratedExitName =
+    saveTrigger === AUTO_SAVE_TRIGGER_EXIT &&
+    (!existingExitSession || existingExitSession?.metadata?.autoGeneratedName === true);
   const metadata = {
     desktopKey: snapshot.desktopKey ?? null,
     saveType: SAVE_TYPE_AUTO,
@@ -1459,13 +1621,17 @@ async function storeAutoSaveSessionFromSnapshot(snapshot, trigger, options = {})
     autoSaveRunId,
     ...(autoSaveTopicSignature ? { autoSaveTopicSignature } : {}),
     ...(upsertExitSnapshot && saveTrigger === AUTO_SAVE_TRIGGER_EXIT ? { snapshotRole: AUTO_SAVE_EXIT_SESSION_MARKER } : {}),
+    ...(saveTrigger === AUTO_SAVE_TRIGGER_EXIT ? { autoGeneratedName: useGeneratedExitName } : {}),
     ...(snapshot.desktopStrategy ? { desktopStrategy: snapshot.desktopStrategy } : {}),
     ...(snapshot.heuristics ? { heuristics: snapshot.heuristics } : {})
   };
   const autoSession = normalizeSessionForStorage({
     name:
-      existingExitSession?.name ||
-      `${saveTrigger === AUTO_SAVE_TRIGGER_EXIT ? 'Exit Save' : 'Auto Save'} ${autoSaveCount + 1}`,
+      (existingExitSession && !useGeneratedExitName
+        ? existingExitSession.name
+        : saveTrigger === AUTO_SAVE_TRIGGER_EXIT
+        ? `Exit Save ${exitDateTime}`
+        : `Auto Save ${autoSaveCount + 1}`),
     timestamp,
     windows: snapshot.windows,
     metadata,
@@ -1488,11 +1654,15 @@ async function storeAutoSaveSessionFromSnapshot(snapshot, trigger, options = {})
   return { success: true, session: autoSession };
 }
 
-function findRollingExitSessionIndex(sessions) {
+function findRollingExitSessionIndex(sessions, autoSaveRunId) {
+  const normalizedRunId = typeof autoSaveRunId === 'string' ? autoSaveRunId.trim() : '';
+  if (!normalizedRunId) return -1;
+
   return (Array.isArray(sessions) ? sessions : []).findIndex((session) =>
     getSessionSaveType(session) === SAVE_TYPE_AUTO &&
     session?.metadata?.saveTrigger === AUTO_SAVE_TRIGGER_EXIT &&
-    session?.metadata?.snapshotRole === AUTO_SAVE_EXIT_SESSION_MARKER
+    session?.metadata?.snapshotRole === AUTO_SAVE_EXIT_SESSION_MARKER &&
+    session?.metadata?.autoSaveRunId === normalizedRunId
   );
 }
 
@@ -1531,6 +1701,15 @@ async function renameSessionAtIndex(index, newName) {
   if (index < 0 || index >= sessions.length) return false;
   if (typeof newName !== 'string' || !newName.trim()) return false;
   sessions[index].name = newName.trim();
+  if (
+    getSessionSaveType(sessions[index]) === SAVE_TYPE_AUTO &&
+    sessions[index]?.metadata?.saveTrigger === AUTO_SAVE_TRIGGER_EXIT
+  ) {
+    sessions[index].metadata = {
+      ...sessions[index].metadata,
+      autoGeneratedName: false
+    };
+  }
   await persistSessions(sessions, { reason: 'rename_session' });
   return true;
 }

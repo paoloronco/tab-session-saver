@@ -115,7 +115,7 @@ Response:
 
 ## PUT /v1/sync/snapshot
 
-Stores the full session snapshot for the signed-in user.
+Stores the 10 most recent manually saved sessions for the signed-in user. Auto Save and Save on Exit entries are discarded.
 
 Request:
 
@@ -192,7 +192,7 @@ Retry-After: 87
 
 Current Cloud Sync limits:
 
-- max sessions per cloud snapshot: `10`
+- max sessions per cloud snapshot: `10`, limited to the most recent manually saved sessions; Auto Save and Save on Exit are discarded server-side
 - max URLs across all saved sessions in the snapshot: `300`
 - max serialized snapshot size: `512 KB`
 - min interval between accepted snapshot writes per account: `120 seconds`

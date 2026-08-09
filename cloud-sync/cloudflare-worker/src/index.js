@@ -3,6 +3,7 @@ const GOOGLE_USERINFO_ENDPOINT = 'https://openidconnect.googleapis.com/v1/userin
 const DEFAULT_PLAN = 'free';
 const HARD_MAX_SNAPSHOT_BYTES = 4 * 1024 * 1024;
 const HARD_MAX_SESSIONS_PER_SNAPSHOT = 10000;
+const CLOUD_SYNC_MANUAL_SESSION_LIMIT = 10;
 const SNAPSHOT_WRITE_MIN_INTERVAL_SECONDS = 120;
 const PLAN_LIMITS = {
   free: {
@@ -63,7 +64,28 @@ function normalizeSessions(value) {
   if (!Array.isArray(value)) return [];
   return value
     .slice(0, HARD_MAX_SESSIONS_PER_SNAPSHOT)
-    .filter((session) => session && typeof session === 'object');
+    .map((session, index) => ({ session, index }))
+    .filter(({ session }) => {
+      if (!session || typeof session !== 'object') return false;
+      const saveTrigger = session.saveTrigger ?? session?.metadata?.saveTrigger;
+      return session.saveType !== 'auto' &&
+        session?.metadata?.saveType !== 'auto' &&
+        saveTrigger !== 'scheduled' &&
+        saveTrigger !== 'exit';
+    })
+    .sort((left, right) => {
+      const leftTimestamp = Date.parse(
+        typeof left.session.timestamp === 'string' ? left.session.timestamp : ''
+      );
+      const rightTimestamp = Date.parse(
+        typeof right.session.timestamp === 'string' ? right.session.timestamp : ''
+      );
+      const leftTime = Number.isFinite(leftTimestamp) ? leftTimestamp : 0;
+      const rightTime = Number.isFinite(rightTimestamp) ? rightTimestamp : 0;
+      return rightTime - leftTime || right.index - left.index;
+    })
+    .slice(0, CLOUD_SYNC_MANUAL_SESSION_LIMIT)
+    .map(({ session }) => session);
 }
 
 function normalizeFolderName(value) {
@@ -72,14 +94,24 @@ function normalizeFolderName(value) {
     : '';
 }
 
-function normalizeFolders(value) {
+function getSessionFolderId(session) {
+  const folderId = session?.metadata?.folderId ?? session?.folderId;
+  return typeof folderId === 'string' ? folderId.trim() : '';
+}
+
+function normalizeFolders(value, sessions = []) {
+  const referencedFolderIds = new Set(
+    (Array.isArray(sessions) ? sessions : [])
+      .map(getSessionFolderId)
+      .filter(Boolean)
+  );
   const folders = [];
   const seen = new Set();
   (Array.isArray(value) ? value : []).forEach((rawFolder) => {
     const folder = rawFolder && typeof rawFolder === 'object' ? rawFolder : {};
     const id = typeof folder.id === 'string' && folder.id.trim() ? folder.id.trim().slice(0, 160) : '';
     const name = normalizeFolderName(folder.name);
-    if (!id || !name || seen.has(id)) return;
+    if (!id || !name || seen.has(id) || !referencedFolderIds.has(id)) return;
     seen.add(id);
     folders.push({
       id,
@@ -95,9 +127,10 @@ function normalizeSnapshotRecord(value) {
     return { sessions: normalizeSessions(value), folders: [] };
   }
   const snapshot = value && typeof value === 'object' ? value : {};
+  const sessions = normalizeSessions(snapshot.sessions);
   return {
-    sessions: normalizeSessions(snapshot.sessions),
-    folders: normalizeFolders(snapshot.folders)
+    sessions,
+    folders: normalizeFolders(snapshot.folders, sessions)
   };
 }
 
@@ -310,7 +343,7 @@ async function saveSnapshot(env, account, payload) {
   const profile = account.profile;
   const plan = account.plan || DEFAULT_PLAN;
   const sessions = normalizeSessions(payload?.sessions);
-  const folders = normalizeFolders(payload?.folders);
+  const folders = normalizeFolders(payload?.folders, sessions);
   const sessionsJson = JSON.stringify({ version: 2, sessions, folders });
   const snapshotBytes = estimateUtf8Bytes(sessionsJson);
 
