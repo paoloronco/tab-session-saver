@@ -12,6 +12,10 @@ const workerSource = fs.readFileSync(
   path.join(__dirname, '..', 'cloud-sync', 'cloudflare-worker', 'src', 'index.js'),
   'utf8'
 );
+const settingsSource = fs.readFileSync(
+  path.join(__dirname, '..', 'Chrome-extension', 'settings.html'),
+  'utf8'
+);
 
 function plain(value) {
   return JSON.parse(JSON.stringify(value));
@@ -40,6 +44,7 @@ function createHarness(options = {}) {
     }]
   }];
   const event = { addListener() {} };
+  const alarmState = new Map();
   const identityCalls = [];
   const removedAuthTokens = [];
   const chrome = {
@@ -70,7 +75,15 @@ function createHarness(options = {}) {
       }
     },
     action: { setPopup: async () => {}, onClicked: event },
-    alarms: { create: async () => {}, clear: async () => true, onAlarm: event },
+    alarms: {
+      async create(name, details) {
+        alarmState.set(name, { ...details });
+      },
+      async clear(name) {
+        return alarmState.delete(name);
+      },
+      onAlarm: event
+    },
     storage: {
       local: {
         async get(defaults) {
@@ -128,13 +141,14 @@ function createHarness(options = {}) {
     fetch: options.fetch || (async () => { throw new Error('Unexpected fetch'); })
   });
   vm.runInContext(
-    `${backgroundSource}\n;globalThis.__saveOnExitTest = { getCurrentAutoSaveRunId, refreshAutoSaveExitSnapshot, runAutoSaveOnExit, renameSessionAtIndex, selectCloudSyncManualSessions, mergeCloudSyncManualSessions, loginCloudSync, runCloudSyncPush, runCloudSyncPull };`,
+    `${backgroundSource}\n;globalThis.__saveOnExitTest = { getCurrentAutoSaveRunId, applyAutoSaveSchedule, runAutoSaveNow, refreshAutoSaveExitSnapshot, scheduleAutoSaveExitSnapshotRefresh, hasPendingExitSnapshotRefresh: () => Boolean(exitSnapshotRefreshTimer), runAutoSaveOnExit, handleWindowRemovedForBrowserClose, renameSessionAtIndex, selectCloudSyncManualSessions, mergeCloudSyncManualSessions, loginCloudSync, runCloudSyncPush, runCloudSyncPull };`,
     context
   );
   return {
     storageData,
     sessionStorageData,
     windows,
+    alarmState,
     identityCalls,
     removedAuthTokens,
     api: context.__saveOnExitTest
@@ -200,6 +214,113 @@ test('Save on Exit retains older browser runs and preserves custom names', async
   assert.deepEqual(
     plain(storageData.sessions[1].windows[0].tabs.map((tab) => tab.url)),
     ['https://second.example/final']
+  );
+});
+
+test('scheduled Auto Save and Save on Exit remain independent in all toggle combinations', async (t) => {
+  const combinations = [
+    { enabled: false, exitEnabled: false },
+    { enabled: true, exitEnabled: false },
+    { enabled: false, exitEnabled: true },
+    { enabled: true, exitEnabled: true }
+  ];
+
+  for (const combination of combinations) {
+    await t.test(
+      `enabled=${combination.enabled}, exitEnabled=${combination.exitEnabled}`,
+      async () => {
+        const settings = { ...combination, intervalMinutes: 15 };
+        const { storageData, windows, alarmState, api } = createHarness({
+          storageData: { autoSaveSettings: settings }
+        });
+
+        await api.applyAutoSaveSchedule(settings);
+
+        assert.equal(alarmState.has('auto-save-session'), combination.enabled);
+        if (combination.enabled) {
+          assert.deepEqual(plain(alarmState.get('auto-save-session')), {
+            delayInMinutes: 15,
+            periodInMinutes: 15
+          });
+        }
+
+        const scheduledResult = await api.runAutoSaveNow();
+        assert.equal(scheduledResult.success === true, combination.enabled);
+        if (!combination.enabled) {
+          assert.equal(scheduledResult.reason, 'disabled');
+        }
+
+        windows.splice(0, windows.length);
+        const closeResult = await api.handleWindowRemovedForBrowserClose();
+        assert.equal(closeResult.autoSave.success === true, combination.exitEnabled);
+        if (!combination.exitEnabled) {
+          assert.equal(closeResult.autoSave.reason, 'disabled');
+        }
+
+        const scheduledSessions = storageData.sessions.filter(
+          (session) => session?.metadata?.saveTrigger === 'scheduled'
+        );
+        const exitSessions = storageData.sessions.filter(
+          (session) => session?.metadata?.saveTrigger === 'exit'
+        );
+        assert.equal(scheduledSessions.length, combination.enabled ? 1 : 0);
+        assert.equal(exitSessions.length, combination.exitEnabled ? 1 : 0);
+
+        if (combination.enabled) {
+          assert.equal(scheduledSessions[0].name, 'Auto Save 1');
+        }
+        if (combination.exitEnabled) {
+          assert.match(
+            exitSessions[0].name,
+            /^Exit Save \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
+          );
+        }
+      }
+    );
+  }
+});
+
+test('changing either Auto Save toggle does not mutate or schedule the other feature', async () => {
+  const { storageData, alarmState, api } = createHarness({
+    storageData: {
+      autoSaveSettings: { enabled: true, intervalMinutes: 20, exitEnabled: true }
+    }
+  });
+
+  await api.applyAutoSaveSchedule(storageData.autoSaveSettings);
+  api.scheduleAutoSaveExitSnapshotRefresh();
+  assert.equal(alarmState.has('auto-save-session'), true);
+  assert.equal(api.hasPendingExitSnapshotRefresh(), true);
+
+  storageData.autoSaveSettings = { enabled: false, intervalMinutes: 20, exitEnabled: true };
+  await api.applyAutoSaveSchedule(storageData.autoSaveSettings);
+  assert.equal(alarmState.has('auto-save-session'), false);
+  assert.equal(api.hasPendingExitSnapshotRefresh(), true);
+  assert.equal((await api.runAutoSaveNow()).reason, 'disabled');
+  assert.equal((await api.runAutoSaveOnExit()).success, true);
+
+  api.scheduleAutoSaveExitSnapshotRefresh();
+  storageData.autoSaveSettings = { enabled: true, intervalMinutes: 20, exitEnabled: false };
+  await api.applyAutoSaveSchedule(storageData.autoSaveSettings);
+  assert.equal(alarmState.has('auto-save-session'), true);
+  assert.equal(api.hasPendingExitSnapshotRefresh(), false);
+  assert.equal((await api.runAutoSaveNow()).success, true);
+  assert.equal((await api.runAutoSaveOnExit()).reason, 'disabled');
+
+  storageData.autoSaveSettings = { enabled: false, intervalMinutes: 20, exitEnabled: false };
+  await api.applyAutoSaveSchedule(storageData.autoSaveSettings);
+  assert.equal(alarmState.has('auto-save-session'), false);
+  assert.equal(api.hasPendingExitSnapshotRefresh(), false);
+});
+
+test('Settings shows the interval only for scheduled Auto Save', () => {
+  assert.match(
+    settingsSource,
+    /\.auto-save-interval\s*\{[^}]*display:\s*none;/s
+  );
+  assert.match(
+    settingsSource,
+    /\.auto-save-interval\.is-visible\s*\{[^}]*display:\s*grid;/s
   );
 });
 

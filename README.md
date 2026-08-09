@@ -152,6 +152,8 @@ tabs-session-saver/
 - kept the active run snapshot rolling so tab and window changes do not create duplicates before the browser closes
 - used Chromium session storage to detect browser restarts even when the extension service worker is recreated
 - preserved session rename support for custom Save on Exit names
+- kept scheduled Auto Save and Save on Exit independent across every on/off combination, including separate naming and scheduling
+- showed the interval control only when scheduled Auto Save is enabled
 - limited Cloud Sync to the 10 most recent manually saved sessions while keeping automatic and exit saves local
 - preserved local automatic and exit saves when pulling manual sessions from the cloud
 - made first sign-in pull and merge an existing cloud snapshot before any push, preventing an empty new device from overwriting cloud data

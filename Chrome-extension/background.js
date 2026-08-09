@@ -1389,6 +1389,9 @@ async function applyAutoSaveSchedule(rawSettings = {}) {
   }
   if (settings.exitEnabled) {
     await refreshAutoSaveExitSnapshot();
+  } else if (exitSnapshotRefreshTimer) {
+    clearTimeout(exitSnapshotRefreshTimer);
+    exitSnapshotRefreshTimer = null;
   }
   return settings;
 }
@@ -1608,7 +1611,10 @@ async function storeAutoSaveSessionFromSnapshot(snapshot, trigger, options = {})
     upsertExitSnapshot && saveTrigger === AUTO_SAVE_TRIGGER_EXIT
       ? findRollingExitSessionIndex(sessions, autoSaveRunId)
       : -1;
-  const autoSaveCount = sessions.filter((session) => getSessionSaveType(session) === SAVE_TYPE_AUTO).length;
+  const scheduledAutoSaveCount = sessions.filter((session) =>
+    getSessionSaveType(session) === SAVE_TYPE_AUTO &&
+    session?.metadata?.saveTrigger === AUTO_SAVE_TRIGGER_SCHEDULED
+  ).length;
   const existingExitSession = existingExitIndex >= 0 ? sessions[existingExitIndex] : null;
   const exitDateTime = formatAutoSaveSessionDateTime(timestamp);
   const useGeneratedExitName =
@@ -1631,7 +1637,7 @@ async function storeAutoSaveSessionFromSnapshot(snapshot, trigger, options = {})
         ? existingExitSession.name
         : saveTrigger === AUTO_SAVE_TRIGGER_EXIT
         ? `Exit Save ${exitDateTime}`
-        : `Auto Save ${autoSaveCount + 1}`),
+        : `Auto Save ${scheduledAutoSaveCount + 1}`),
     timestamp,
     windows: snapshot.windows,
     metadata,

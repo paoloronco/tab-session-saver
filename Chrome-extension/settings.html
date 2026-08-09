@@ -390,11 +390,15 @@
 
     .auto-save-interval {
       align-items: center;
-      display: grid;
+      display: none;
       grid-template-columns: minmax(120px, 180px) 110px auto;
       gap: 0.7rem;
       margin: 0.55rem 0 0.95rem;
       max-width: 440px;
+    }
+
+    .auto-save-interval.is-visible {
+      display: grid;
     }
 
     .settings-inline-unit {
