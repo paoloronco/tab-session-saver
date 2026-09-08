@@ -946,6 +946,123 @@
       background: var(--surface-alt);
     }
 
+    .add-item-dialog {
+      width: min(360px, calc(100vw - 2rem));
+      padding: 0;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      background: var(--surface);
+      color: var(--text-primary);
+      box-shadow: 0 24px 60px rgba(12, 18, 32, 0.35);
+    }
+
+    .add-item-dialog::backdrop {
+      background: rgba(12, 18, 32, 0.58);
+      backdrop-filter: blur(2px);
+    }
+
+    .add-item-form {
+      display: grid;
+      gap: 1rem;
+      padding: 1.1rem;
+    }
+
+    .add-item-form h2 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .add-item-description,
+    .add-item-error {
+      margin: 0;
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+
+    .add-item-description {
+      color: var(--text-secondary);
+    }
+
+    .add-item-destinations {
+      display: grid;
+      gap: 0.55rem;
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    .add-item-destinations legend {
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .add-item-destination {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 0.65rem;
+      align-items: center;
+      padding: 0.7rem;
+      border: 1px solid var(--border-color);
+      border-radius: 11px;
+      background: var(--surface-alt);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .add-item-destination:has(input:checked) {
+      border-color: var(--accent-color);
+    }
+
+    .add-item-destination input {
+      margin: 0;
+      accent-color: var(--accent-color);
+    }
+
+    .add-item-window-select {
+      grid-column: 2;
+      margin-top: -0.2rem;
+    }
+
+    .add-item-window-select[hidden] {
+      display: none;
+    }
+
+    .add-item-error {
+      min-height: 1.1rem;
+      color: #c2410c;
+    }
+
+    .add-item-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.55rem;
+    }
+
+    .add-item-actions button {
+      min-height: 38px;
+      padding: 0.55rem 0.8rem;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .add-item-actions button[type="submit"] {
+      border-color: var(--accent-color);
+      background: var(--accent-color);
+      color: #ffffff;
+    }
+
+    .add-item-actions button:disabled {
+      cursor: wait;
+      opacity: 0.55;
+    }
+
     .preview-container {
       display: none;
       margin-top: 0.75rem;
@@ -2049,5 +2166,31 @@
 
     </div><!-- /.huge-content-area -->
   </div><!-- /.popup -->
+
+  <dialog id="add-item-dialog" class="add-item-dialog" aria-labelledby="add-item-dialog-title">
+    <form id="add-item-form" class="add-item-form">
+      <h2 id="add-item-dialog-title" data-translate="add_session_item_button">Add a new item</h2>
+      <p class="add-item-description" data-translate="add_item_dialog_description">Enter a URL or search, then choose where to save it.</p>
+      <label for="add-item-input" data-translate="add_url_prompt">Enter a URL or search to add to this session:</label>
+      <input id="add-item-input" type="text" autocomplete="off" spellcheck="false">
+      <fieldset class="add-item-destinations">
+        <legend data-translate="add_item_destination_label">Add to</legend>
+        <label class="add-item-destination">
+          <input id="add-item-existing" type="radio" name="addItemDestination" value="existing" checked>
+          <span data-translate="add_item_existing_window">An existing window</span>
+          <select id="add-item-window-select" class="add-item-window-select" aria-label="Choose a window"></select>
+        </label>
+        <label class="add-item-destination">
+          <input id="add-item-new-window" type="radio" name="addItemDestination" value="new">
+          <span data-translate="add_item_new_window">A new window</span>
+        </label>
+      </fieldset>
+      <p id="add-item-error" class="add-item-error" role="alert" aria-live="polite"></p>
+      <div class="add-item-actions">
+        <button id="add-item-cancel" type="button" data-translate="add_item_cancel_button">Cancel</button>
+        <button id="add-item-submit" type="submit" data-translate="add_session_item_button">Add a new item</button>
+      </div>
+    </form>
+  </dialog>
 </body>
 </html>

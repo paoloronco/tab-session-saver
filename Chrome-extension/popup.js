@@ -94,8 +94,12 @@ const translations = {
     auto_save_group_topic_title: "Similar tabs",
     auto_save_group_count: "{count} sessions",
     add_url_button: "Add URL",
-    add_session_item_button: "Add item",
-    add_session_window_button: "Add as new window",
+    add_session_item_button: "Add a new item",
+    add_item_dialog_description: "Enter a URL or search, then choose where to save it.",
+    add_item_destination_label: "Add to",
+    add_item_existing_window: "An existing window",
+    add_item_new_window: "A new window",
+    add_item_cancel_button: "Cancel",
     add_url_prompt: "Enter a URL or search to add to this session:",
     add_url_invalid: "Enter a valid URL or search text.",
     add_url_failed: "Unable to add this item.",
@@ -243,8 +247,12 @@ const translations = {
     auto_save_group_topic_title: "Pesta\u00F1as similares",
     auto_save_group_count: "{count} sesiones",
     add_url_button: "A\u00F1adir URL",
-    add_session_item_button: "A\u00F1adir elemento",
-    add_session_window_button: "A\u00F1adir como ventana",
+    add_session_item_button: "A\u00F1adir un nuevo elemento",
+    add_item_dialog_description: "Introduce una URL o b\u00FAsqueda y elige d\u00F3nde guardarla.",
+    add_item_destination_label: "A\u00F1adir a",
+    add_item_existing_window: "Una ventana existente",
+    add_item_new_window: "Una ventana nueva",
+    add_item_cancel_button: "Cancelar",
     add_url_prompt: "Introduce una URL o b\u00FAsqueda para a\u00F1adirla a esta sesi\u00F3n:",
     add_url_invalid: "Introduce una URL o b\u00FAsqueda v\u00E1lida.",
     add_url_failed: "No se pudo a\u00F1adir este elemento.",
@@ -392,8 +400,12 @@ const translations = {
     auto_save_group_topic_title: "Schede simili",
     auto_save_group_count: "{count} sessioni",
     add_url_button: "Aggiungi URL",
-    add_session_item_button: "Aggiungi elemento",
-    add_session_window_button: "Aggiungi come finestra",
+    add_session_item_button: "Aggiungi un nuovo elemento",
+    add_item_dialog_description: "Inserisci un URL o una ricerca, poi scegli dove salvarlo.",
+    add_item_destination_label: "Aggiungi a",
+    add_item_existing_window: "Una finestra esistente",
+    add_item_new_window: "Una nuova finestra",
+    add_item_cancel_button: "Annulla",
     add_url_prompt: "Inserisci un URL o una ricerca da aggiungere a questa sessione:",
     add_url_invalid: "Inserisci un URL o una ricerca valida.",
     add_url_failed: "Impossibile aggiungere questo elemento.",
@@ -541,8 +553,12 @@ const translations = {
     auto_save_group_topic_title: "Onglets similaires",
     auto_save_group_count: "{count} sessions",
     add_url_button: "Ajouter une URL",
-    add_session_item_button: "Ajouter un \u00E9l\u00E9ment",
-    add_session_window_button: "Ajouter comme fen\u00EAtre",
+    add_session_item_button: "Ajouter un nouvel \u00E9l\u00E9ment",
+    add_item_dialog_description: "Saisissez une URL ou une recherche, puis choisissez o\u00F9 l'enregistrer.",
+    add_item_destination_label: "Ajouter \u00E0",
+    add_item_existing_window: "Une fen\u00EAtre existante",
+    add_item_new_window: "Une nouvelle fen\u00EAtre",
+    add_item_cancel_button: "Annuler",
     add_url_prompt: "Saisissez une URL ou recherche \u00E0 ajouter \u00E0 cette session :",
     add_url_invalid: "Saisissez une URL ou recherche valide.",
     add_url_failed: "Impossible d'ajouter cet \u00E9l\u00E9ment.",
@@ -690,8 +706,12 @@ const translations = {
     auto_save_group_topic_title: "\u00C4hnliche Tabs",
     auto_save_group_count: "{count} Sitzungen",
     add_url_button: "URL hinzuf\u00FCgen",
-    add_session_item_button: "Element hinzuf\u00FCgen",
-    add_session_window_button: "Als Fenster hinzuf\u00FCgen",
+    add_session_item_button: "Neues Element hinzuf\u00FCgen",
+    add_item_dialog_description: "Gib eine URL oder Suche ein und w\u00E4hle, wo sie gespeichert werden soll.",
+    add_item_destination_label: "Hinzuf\u00FCgen zu",
+    add_item_existing_window: "Einem vorhandenen Fenster",
+    add_item_new_window: "Einem neuen Fenster",
+    add_item_cancel_button: "Abbrechen",
     add_url_prompt: "Gib eine URL oder Suche ein, die zu dieser Sitzung hinzugef\u00FCgt werden soll:",
     add_url_invalid: "Gib eine g\u00FCltige URL oder Suche ein.",
     add_url_failed: "Dieses Element konnte nicht hinzugef\u00FCgt werden.",
@@ -1212,7 +1232,11 @@ function addCustomUrlToSession(session, urlValue, options = {}) {
     });
     return next;
   }
-  const targetWindow = next.windows[next.windows.length - 1];
+  const targetIndex = Number.isInteger(options.windowIndex)
+    ? options.windowIndex
+    : next.windows.length - 1;
+  const targetWindow = next.windows[targetIndex];
+  if (!targetWindow) return null;
   if (!Array.isArray(targetWindow.tabs)) targetWindow.tabs = [];
   targetWindow.tabs.push({ ...tab, index: targetWindow.tabs.length });
   return next;
@@ -2010,6 +2034,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const cloudSyncPullBtn = document.getElementById('cloudSyncPull');
   const cloudSyncDisconnectBtn = document.getElementById('cloudSyncDisconnect');
   const cloudSyncStatus = document.getElementById('cloudSyncStatus');
+  const addItemDialog = document.getElementById('add-item-dialog');
+  const addItemForm = document.getElementById('add-item-form');
+  const addItemInput = document.getElementById('add-item-input');
+  const addItemExisting = document.getElementById('add-item-existing');
+  const addItemNewWindow = document.getElementById('add-item-new-window');
+  const addItemWindowSelect = document.getElementById('add-item-window-select');
+  const addItemError = document.getElementById('add-item-error');
+  const addItemCancel = document.getElementById('add-item-cancel');
+  const addItemSubmit = document.getElementById('add-item-submit');
   let latestSessions = [];
   let sessionFolders = [];
   let activeSessionCategory = SAVE_TYPE_MANUAL;
@@ -2018,10 +2051,85 @@ document.addEventListener('DOMContentLoaded', () => {
   let cloudSyncSettingsState = null;
   let activeDragSessionIndex = null;
   let activeDropPlacement = 'before';
+  let pendingAddItem = null;
   const isPopupPage = window.location.pathname.endsWith('/popup.html');
   const isFullTabPopupView = new URLSearchParams(window.location.search).get('view') === 'tab';
 
   document.addEventListener('click', closeAllMenus);
+
+  function updateAddItemDestinationState() {
+    if (!addItemWindowSelect) return;
+    addItemWindowSelect.disabled = addItemNewWindow?.checked === true;
+  }
+
+  function openAddItemDialog(session, index, onSaved) {
+    if (!addItemDialog || !addItemForm || !addItemWindowSelect) return;
+    const windows = Array.isArray(session?.windows) ? session.windows : [];
+    pendingAddItem = { session, index, onSaved };
+    addItemForm.reset();
+    addItemError.textContent = '';
+    addItemInput.removeAttribute('aria-invalid');
+    addItemSubmit.disabled = false;
+    addItemWindowSelect.replaceChildren();
+    windows.forEach((windowData, windowIndex) => {
+      const option = document.createElement('option');
+      const tabCount = Array.isArray(windowData?.tabs) ? windowData.tabs.length : 0;
+      const tabLabel = tabCount === 1
+        ? getTranslation('tab_count_one')
+        : formatTranslation('tab_count_other', { count: tabCount });
+      option.value = String(windowIndex);
+      option.textContent = `${formatTranslation('preview_window_label', { index: windowIndex + 1 })} \u00B7 ${tabLabel}`;
+      addItemWindowSelect.appendChild(option);
+    });
+    addItemExisting.disabled = windows.length === 0;
+    addItemExisting.checked = windows.length > 0;
+    addItemNewWindow.checked = windows.length === 0;
+    addItemWindowSelect.hidden = windows.length <= 1;
+    updateAddItemDestinationState();
+    addItemDialog.showModal();
+    addItemInput.focus();
+  }
+
+  addItemExisting?.addEventListener('change', updateAddItemDestinationState);
+  addItemNewWindow?.addEventListener('change', updateAddItemDestinationState);
+  addItemCancel?.addEventListener('click', () => addItemDialog?.close());
+  addItemDialog?.addEventListener('close', () => {
+    pendingAddItem = null;
+    if (addItemSubmit) addItemSubmit.disabled = false;
+  });
+  addItemForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!pendingAddItem) return;
+    const request = pendingAddItem;
+    const addAsNewWindow = addItemNewWindow?.checked === true;
+    const updatedSession = addCustomUrlToSession(request.session, addItemInput?.value || '', {
+      newWindow: addAsNewWindow,
+      windowIndex: addAsNewWindow ? undefined : Number(addItemWindowSelect?.value)
+    });
+    if (!updatedSession) {
+      addItemError.textContent = getTranslation('add_url_invalid');
+      addItemInput?.setAttribute('aria-invalid', 'true');
+      addItemInput?.focus();
+      return;
+    }
+
+    addItemError.textContent = '';
+    addItemInput?.removeAttribute('aria-invalid');
+    addItemSubmit.disabled = true;
+    chrome.runtime.sendMessage(
+      { action: 'update_session', index: request.index, session: updatedSession },
+      (response) => {
+        if (chrome.runtime.lastError || !response?.success) {
+          console.error('Failed to add item to session', chrome.runtime.lastError || response?.error);
+          addItemError.textContent = getTranslation('add_url_failed');
+          addItemSubmit.disabled = false;
+          return;
+        }
+        request.onSaved(updatedSession);
+        addItemDialog.close();
+      }
+    );
+  });
 
   function applyPopupSize(size) {
     const selectedSize = normalizePopupSize(size);
@@ -3140,45 +3248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addItemBtn.textContent = getTranslation('add_session_item_button');
         addItemBtn.addEventListener('click', () => {
           closeAllMenus();
-          const itemInput = prompt(getTranslation('add_url_prompt'));
-          if (itemInput === null) return;
-          const updatedSession = addCustomUrlToSession(sessionPayload, itemInput, { newWindow: false });
-          if (!updatedSession) {
-            alert(getTranslation('add_url_invalid'));
-            return;
-          }
-          chrome.runtime.sendMessage({ action: 'update_session', index, session: updatedSession }, (res) => {
-            if (!res || !res.success) {
-              console.error('Failed to add item to session', res && res.error);
-              alert(getTranslation('add_url_failed'));
-              return;
-            }
-            sessionPayload = updatedSession;
-            latestSessions[index] = updatedSession;
-            updateSessionLabelMeta(sessionPayload, label);
-            if (previewContainer.classList.contains('is-open')) {
-              renderPreview(sessionPayload, previewContainer, index, label);
-            }
-          });
-        });
-
-        const addWindowBtn = document.createElement('button');
-        addWindowBtn.textContent = getTranslation('add_session_window_button');
-        addWindowBtn.addEventListener('click', () => {
-          closeAllMenus();
-          const itemInput = prompt(getTranslation('add_url_prompt'));
-          if (itemInput === null) return;
-          const updatedSession = addCustomUrlToSession(sessionPayload, itemInput, { newWindow: true });
-          if (!updatedSession) {
-            alert(getTranslation('add_url_invalid'));
-            return;
-          }
-          chrome.runtime.sendMessage({ action: 'update_session', index, session: updatedSession }, (res) => {
-            if (!res || !res.success) {
-              console.error('Failed to add window to session', res && res.error);
-              alert(getTranslation('add_url_failed'));
-              return;
-            }
+          openAddItemDialog(sessionPayload, index, (updatedSession) => {
             sessionPayload = updatedSession;
             latestSessions[index] = updatedSession;
             updateSessionLabelMeta(sessionPayload, label);
@@ -3209,7 +3279,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         menu.appendChild(previewBtn);
         menu.appendChild(addItemBtn);
-        menu.appendChild(addWindowBtn);
         menu.appendChild(renameBtn);
         menu.appendChild(deleteBtn);
 
