@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.15.5-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.15.6-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -146,6 +146,12 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 7.15.6
+- unified the saved-session add actions into one clear "Add a new item" command
+- added an in-extension dialog for choosing an existing saved window or creating a new one
+- added explicit window selection for sessions containing multiple windows
+- updated extension version to `7.15.6`
 
 ### 7.15.5
 - changed Save on Exit to retain one dated snapshot per browser run instead of overwriting the previous browser run
