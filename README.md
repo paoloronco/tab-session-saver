@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.15.6-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.16.0-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -46,10 +46,10 @@ Sessions are saved directly on your device using Chrome's built-in storage by de
 | Preview | Inspect saved tabs before restoring, restore individual windows, and remove saved windows from a session. |
 | Search | Filter saved sessions by session name, tab title, full URL, or domain. |
 | Auto Save | Capture sessions on a schedule or when Chrome closes, with grouping by smart topic, day, browser session, or no grouping. |
-| Session editing | Rename, delete, reorder, organize sessions into folders, remove individual tabs/windows, and add custom URLs or search items to saved sessions. |
+| Session editing | Rename through a themed in-extension dialog, delete, reorder, organize sessions into folders, remove individual tabs/windows, and add custom URLs or search items to saved sessions. |
 | Tab groups | Preserve Chrome tab group names, colors, and membership during save and restore. |
-| Backup | Export and import JSON backups for manual transfer or recovery. |
-| Appearance | Choose popup size, full-tab mode, dark mode, accent color, and UI language. |
+| Backup | Export all sessions or an individual session as JSON; drag JSON files onto the popup to import without replacing existing sessions. |
+| Appearance | Choose from six themes with palette previews and light/dark variants, customize the accent color, and select popup size, full-tab mode, and UI language. |
 | Cloud Sync | Sign in with Google to sync only the 10 most recent manually saved sessions. Auto Save and Save on Exit remain local. |
 | Newsletter | Subscribe from Settings to receive product updates. |
 | Browser support | Shows Chrome support status and warns when running on unsupported Chromium-derived browsers. |
@@ -75,6 +75,10 @@ Current hosted Cloud Sync limits:
 | Manual Push throttle | Push is skipped when there are no pending changes and rate-limited when repeated too quickly |
 
 These limits apply only to Cloud Sync. Local sessions and JSON backups are separate.
+
+To export one session, open its **⋮ menu → Export session (JSON)**. Drop the downloaded file onto the open extension popup to add it back, preserving its windows and tab groups. Full backups remain available in **Settings → Backup**; imports accept JSON files up to 5 MB.
+
+In **Settings → Appearance**, select **Classic, Ocean, Forest, Lavender, Rose, or Sand**. Each theme changes backgrounds, surfaces, text, and accents across the popup and Settings. The **Dark mode** toggle switches to the theme's dark palette. **Accent color → Theme default** restores the selected palette's accent; choosing a new theme resets a custom accent.
 
 ---
 
@@ -126,6 +130,8 @@ tabs-session-saver/
 │   ├── background.js          # Service worker: capture, storage, restore, auto save
 │   ├── popup.html             # Popup UI markup
 │   ├── popup.js               # Popup logic: sessions, search, import/export, settings
+│   ├── settings.html          # Dedicated extension settings page
+│   ├── themes.css             # Shared light/dark palettes and theme previews
 │   ├── welcome.html           # Onboarding page shown on first install
 │   ├── welcome.js             # Onboarding behavior and translations
 │   ├── browser-support.js     # Browser detection utility (Chrome vs Chromium)
@@ -146,6 +152,16 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 7.16.0
+- added individual session JSON export to the session menu and drag-and-drop JSON import without replacing existing sessions
+- added six complete themes with palette previews, light/dark variants, and an optional custom accent color
+- aligned manual and automatic session layouts, reserved filter/scrollbar space, and prevented long session titles from changing card sizes
+- anchored session menus to the clicked button using their actual dimensions, including edge positioning and scrolling
+- replaced Chrome's rename prompt with a themed in-extension dialog supporting Save, Cancel, Enter, Escape, validation, and retry on save errors
+- disabled and muted the Cloud Sync login button for connected accounts, re-enabling it after disconnect
+- separated the newsletter Subscribe button from the email field
+- updated extension version to `7.16.0`
 
 ### 7.15.6
 - unified the saved-session add actions into one clear "Add a new item" command

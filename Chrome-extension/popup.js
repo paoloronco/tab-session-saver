@@ -3462,7 +3462,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportSessionBtn.textContent = getTranslation('export_session_button');
         exportSessionBtn.addEventListener('click', () => {
           closeAllMenus();
-          const filename = sessionName.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').slice(0, 100) || 'session';
+          const filename = sessionName.replace(/[<>:"/\\|?*\p{Cc}]/gu, '_').slice(0, 100) || 'session';
           downloadSessions([sessionPayload], `${filename}.json`);
         });
 
