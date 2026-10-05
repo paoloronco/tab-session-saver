@@ -2103,12 +2103,28 @@ function resetPreviewStates() {
   });
 }
 
+function positionSessionMenu(menu, button) {
+  const buttonRect = button.getBoundingClientRect();
+  menu.style.maxHeight = '';
+  const menuRect = menu.getBoundingClientRect();
+  const below = window.innerHeight - buttonRect.bottom - 14;
+  const above = buttonRect.top - 14;
+  const openBelow = menuRect.height <= below || below >= above;
+  menu.style.maxHeight = `${Math.max(0, openBelow ? below : above)}px`;
+  const height = menu.getBoundingClientRect().height;
+  const top = openBelow ? buttonRect.bottom + 6 : buttonRect.top - height - 6;
+  const left = Math.max(8, Math.min(buttonRect.right - menuRect.width, window.innerWidth - menuRect.width - 8));
+  menu.style.top = `${Math.max(8, top)}px`;
+  menu.style.left = `${left}px`;
+}
+
 function closeAllMenus(options = {}) {
   const { preservePreviews = false } = options;
   document.querySelectorAll('.menu-content').forEach(menu => {
     menu.style.display = 'none';
     menu.style.removeProperty('top');
     menu.style.removeProperty('left');
+    menu.style.removeProperty('max-height');
       // Restore menu to original parent if it was moved to body
       if (menu._originalParent && document.body.contains(menu)) {
         menu._originalParent.appendChild(menu);
@@ -2178,6 +2194,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const isFullTabPopupView = new URLSearchParams(window.location.search).get('view') === 'tab';
 
   document.addEventListener('click', closeAllMenus);
+  const repositionMenus = () => {
+    document.querySelectorAll('.menu-content').forEach(menu => {
+      if (menu.style.display !== 'block') return;
+      const button = menu._originalParent.querySelector('.menu-button');
+      const rect = button.getBoundingClientRect();
+      if (rect.bottom <= 0 || rect.top >= window.innerHeight) {
+        closeAllMenus({ preservePreviews: true });
+        return;
+      }
+      positionSessionMenu(menu, button);
+    });
+  };
+  document.addEventListener('scroll', event => {
+    if (!event.target?.closest?.('.menu-content')) repositionMenus();
+  }, true);
+  window.addEventListener('resize', repositionMenus);
 
   function updateAddItemDestinationState() {
     if (!addItemWindowSelect) return;
@@ -3218,6 +3250,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      closeAllMenus({ preservePreviews: true });
       container.replaceChildren();
       resetPreviewStates();
 
@@ -3492,32 +3525,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const wasOpen = menu.style.display === 'block';
             closeAllMenus();
             if (!wasOpen) {
-              // Position menu as fixed overlay using viewport coordinates
-              const btnRect = menuBtn.getBoundingClientRect();
-              const menuHeight = 220; // Estimated height for flipping logic
-              
-              // Position menu below button
-              let top = btnRect.bottom + 6;
-              let left = btnRect.right - 160; // Align right edge, accounting for min-width: 150px
-              
-              // Flip menu above button if insufficient space below
-              // (account for viewport height - typically 600-800px for Chrome popup)
-              if (top + menuHeight > window.innerHeight - 10) {
-                top = btnRect.top - menuHeight - 6;
-              }
-              
-              // Clamp left within viewport with padding
-              const minLeft = 8;
-              const maxLeft = window.innerWidth - 160 - 8;
-              left = Math.max(minLeft, Math.min(left, maxLeft));
-              
+              // Measure in the viewport, outside the session card's hover transform.
+              document.body.appendChild(menu);
               menu.style.display = 'block';
-              menu.style.top = `${Math.max(0, top)}px`;
-              menu.style.left = `${left}px`;
-              // Move menu to body to escape popup's scroll container
-              if (menu.parentNode !== document.body) {
-                document.body.appendChild(menu);
-              }
+              menu.style.top = '0px';
+              menu.style.left = '0px';
+              positionSessionMenu(menu, menuBtn);
               entry.classList.add('menu-open');
               menuBtn.setAttribute('aria-expanded', 'true');
             }
