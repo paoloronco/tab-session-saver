@@ -2225,5 +2225,17 @@
       </div>
     </form>
   </dialog>
+  <dialog id="rename-dialog" class="add-item-dialog" aria-labelledby="rename-dialog-title">
+    <form id="rename-form" class="add-item-form" novalidate>
+      <h2 id="rename-dialog-title" data-translate="rename_button">Rename</h2>
+      <label for="rename-input" data-translate="rename_prompt">Enter a new name for this session:</label>
+      <input id="rename-input" type="text" maxlength="160" required autocomplete="off" aria-describedby="rename-error">
+      <p id="rename-error" class="add-item-error" role="alert" aria-live="polite"></p>
+      <div class="add-item-actions">
+        <button id="rename-cancel" type="button" data-translate="add_item_cancel_button">Cancel</button>
+        <button id="rename-submit" type="submit" data-translate="rename_save_button">Save</button>
+      </div>
+    </form>
+  </dialog>
 </body>
 </html>

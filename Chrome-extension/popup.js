@@ -141,6 +141,9 @@ const translations = {
     session_menu_label: "Session menu",
     session_default_name: "Session",
     rename_prompt: "Enter a new name for this session:",
+    rename_save_button: "Save",
+    rename_empty_error: "Enter a session name.",
+    rename_failed_error: "Unable to rename the session. Please try again.",
     chrome_store_link: "Install from Chrome Web Store",
     github_link: "Source code on GitHub",
     developer_website_link: "Developer website",
@@ -307,6 +310,9 @@ const translations = {
     session_menu_label: "Men\u00FA de sesi\u00F3n",
     session_default_name: "Sesi\u00F3n",
     rename_prompt: "Introduce un nuevo nombre para esta sesi\u00F3n:",
+    rename_save_button: "Guardar",
+    rename_empty_error: "Introduce un nombre para la sesi\u00f3n.",
+    rename_failed_error: "No se pudo renombrar la sesi\u00f3n. Int\u00e9ntalo de nuevo.",
     chrome_store_link: "Instalar desde Chrome Web Store",
     github_link: "Código fuente en GitHub",
     developer_website_link: "Sitio del desarrollador",
@@ -473,6 +479,9 @@ const translations = {
     session_menu_label: "Menu sessione",
     session_default_name: "Sessione",
     rename_prompt: "Inserisci un nuovo nome per questa sessione:",
+    rename_save_button: "Salva",
+    rename_empty_error: "Inserisci un nome per la sessione.",
+    rename_failed_error: "Impossibile rinominare la sessione. Riprova.",
     chrome_store_link: "Installa dal Chrome Web Store",
     github_link: "Codice sorgente su GitHub",
     developer_website_link: "Sito dello sviluppatore",
@@ -639,6 +648,9 @@ const translations = {
     session_menu_label: "Menu de session",
     session_default_name: "Session",
     rename_prompt: "Entrez un nouveau nom pour cette session :",
+    rename_save_button: "Enregistrer",
+    rename_empty_error: "Saisissez un nom de session.",
+    rename_failed_error: "Impossible de renommer la session. R\u00e9essayez.",
     chrome_store_link: "Installer depuis le Chrome Web Store",
     github_link: "Code source sur GitHub",
     developer_website_link: "Site du développeur",
@@ -805,6 +817,9 @@ const translations = {
     session_menu_label: "Sitzungsmen\u00FC",
     session_default_name: "Sitzung",
     rename_prompt: "Gib einen neuen Namen f\u00FCr diese Sitzung ein:",
+    rename_save_button: "Speichern",
+    rename_empty_error: "Gib einen Sitzungsnamen ein.",
+    rename_failed_error: "Die Sitzung konnte nicht umbenannt werden. Versuche es erneut.",
     chrome_store_link: "Aus dem Chrome Web Store installieren",
     github_link: "Quellcode auf GitHub",
     developer_website_link: "Entwickler-Website",
@@ -2285,6 +2300,54 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   });
 
+  const renameDialog = document.getElementById('rename-dialog');
+  const renameForm = document.getElementById('rename-form');
+  const renameInput = document.getElementById('rename-input');
+  const renameError = document.getElementById('rename-error');
+  const renameCancel = document.getElementById('rename-cancel');
+  const renameSubmit = document.getElementById('rename-submit');
+  let pendingRenameIndex = null;
+
+  function openRenameDialog(index, name) {
+    if (!renameDialog) return;
+    pendingRenameIndex = index;
+    renameInput.value = name;
+    renameError.textContent = '';
+    renameInput.removeAttribute('aria-invalid');
+    renameDialog.showModal();
+    renameInput.focus();
+    renameInput.select();
+  }
+
+  renameCancel?.addEventListener('click', () => renameDialog.close());
+  renameDialog?.addEventListener('close', () => { pendingRenameIndex = null; });
+  renameDialog?.addEventListener('cancel', event => {
+    if (renameSubmit.disabled) event.preventDefault();
+  });
+  renameForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (!Number.isInteger(pendingRenameIndex) || renameSubmit.disabled) return;
+    const newName = renameInput.value.trim().slice(0, 160);
+    if (!newName) {
+      renameError.textContent = getTranslation('rename_empty_error');
+      renameInput.setAttribute('aria-invalid', 'true');
+      renameInput.focus();
+      return;
+    }
+    renameError.textContent = '';
+    renameInput.removeAttribute('aria-invalid');
+    renameSubmit.disabled = renameCancel.disabled = renameInput.disabled = true;
+    try {
+      await sendRuntimeMessage({ action: 'rename_session', index: pendingRenameIndex, newName });
+      renameDialog.close();
+      loadSessions();
+    } catch (_error) {
+      renameError.textContent = getTranslation('rename_failed_error');
+    } finally {
+      renameSubmit.disabled = renameCancel.disabled = renameInput.disabled = false;
+    }
+  });
+
   function applyPopupSize(size) {
     const selectedSize = normalizePopupSize(size);
     const effectiveSize = selectedSize === 'huge' && isPopupPage && !isFullTabPopupView
@@ -2924,19 +2987,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function renameSession(index, newName) {
-    chrome.runtime.sendMessage(
-      {
-        action: 'rename_session',
-        index,
-        newName
-      },
-      (res) => {
-        if (res && res.success) loadSessions();
-      }
-    );
-  }
-
   function clearSessionDropTargets() {
     document.querySelectorAll('.session-entry.drag-over-before, .session-entry.drag-over-after, .session-entry.is-dragging')
       .forEach((entry) => {
@@ -3396,10 +3446,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renameBtn.textContent = getTranslation('rename_button');
         renameBtn.addEventListener('click', () => {
           closeAllMenus();
-          const newName = prompt(getTranslation('rename_prompt'), sessionName);
-          if (newName && newName.trim()) {
-            renameSession(index, newName.trim());
-          }
+          openRenameDialog(index, sessionPayload.name || sessionName);
         });
 
         const deleteBtn = document.createElement('button');
