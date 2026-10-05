@@ -66,14 +66,14 @@
     button,
     .extension-primary-link:first-child {
       background: var(--accent-color);
-      color: #ffffff;
-      box-shadow: 0 10px 24px rgba(76, 110, 245, 0.22);
+      color: var(--accent-foreground, #ffffff);
+      box-shadow: 0 10px 24px color-mix(in srgb, var(--accent-color) 22%, transparent);
     }
 
     button:hover,
     .extension-primary-link:hover {
       transform: translateY(-1px);
-      box-shadow: 0 14px 30px rgba(76, 110, 245, 0.26);
+      box-shadow: 0 14px 30px color-mix(in srgb, var(--accent-color) 26%, transparent);
     }
 
     input,
@@ -91,7 +91,7 @@
     select:focus,
     button:focus-visible,
     a:focus-visible {
-      outline: 3px solid rgba(76, 110, 245, 0.22);
+      outline: 3px solid color-mix(in srgb, var(--accent-color) 22%, transparent);
       outline-offset: 2px;
     }
 
@@ -106,14 +106,14 @@
       top: 0;
       height: 100vh;
       border-right: 1px solid var(--border-color);
-      background: rgba(255, 255, 255, 0.88);
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
       backdrop-filter: blur(14px);
       padding: 1.35rem;
       overflow-y: auto;
     }
 
     body.dark-mode .settings-sidebar {
-      background: rgba(24, 34, 53, 0.9);
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
     }
 
     .settings-brand {
@@ -572,6 +572,7 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="themes.css">
   <script src="browser-support.js" defer></script>
   <script src="popup.js" defer></script>
 </head>
@@ -656,13 +657,56 @@
           <div class="toggle-container">
             <span data-translate="dark_mode_label">Dark mode</span>
             <label class="toggle-switch">
-              <input type="checkbox" id="darkMode">
+              <input type="checkbox" id="darkMode" aria-label="Dark mode" data-translate-aria-label="dark_mode_label">
               <span class="slider"></span>
             </label>
           </div>
+          <fieldset class="theme-picker" aria-describedby="themes-description">
+            <legend data-translate="themes_label">Themes</legend>
+            <p id="themes-description" class="settings-description" data-translate="themes_description">Choose a palette for the entire extension. Each theme includes light and dark colors.</p>
+            <div class="theme-grid">
+              <label class="theme-option" data-theme="classic">
+                <input type="radio" name="appearanceTheme" value="classic">
+                <span class="theme-preview" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span class="theme-name" data-translate="theme_classic">Classic</span>
+                <span class="theme-swatches" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+              </label>
+              <label class="theme-option" data-theme="ocean">
+                <input type="radio" name="appearanceTheme" value="ocean">
+                <span class="theme-preview" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span class="theme-name" data-translate="theme_ocean">Ocean</span>
+                <span class="theme-swatches" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+              </label>
+              <label class="theme-option" data-theme="forest">
+                <input type="radio" name="appearanceTheme" value="forest">
+                <span class="theme-preview" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span class="theme-name" data-translate="theme_forest">Forest</span>
+                <span class="theme-swatches" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+              </label>
+              <label class="theme-option" data-theme="lavender">
+                <input type="radio" name="appearanceTheme" value="lavender">
+                <span class="theme-preview" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span class="theme-name" data-translate="theme_lavender">Lavender</span>
+                <span class="theme-swatches" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+              </label>
+              <label class="theme-option" data-theme="rose">
+                <input type="radio" name="appearanceTheme" value="rose">
+                <span class="theme-preview" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span class="theme-name" data-translate="theme_rose">Rose</span>
+                <span class="theme-swatches" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+              </label>
+              <label class="theme-option" data-theme="sand">
+                <input type="radio" name="appearanceTheme" value="sand">
+                <span class="theme-preview" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span class="theme-name" data-translate="theme_sand">Sand</span>
+                <span class="theme-swatches" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+              </label>
+            </div>
+          </fieldset>
           <div class="setting-group">
             <label for="accentColor" data-translate="color_label">Accent color</label>
             <select id="accentColor">
+              <option value="" data-translate="theme_default_accent">Theme default</option>
               <option value="#4c6ef5" data-translate="color_blue">Blue</option>
               <option value="#228b22" data-translate="color_green">Green</option>
               <option value="#ffb020" data-translate="color_yellow">Yellow</option>

@@ -37,6 +37,15 @@ const translations = {
     dark_mode_label: "Dark mode",
     color_label: "Accent color",
     appearance_title: "Appearance",
+    themes_label: "Themes",
+    themes_description: "Choose a palette for the entire extension. Each theme includes light and dark colors.",
+    theme_default_accent: "Theme default",
+    theme_classic: "Classic",
+    theme_ocean: "Ocean",
+    theme_forest: "Forest",
+    theme_lavender: "Lavender",
+    theme_rose: "Rose",
+    theme_sand: "Sand",
     popup_size_label: "Popup size",
     popup_size_small: "Small",
     popup_size_medium: "Medium",
@@ -194,6 +203,15 @@ const translations = {
     dark_mode_label: "Modo oscuro",
     color_label: "Color de acento",
     appearance_title: "Apariencia",
+    themes_label: "Temas",
+    themes_description: "Elige una paleta para toda la extensi\u00f3n. Cada tema incluye colores claros y oscuros.",
+    theme_default_accent: "Predeterminado del tema",
+    theme_classic: "Cl\u00e1sico",
+    theme_ocean: "Oc\u00e9ano",
+    theme_forest: "Bosque",
+    theme_lavender: "Lavanda",
+    theme_rose: "Rosa",
+    theme_sand: "Arena",
     popup_size_label: "Tama\u00F1o del popup",
     popup_size_small: "Peque\u00F1o",
     popup_size_medium: "Mediano",
@@ -351,6 +369,15 @@ const translations = {
     dark_mode_label: "Modalit\u00E0 scura",
     color_label: "Colore di accento",
     appearance_title: "Aspetto",
+    themes_label: "Temi",
+    themes_description: "Scegli una palette per tutta l\u2019estensione. Ogni tema include colori chiari e scuri.",
+    theme_default_accent: "Predefinito del tema",
+    theme_classic: "Classico",
+    theme_ocean: "Oceano",
+    theme_forest: "Foresta",
+    theme_lavender: "Lavanda",
+    theme_rose: "Rosa",
+    theme_sand: "Sabbia",
     popup_size_label: "Dimensione popup",
     popup_size_small: "Piccolo",
     popup_size_medium: "Medio",
@@ -508,6 +535,15 @@ const translations = {
     dark_mode_label: "Mode sombre",
     color_label: "Couleur d'accent",
     appearance_title: "Apparence",
+    themes_label: "Th\u00e8mes",
+    themes_description: "Choisissez une palette pour toute l\u2019extension. Chaque th\u00e8me inclut des couleurs claires et sombres.",
+    theme_default_accent: "Couleur du th\u00e8me",
+    theme_classic: "Classique",
+    theme_ocean: "Oc\u00e9an",
+    theme_forest: "For\u00eat",
+    theme_lavender: "Lavande",
+    theme_rose: "Rose",
+    theme_sand: "Sable",
     popup_size_label: "Taille du popup",
     popup_size_small: "Petite",
     popup_size_medium: "Moyenne",
@@ -665,6 +701,15 @@ const translations = {
     dark_mode_label: "Dunkelmodus",
     color_label: "Akzentfarbe",
     appearance_title: "Darstellung",
+    themes_label: "Themes",
+    themes_description: "W\u00e4hle eine Palette f\u00fcr die gesamte Erweiterung. Jedes Theme umfasst helle und dunkle Farben.",
+    theme_default_accent: "Theme-Standard",
+    theme_classic: "Klassisch",
+    theme_ocean: "Ozean",
+    theme_forest: "Wald",
+    theme_lavender: "Lavendel",
+    theme_rose: "Rose",
+    theme_sand: "Sand",
     popup_size_label: "Popup-Gr\u00F6\u00DFe",
     popup_size_small: "Klein",
     popup_size_medium: "Mittel",
@@ -828,6 +873,35 @@ const SESSION_FOLDERS_KEY = 'sessionFolders';
 let currentLanguage = 'en';
 let reloadSessions = () => {};
 let restoreRequestInFlight = false;
+
+const APPEARANCE_THEMES = ['classic', 'ocean', 'forest', 'lavender', 'rose', 'sand'];
+
+function applyAppearance() {
+  const savedTheme = localStorage.getItem('appearanceTheme');
+  const theme = APPEARANCE_THEMES.includes(savedTheme) ? savedTheme : 'classic';
+  const dark = localStorage.getItem('darkMode') === 'true';
+  const accent = localStorage.getItem('accentColor') || '';
+  document.body.dataset.theme = theme;
+  document.body.classList.toggle('dark-mode', dark);
+  document.body.classList.toggle('light-mode', !dark);
+  if (/^#[0-9a-f]{6}$/i.test(accent)) {
+    document.body.style.setProperty('--accent-color', accent);
+    const channels = accent.slice(1).match(/../g).map(hex => parseInt(hex, 16) / 255);
+    const luminance = channels.map(value => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4)
+      .reduce((sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index], 0);
+    document.body.style.setProperty('--accent-foreground', luminance > 0.179 ? '#000000' : '#ffffff');
+  } else {
+    document.body.style.removeProperty('--accent-color');
+    document.body.style.removeProperty('--accent-foreground');
+  }
+  document.querySelectorAll('input[name="appearanceTheme"]').forEach(input => {
+    input.checked = input.value === theme;
+  });
+  const darkToggle = document.getElementById('darkMode');
+  if (darkToggle) darkToggle.checked = dark;
+  const accentSelect = document.getElementById('accentColor');
+  if (accentSelect) accentSelect.value = /^#[0-9a-f]{6}$/i.test(accent) ? accent : '';
+}
 
 function normalizePopupSize(value) {
   return ['small', 'medium', 'large', 'huge'].includes(value) ? value : 'medium';
@@ -2586,17 +2660,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ACCENT COLOR
-  accentSelect?.addEventListener('change', e => {
-    document.documentElement.style.setProperty('--accent-color', e.target.value);
-    localStorage.setItem('accentColor', e.target.value);
+  document.querySelectorAll('input[name="appearanceTheme"]').forEach(input => {
+    input.addEventListener('change', () => {
+      if (!input.checked) return;
+      localStorage.setItem('appearanceTheme', input.value);
+      localStorage.removeItem('accentColor');
+      applyAppearance();
+    });
   });
 
-  // DARK MODE
-  darkToggle?.addEventListener('change', e => {
-    document.body.classList.toggle('dark-mode', e.target.checked);
-    document.body.classList.toggle('light-mode', !e.target.checked);
-    localStorage.setItem('darkMode', e.target.checked);
+  accentSelect?.addEventListener('change', event => {
+    localStorage.setItem('accentColor', event.target.value);
+    applyAppearance();
+  });
+  darkToggle?.addEventListener('change', event => {
+    localStorage.setItem('darkMode', event.target.checked);
+    applyAppearance();
+  });
+  window.addEventListener('storage', event => {
+    if (['appearanceTheme', 'accentColor', 'darkMode'].includes(event.key)) applyAppearance();
   });
 
   // LANGUAGE SELECTION
@@ -3499,7 +3581,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Carica impostazioni salvate
   function restoreSettings() {
     const savedAccent = localStorage.getItem('accentColor');
-    const savedDark = localStorage.getItem('darkMode');
     const savedLanguage = localStorage.getItem('language');
     const restoreMode = getRestoreMode();
     const autoSaveGroupMode = getAutoSaveGroupMode();
@@ -3515,13 +3596,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         accentSelect.value = savedAccent;
       }
-      document.documentElement.style.setProperty('--accent-color', savedAccent);
     }
-    if (savedDark === 'true') {
-      if (darkToggle) darkToggle.checked = true;
-      document.body.classList.add('dark-mode');
-      document.body.classList.remove('light-mode');
-    }
+    applyAppearance();
     if (savedLanguage) {
       if (languageSelect) languageSelect.value = savedLanguage;
       translatePage(savedLanguage);
