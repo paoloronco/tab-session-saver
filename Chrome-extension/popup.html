@@ -144,6 +144,7 @@
       padding: 1.25rem 1.25rem 1.5rem;
       overflow-y: auto;
       overflow-x: hidden;
+      scrollbar-gutter: stable;
       overscroll-behavior: contain;
       scrollbar-width: thin;
       scrollbar-color: color-mix(in srgb, var(--accent-color) 45%, var(--border-color)) transparent;
@@ -237,10 +238,10 @@
     body.size-huge #main-section {
       display: flex !important;
       flex-direction: column;
-      gap: 1rem;
       padding: 1.25rem 1.5rem 1.5rem;
       overflow-y: auto;
       overflow-x: hidden;
+      scrollbar-gutter: stable;
       overscroll-behavior: contain;
       height: auto;
       min-height: 0;
@@ -261,6 +262,7 @@
       grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
       gap: 0.85rem;
       align-content: start;
+      align-items: start;
     }
 
     /* Settings stay reachable from the gear button */
@@ -374,6 +376,10 @@
 
     #main-section {
       display: block;
+    }
+
+    #main-section > * {
+      flex-shrink: 0;
     }
 
     .session-toolbar {
@@ -684,7 +690,9 @@
     }
 
     .auto-save-trigger-filters[hidden] {
-      display: none;
+      display: grid;
+      visibility: hidden;
+      pointer-events: none;
     }
 
     .auto-save-trigger-filter {
@@ -815,7 +823,10 @@
 
     .session-label strong {
       font-size: 0.95rem;
-      display: inline-block;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       margin-bottom: 0.25rem;
     }
 

@@ -3244,6 +3244,7 @@ document.addEventListener('DOMContentLoaded', () => {
         label.setAttribute('tabindex', '0');
         const labelTitle = document.createElement('strong');
         labelTitle.textContent = sessionName;
+        labelTitle.title = sessionName;
         const labelMeta = document.createElement('div');
         labelMeta.className = 'session-meta';
         renderMetaSegments(labelMeta, metaSegments);
