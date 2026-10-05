@@ -2448,13 +2448,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setCloudSyncBusy(isBusy) {
+    const configured = cloudSyncSettingsState?.configured === true;
     [
       cloudSyncLoginBtn,
       cloudSyncPushBtn,
       cloudSyncPullBtn,
       cloudSyncDisconnectBtn
     ].forEach((button) => {
-      if (button) button.disabled = isBusy;
+      if (button) button.disabled = isBusy || (button === cloudSyncLoginBtn ? configured : !configured);
     });
   }
 
@@ -2474,9 +2475,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ? formatTranslation('cloud_sync_account_label', { email })
         : '';
     }
-    if (cloudSyncPushBtn) cloudSyncPushBtn.disabled = !settings.configured;
-    if (cloudSyncPullBtn) cloudSyncPullBtn.disabled = !settings.configured;
-    if (cloudSyncDisconnectBtn) cloudSyncDisconnectBtn.disabled = !settings.configured;
+    setCloudSyncBusy(false);
 
     if (statusKey) {
       setCloudSyncStatus(statusKey, { type: statusKey === 'cloud_sync_request_error' ? 'error' : 'success' });
