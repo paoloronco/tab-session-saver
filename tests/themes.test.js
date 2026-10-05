@@ -47,6 +47,8 @@ test('themes preserve mode, reset custom accent on selection, and persist across
   }
   h.dark.change({target:{checked:false}});
   assert.ok(h.classes.has('light-mode'));
+  h.themes[0].checked = true;
+  h.themes[0].change();
   h.accent.change({target:{value:'#f35f5f'}});
   assert.equal(h.styles.get('--accent-color'), '#f35f5f');
   assert.equal(h.styles.get('--accent-foreground'), '#000000');
@@ -66,6 +68,9 @@ test('unknown themes and invalid accents fall back safely; other open pages refr
   h.listeners.storage({key:'appearanceTheme'});
   assert.equal(h.body.dataset.theme, 'ocean');
   assert.ok(h.dark.checked);
+  h.settings.set('accentColor', '#ffb020');
+  h.context.applyAppearance();
+  assert.equal(h.styles.has('--accent-color'), false);
   for (const page of ['popup.html','settings.html']) {
     assert.match(fs.readFileSync(path.join(root,page),'utf8'), /href="themes.css"/);
   }

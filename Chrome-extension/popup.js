@@ -895,7 +895,7 @@ function applyAppearance() {
   const savedTheme = localStorage.getItem('appearanceTheme');
   const theme = APPEARANCE_THEMES.includes(savedTheme) ? savedTheme : 'classic';
   const dark = localStorage.getItem('darkMode') === 'true';
-  const accent = localStorage.getItem('accentColor') || '';
+  const accent = theme === 'classic' ? localStorage.getItem('accentColor') || '' : '';
   document.body.dataset.theme = theme;
   document.body.classList.toggle('dark-mode', dark);
   document.body.classList.toggle('light-mode', !dark);
