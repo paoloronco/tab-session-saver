@@ -26,6 +26,10 @@ const translations = {
     delete_folder_with_sessions_confirm: "Folder \"{name}\" contains {count} sessions. Delete those sessions too?",
     delete_folder_keep_sessions_confirm: "Keep the sessions and delete only folder \"{name}\"?",
     unfiled_sessions_title: "Other sessions",
+    export_session_button: "Export session (JSON)",
+    import_drop_hint: "Drop JSON files here to import sessions",
+    import_success: "Import successful",
+    import_error: "Import/export failed: ",
     export_button: "Export saved sessions (JSON)",
     import_button: "Import sessions (JSON)",
     settings_title: "Settings",
@@ -179,6 +183,10 @@ const translations = {
     delete_folder_with_sessions_confirm: "La carpeta \"{name}\" contiene {count} sesiones. \u00BFEliminar tambi\u00E9n esas sesiones?",
     delete_folder_keep_sessions_confirm: "\u00BFConservar las sesiones y eliminar solo la carpeta \"{name}\"?",
     unfiled_sessions_title: "Otras sesiones",
+    export_session_button: "Exportar sesi\u00f3n (JSON)",
+    import_drop_hint: "Suelta archivos JSON aqu\u00ed para importar sesiones",
+    import_success: "Importaci\u00f3n completada",
+    import_error: "Error al importar/exportar: ",
     export_button: "Exportar sesiones guardadas (JSON)",
     import_button: "Importar sesiones (JSON)",
     settings_title: "Configuraci\u00F3n",
@@ -332,6 +340,10 @@ const translations = {
     delete_folder_with_sessions_confirm: "La cartella \"{name}\" contiene {count} sessioni. Eliminare anche queste sessioni?",
     delete_folder_keep_sessions_confirm: "Tenere le sessioni ed eliminare solo la cartella \"{name}\"?",
     unfiled_sessions_title: "Altre sessioni",
+    export_session_button: "Esporta sessione (JSON)",
+    import_drop_hint: "Rilascia qui i file JSON per importare le sessioni",
+    import_success: "Importazione completata",
+    import_error: "Importazione/esportazione non riuscita: ",
     export_button: "Esporta le sessioni salvate (JSON)",
     import_button: "Importa le sessioni (JSON)",
     settings_title: "Impostazioni",
@@ -485,6 +497,10 @@ const translations = {
     delete_folder_with_sessions_confirm: "Le dossier \"{name}\" contient {count} sessions. Supprimer aussi ces sessions ?",
     delete_folder_keep_sessions_confirm: "Conserver les sessions et supprimer seulement le dossier \"{name}\" ?",
     unfiled_sessions_title: "Autres sessions",
+    export_session_button: "Exporter la session (JSON)",
+    import_drop_hint: "D\u00e9posez les fichiers JSON ici pour importer des sessions",
+    import_success: "Importation r\u00e9ussie",
+    import_error: "\u00c9chec de l'import/export : ",
     export_button: "Exporter les sessions enregistr\u00E9es (JSON)",
     import_button: "Importer des sessions (JSON)",
     settings_title: "Param\u00E8tres",
@@ -638,6 +654,10 @@ const translations = {
     delete_folder_with_sessions_confirm: "Ordner \"{name}\" enth\u00E4lt {count} Sitzungen. Diese Sitzungen ebenfalls l\u00F6schen?",
     delete_folder_keep_sessions_confirm: "Sitzungen behalten und nur Ordner \"{name}\" l\u00F6schen?",
     unfiled_sessions_title: "Weitere Sitzungen",
+    export_session_button: "Sitzung exportieren (JSON)",
+    import_drop_hint: "JSON-Dateien hier ablegen, um Sitzungen zu importieren",
+    import_success: "Import erfolgreich",
+    import_error: "Import/Export fehlgeschlagen: ",
     export_button: "Gespeicherte Sitzungen exportieren (JSON)",
     import_button: "Sitzungen importieren (JSON)",
     settings_title: "Einstellungen",
@@ -867,6 +887,34 @@ function combineSessionCollections(existing, additions) {
   const currentSessions = Array.isArray(existing) ? existing : [];
   const newSessions = Array.isArray(additions) ? additions : [];
   return currentSessions.concat(newSessions);
+}
+
+function downloadSessions(sessions, filename) {
+  const blob = new Blob([JSON.stringify(sessions, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function parseImportedSessions(text, baseCount = 0) {
+  const parsed = JSON.parse(text);
+  if (!Array.isArray(parsed) || !parsed.every(item => item && typeof item === 'object')) {
+    throw new Error('Invalid format: expected an array of sessions');
+  }
+  const sessions = parsed.map((item, index) => {
+    const normalized = normalizeSessionSnapshot(item);
+    if (!normalized.name) {
+      normalized.name = `${getTranslation('session_default_name')} ${baseCount + index + 1}`;
+    }
+    return normalized;
+  }).filter(session => describeSessionCounts(session).tabsCount > 0);
+  if (!sessions.length) throw new Error('No restorable tabs were found in the import file');
+  return sessions;
 }
 
 function reorderSessionCollection(sessions, fromIndex, toIndex, placement = 'before') {
@@ -2571,108 +2619,79 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // EXPORT SESSIONS
+  // Backups and individual sessions share the same JSON array format.
   const exportBtn = document.getElementById('exportSessions');
-  if (exportBtn) {
-    exportBtn.addEventListener('click', () => {
-      chrome.runtime.sendMessage({ action: 'get_sessions' }, (sessions) => {
-        try {
-          const dataStr = JSON.stringify(sessions, null, 2);
-          const blob = new Blob([dataStr], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `tabs-sessions-${timestamp}.json`;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
-        } catch (err) {
-          console.error('Export error', err);
-        }
-      });
+  exportBtn?.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: 'get_sessions' }, (sessions) => {
+      if (chrome.runtime.lastError || !Array.isArray(sessions)) {
+        alert(getTranslation('import_error') + (chrome.runtime.lastError?.message || 'Unable to load sessions'));
+        return;
+      }
+      downloadSessions(sessions, `tabs-sessions-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
     });
+  });
+
+  async function importSessionFile(file, askToReplace = false) {
+    if (!file) return;
+    try {
+      if (file.size > MAX_IMPORT_FILE_BYTES) throw new Error('Import file is too large (maximum 5 MB)');
+      const text = await file.text();
+      // Validate before offering to replace existing data.
+      parseImportedSessions(text);
+      const replace = askToReplace && confirm('Replace existing sessions with imported ones? Click OK to replace, Cancel to merge.');
+      const existing = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ action: 'get_sessions' }, (sessions) => {
+          if (chrome.runtime.lastError || !Array.isArray(sessions)) {
+            reject(new Error(chrome.runtime.lastError?.message || 'Unable to load existing sessions'));
+          } else {
+            resolve(sessions);
+          }
+        });
+      });
+      const imported = parseImportedSessions(text, replace ? 0 : existing.length);
+      await sendRuntimeMessage({
+        action: 'replace_sessions',
+        sessions: replace ? imported : combineSessionCollections(existing, imported),
+        reason: 'import_sessions'
+      });
+      setActiveSessionCategory(getSessionSaveType(imported[0]));
+      setAutoSaveTriggerFilter(AUTO_SAVE_TRIGGER_ALL);
+      if (searchInput) searchInput.value = '';
+      loadSessions();
+      alert(getTranslation('import_success'));
+    } catch (error) {
+      alert(getTranslation('import_error') + (error.message || error.error || String(error)));
+    }
   }
 
-  // IMPORT SESSIONS
   const importBtn = document.getElementById('importSessions');
   const importInput = document.getElementById('importFileInput');
-  if (importBtn && importInput) {
-    importBtn.addEventListener('click', () => {
-      importInput.value = null;
-      importInput.click();
-    });
+  importBtn?.addEventListener('click', () => {
+    importInput.value = '';
+    importInput.click();
+  });
+  importInput?.addEventListener('change', event => importSessionFile(event.target.files?.[0], true));
 
-    importInput.addEventListener('change', (e) => {
-      try {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
-        if (file.size > MAX_IMPORT_FILE_BYTES) {
-          throw new Error('Import file is too large');
-        }
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          try {
-            const parsed = JSON.parse(ev.target.result);
-            if (!Array.isArray(parsed)) throw new Error('Invalid format: expected an array');
-
-            const valid = parsed.every(item => item && typeof item === 'object');
-            if (!valid) throw new Error('Invalid session objects');
-
-            const replace = confirm('Replace existing sessions with imported ones? Click OK to replace, Cancel to merge.');
-
-            chrome.runtime.sendMessage({ action: 'get_sessions' }, (existingRaw) => {
-              try {
-                const existing = Array.isArray(existingRaw) ? existingRaw : [];
-                let resultSessions = replace ? [] : existing.slice();
-                const baseCount = resultSessions.length;
-
-                const importedSessions = parsed.map((item, idx) => {
-                  const normalized = normalizeSessionSnapshot(item);
-                  if (!normalized.name || !normalized.name.trim()) {
-                    normalized.name = `${getTranslation('session_default_name')} ${baseCount + idx + 1}`;
-                  }
-                  return normalized;
-                }).filter((session) => describeSessionCounts(session).tabsCount > 0);
-                if (!importedSessions.length) {
-                  throw new Error('No restorable tabs were found in the import file');
-                }
-
-                resultSessions = replace
-                  ? importedSessions
-                  : combineSessionCollections(resultSessions, importedSessions);
-
-                chrome.runtime.sendMessage({ action: 'replace_sessions', sessions: resultSessions, reason: 'import_sessions' }, (response) => {
-                  try {
-                    if (chrome.runtime.lastError || !response?.success) {
-                      const message = chrome.runtime.lastError?.message || response?.error || 'Unknown error';
-                      console.error('Import persist error', chrome.runtime.lastError || response);
-                      alert('Failed to import sessions: ' + message);
-                      return;
-                    }
-                    loadSessions();
-                    alert('Import successful');
-                  } catch (e) {
-                    console.error('Error in import set callback', e);
-                  }
-                });
-              } catch (e) {
-                console.error('Error in import get_sessions callback', e);
-                alert('Failed to import sessions: ' + (e.message || e));
-              }
-            });
-          } catch (err) {
-            console.error('Import error', err);
-            alert('Failed to import sessions: ' + (err.message || err));
-          }
-        };
-        reader.readAsText(file);
-      } catch (e) {
-        console.error('Error in import change', e);
-      }
-    });
-  }
+  const hasDraggedFiles = event => Array.from(event.dataTransfer?.types || []).includes('Files');
+  document.addEventListener('dragover', event => {
+    if (!hasDraggedFiles(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'copy';
+    document.body.classList.add('import-drag-over');
+  }, true);
+  document.addEventListener('dragleave', event => {
+    if (!event.relatedTarget) document.body.classList.remove('import-drag-over');
+  });
+  document.addEventListener('drop', async event => {
+    if (!hasDraggedFiles(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    document.body.classList.remove('import-drag-over');
+    for (const file of Array.from(event.dataTransfer.files)) {
+      await importSessionFile(file);
+    }
+  }, true);
 
   // SETTINGS PAGE
   const settingsBtn = document.getElementById('settings-icon');
@@ -3277,9 +3296,18 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         });
 
+        const exportSessionBtn = document.createElement('button');
+        exportSessionBtn.textContent = getTranslation('export_session_button');
+        exportSessionBtn.addEventListener('click', () => {
+          closeAllMenus();
+          const filename = sessionName.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').slice(0, 100) || 'session';
+          downloadSessions([sessionPayload], `${filename}.json`);
+        });
+
         menu.appendChild(previewBtn);
         menu.appendChild(addItemBtn);
         menu.appendChild(renameBtn);
+        menu.appendChild(exportSessionBtn);
         menu.appendChild(deleteBtn);
 
         const menuWrapper = document.createElement('div');

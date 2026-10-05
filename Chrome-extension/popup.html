@@ -2077,12 +2077,30 @@
     body.dark-mode .browser-support-status-warn {
       color: #ffd070;
     }
+    #import-drop-hint {
+      display: none;
+      position: fixed;
+      inset: 12px;
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      border: 3px dashed var(--accent-color);
+      border-radius: 16px;
+      background: var(--surface);
+      color: var(--text-primary);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    body.import-drag-over #import-drop-hint { display: flex; }
   </style>
   <script src="browser-support.js" defer></script>
   <script src="popup.js" defer></script>
 </head>
 
 <body class="light-mode">
+  <div id="import-drop-hint" role="status" data-translate="import_drop_hint">Drop JSON files here to import sessions</div>
   <div class="popup">
     <header>
       <div class="header-main">
