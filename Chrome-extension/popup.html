@@ -324,17 +324,8 @@
     .app-icon {
       width: 48px;
       height: 48px;
-      border-radius: 12px;
-      background: color-mix(in srgb, var(--accent-color) 12%, transparent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .app-icon svg {
-      width: 28px;
-      height: 28px;
-      stroke: var(--accent-color);
+      flex-shrink: 0;
+      object-fit: contain;
     }
 
     h1 {
@@ -2117,16 +2108,7 @@
   <div class="popup">
     <header>
       <div class="header-main">
-        <div class="app-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M4.5 5.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v5h-15v-5z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path d="M7 5.5h.01" stroke-width="2" stroke-linecap="round"></path>
-            <path d="M11 5.5h.01" stroke-width="2" stroke-linecap="round"></path>
-            <path d="M4 10.5h16v3" stroke-width="1.6" stroke-linecap="round"></path>
-            <path d="M8 13.5l4 4 4-4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path d="M6.5 18.5h11" stroke-width="1.6" stroke-linecap="round"></path>
-          </svg>
-        </div>
+        <img class="app-icon" src="img-128128.png" width="48" height="48" alt="">
         <div>
           <h1 data-translate="title">Tab Session Saver</h1>
           <p class="subtitle" data-translate="subtitle">Keep your workspaces ready in one click.</p>
