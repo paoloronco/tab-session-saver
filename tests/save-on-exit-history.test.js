@@ -13,7 +13,7 @@ const workerSource = fs.readFileSync(
   'utf8'
 );
 const settingsSource = fs.readFileSync(
-  path.join(__dirname, '..', 'Chrome-extension', 'settings.html'),
+  path.join(__dirname, '..', 'Chrome-extension', 'settings.css'),
   'utf8'
 );
 
@@ -320,7 +320,7 @@ test('Settings shows the interval only for scheduled Auto Save', () => {
   );
   assert.match(
     settingsSource,
-    /\.auto-save-interval\.is-visible\s*\{[^}]*display:\s*grid;/s
+    /\.auto-save-interval\.is-visible\s*\{[^}]*display:\s*flex;/s
   );
 });
 

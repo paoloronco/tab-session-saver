@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.16.3-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.17.0-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -80,6 +80,8 @@ To export one session, open its **⋮ menu → Export session (JSON)**. Drop the
 
 In **Settings → Appearance**, select **Classic, Ocean, Forest, Lavender, Rose, or Sand**. Each theme changes backgrounds, surfaces, text, and accents across the popup and Settings. The **Dark mode** toggle switches to the theme's dark palette. **Accent color** is available only for Classic and disappears for the other themes, which use their preset palette. Choosing a new theme resets a custom accent.
 
+Settings opens in its own browser tab. Use the sidebar to switch between Appearance, Language, Restore behavior, Auto Save, Backup, Cloud Sync, Newsletter, and About & support. Each section has a direct link, supports browser back/forward navigation, and adapts to narrow windows. Preferences save as you change them.
+
 ---
 
 ## Quick Start
@@ -131,6 +133,8 @@ tabs-session-saver/
 │   ├── popup.html             # Popup UI markup
 │   ├── popup.js               # Popup logic: sessions, search, import/export, settings
 │   ├── settings.html          # Dedicated extension settings page
+│   ├── settings.css           # Responsive settings layout and controls
+│   ├── settings.js            # Settings navigation and page-specific translations
 │   ├── themes.css             # Shared light/dark palettes and theme previews
 │   ├── welcome.html           # Onboarding page shown on first install
 │   ├── welcome.js             # Onboarding behavior and translations
@@ -152,6 +156,13 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 7.17.0
+- redesigned Settings as a dedicated browser tab with grouped sidebar navigation and one focused section at a time
+- rebuilt theme previews, display controls, illustrated restore choices, backup cards, Cloud Sync, newsletter, and support sections
+- added direct section links, browser history navigation, keyboard focus, reduced-motion support, and responsive horizontal navigation
+- translated all new settings copy in English, Italian, Spanish, French, and German
+- preserved existing session, backup, theme, and sync behavior; updated extension version to `7.17.0`
 
 ### 7.16.3
 - made the session menu a compact 180 px wide, with longer labels wrapping while preserving button alignment
