@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.18.1-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-8.0.0-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -157,34 +157,19 @@ tabs-session-saver/
 <details>
 <summary>View full changelog</summary>
 
-### 7.18.1
-- removed the automatic "Other sessions" folder: unfiled manual and automatic sessions remain directly in the list
-- preserved explicit drag into folders and drag back into the main list; updated extension version to `7.18.1`
-
-### 7.18.0
-- added a three-dot menu to each saved folder with Rename and Delete folder actions
-- folder renaming updates manual and automatic session metadata; deletion retains the choice to keep or delete contained sessions
-- kept empty folders accessible even when no sessions remain; updated extension version to `7.18.0`
-
-### 7.17.3
-- replaced garbled folder disclosure symbols with simple arrows using encoding-safe CSS escapes
-- updated extension version to `7.17.3`
-
-### 7.17.2
-- replaced the popup header illustration with the extension's own logo
-- updated extension version to `7.17.2`
-
-### 7.17.1
-- removed the automatic-save notice and newsletter promotional copy and illustration from Settings
-- replaced the settings button artwork with a conventional gear icon
-- updated extension version to `7.17.1`
-
-### 7.17.0
+### 8.0.0
 - redesigned Settings as a dedicated browser tab with grouped sidebar navigation and one focused section at a time
 - rebuilt theme previews, display controls, illustrated restore choices, backup cards, Cloud Sync, newsletter, and support sections
 - added direct section links, browser history navigation, keyboard focus, reduced-motion support, and responsive horizontal navigation
 - translated all new settings copy in English, Italian, Spanish, French, and German
-- preserved existing session, backup, theme, and sync behavior; updated extension version to `7.17.0`
+- removed the automatic-save notice and newsletter promotional copy and illustration from Settings, keeping the newsletter icon in the sidebar
+- replaced the settings button artwork with a conventional gear icon and the popup header illustration with the extension's own logo
+- replaced garbled folder disclosure symbols with simple arrows using encoding-safe CSS escapes
+- added a three-dot menu to each saved folder with Rename and Delete folder actions
+- folder renaming updates manual and automatic session metadata; deletion retains the choice to keep or delete contained sessions
+- kept empty folders accessible even when no sessions remain
+- removed the automatic "Other sessions" folder: unfiled manual and automatic sessions remain directly in the list, with explicit drag into folders and back into the main list
+- preserved existing session, backup, theme, and sync behavior; consolidated this redesign and its refinements into version `8.0.0`
 
 ### 7.16.3
 - made the session menu a compact 180 px wide, with longer labels wrapping while preserving button alignment
