@@ -29,7 +29,6 @@ const translations = {
     delete_folder_empty_confirm: "Delete folder \"{name}\"?",
     delete_folder_with_sessions_confirm: "Folder \"{name}\" contains {count} sessions. Delete those sessions too?",
     delete_folder_keep_sessions_confirm: "Keep the sessions and delete only folder \"{name}\"?",
-    unfiled_sessions_title: "Other sessions",
     export_session_button: "Export session (JSON)",
     import_drop_hint: "Drop JSON files here to import sessions",
     import_success: "Import successful",
@@ -202,7 +201,6 @@ const translations = {
     delete_folder_empty_confirm: "\u00BFEliminar la carpeta \"{name}\"?",
     delete_folder_with_sessions_confirm: "La carpeta \"{name}\" contiene {count} sesiones. \u00BFEliminar tambi\u00E9n esas sesiones?",
     delete_folder_keep_sessions_confirm: "\u00BFConservar las sesiones y eliminar solo la carpeta \"{name}\"?",
-    unfiled_sessions_title: "Otras sesiones",
     export_session_button: "Exportar sesi\u00f3n (JSON)",
     import_drop_hint: "Suelta archivos JSON aqu\u00ed para importar sesiones",
     import_success: "Importaci\u00f3n completada",
@@ -375,7 +373,6 @@ const translations = {
     delete_folder_empty_confirm: "Eliminare la cartella \"{name}\"?",
     delete_folder_with_sessions_confirm: "La cartella \"{name}\" contiene {count} sessioni. Eliminare anche queste sessioni?",
     delete_folder_keep_sessions_confirm: "Tenere le sessioni ed eliminare solo la cartella \"{name}\"?",
-    unfiled_sessions_title: "Altre sessioni",
     export_session_button: "Esporta sessione (JSON)",
     import_drop_hint: "Rilascia qui i file JSON per importare le sessioni",
     import_success: "Importazione completata",
@@ -548,7 +545,6 @@ const translations = {
     delete_folder_empty_confirm: "Supprimer le dossier \"{name}\" ?",
     delete_folder_with_sessions_confirm: "Le dossier \"{name}\" contient {count} sessions. Supprimer aussi ces sessions ?",
     delete_folder_keep_sessions_confirm: "Conserver les sessions et supprimer seulement le dossier \"{name}\" ?",
-    unfiled_sessions_title: "Autres sessions",
     export_session_button: "Exporter la session (JSON)",
     import_drop_hint: "D\u00e9posez les fichiers JSON ici pour importer des sessions",
     import_success: "Importation r\u00e9ussie",
@@ -721,7 +717,6 @@ const translations = {
     delete_folder_empty_confirm: "Ordner \"{name}\" l\u00F6schen?",
     delete_folder_with_sessions_confirm: "Ordner \"{name}\" enth\u00E4lt {count} Sitzungen. Diese Sitzungen ebenfalls l\u00F6schen?",
     delete_folder_keep_sessions_confirm: "Sitzungen behalten und nur Ordner \"{name}\" l\u00F6schen?",
-    unfiled_sessions_title: "Weitere Sitzungen",
     export_session_button: "Sitzung exportieren (JSON)",
     import_drop_hint: "JSON-Dateien hier ablegen, um Sitzungen zu importieren",
     import_success: "Import erfolgreich",
@@ -3034,7 +3029,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .forEach((entry) => {
         entry.classList.remove('drag-over-before', 'drag-over-after', 'is-dragging');
       });
-    document.querySelectorAll('.session-folder.is-folder-drop-target')
+    document.querySelectorAll('.is-folder-drop-target')
       .forEach((folderEl) => folderEl.classList.remove('is-folder-drop-target'));
   }
 
@@ -3166,6 +3161,7 @@ document.addEventListener('DOMContentLoaded', () => {
     folderEl.addEventListener('dragover', (event) => {
       if (!Number.isInteger(activeDragSessionIndex)) return;
       event.preventDefault();
+      event.stopPropagation();
       setFolderDropTargetState(folderEl, true);
       if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
     });
@@ -3186,19 +3182,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function createSessionFolderElement(folder, count, { unfiled = false } = {}) {
+  function createSessionFolderElement(folder, count) {
     const details = document.createElement('details');
-    details.className = unfiled ? 'session-folder session-folder-unfiled' : 'session-folder';
+    details.className = 'session-folder';
     details.open = true;
-    details.dataset.folderId = folder?.id || '';
-    bindFolderDropTarget(details, folder?.id || '');
+    details.dataset.folderId = folder.id;
+    bindFolderDropTarget(details, folder.id);
 
     const summary = document.createElement('summary');
     summary.className = 'session-folder-summary';
 
     const title = document.createElement('span');
     title.className = 'session-folder-title';
-    title.textContent = unfiled ? getTranslation('unfiled_sessions_title') : folder.name;
+    title.textContent = folder.name;
 
     const countBadge = document.createElement('span');
     countBadge.className = 'session-folder-count';
@@ -3208,61 +3204,59 @@ document.addEventListener('DOMContentLoaded', () => {
     summary.appendChild(title);
     summary.appendChild(countBadge);
 
-    if (!unfiled) {
-      const menuBtn = document.createElement('button');
-      menuBtn.className = 'menu-button folder-menu-button';
-      menuBtn.type = 'button';
-      menuBtn.setAttribute('aria-label', formatTranslation('folder_menu_label', { name: folder.name }));
-      menuBtn.setAttribute('aria-expanded', 'false');
-      menuBtn.appendChild(createMenuIcon());
+    const menuBtn = document.createElement('button');
+    menuBtn.className = 'menu-button folder-menu-button';
+    menuBtn.type = 'button';
+    menuBtn.setAttribute('aria-label', formatTranslation('folder_menu_label', { name: folder.name }));
+    menuBtn.setAttribute('aria-expanded', 'false');
+    menuBtn.appendChild(createMenuIcon());
 
-      const menu = document.createElement('div');
-      menu.className = 'menu-content folder-menu-content';
-      const renameBtn = document.createElement('button');
-      renameBtn.type = 'button';
-      renameBtn.textContent = getTranslation('rename_button');
-      renameBtn.addEventListener('click', () => {
-        closeAllMenus();
-        openRenameDialog(null, folder.name, folder.id);
-      });
-      const deleteBtn = document.createElement('button');
-      deleteBtn.type = 'button';
-      deleteBtn.textContent = getTranslation('delete_folder_label');
-      deleteBtn.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        closeAllMenus();
-        handleDeleteFolder(folder.id);
-      });
-      menu.appendChild(renameBtn);
-      menu.appendChild(deleteBtn);
-      const menuWrapper = document.createElement('div');
-      menuWrapper.className = 'menu-wrapper';
-      menuWrapper.appendChild(menuBtn);
-      menuWrapper.appendChild(menu);
-      menu._originalParent = menuWrapper;
-      menuBtn.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const wasOpen = menu.style.display === 'block';
-        closeAllMenus();
-        if (wasOpen) return;
-        document.body.appendChild(menu);
-        menu.style.display = 'block';
-        positionSessionMenu(menu, menuBtn);
-        menuBtn.setAttribute('aria-expanded', 'true');
-        renameBtn.focus();
-      });
-      menu.addEventListener('click', event => event.stopPropagation());
-      menu.addEventListener('keydown', (event) => {
-        if (event.key !== 'Escape') return;
-        event.preventDefault();
-        event.stopPropagation();
-        closeAllMenus({ preservePreviews: true });
-        menuBtn.focus();
-      });
-      summary.appendChild(menuWrapper);
-    }
+    const menu = document.createElement('div');
+    menu.className = 'menu-content folder-menu-content';
+    const renameBtn = document.createElement('button');
+    renameBtn.type = 'button';
+    renameBtn.textContent = getTranslation('rename_button');
+    renameBtn.addEventListener('click', () => {
+      closeAllMenus();
+      openRenameDialog(null, folder.name, folder.id);
+    });
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.textContent = getTranslation('delete_folder_label');
+    deleteBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeAllMenus();
+      handleDeleteFolder(folder.id);
+    });
+    menu.appendChild(renameBtn);
+    menu.appendChild(deleteBtn);
+    const menuWrapper = document.createElement('div');
+    menuWrapper.className = 'menu-wrapper';
+    menuWrapper.appendChild(menuBtn);
+    menuWrapper.appendChild(menu);
+    menu._originalParent = menuWrapper;
+    menuBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const wasOpen = menu.style.display === 'block';
+      closeAllMenus();
+      if (wasOpen) return;
+      document.body.appendChild(menu);
+      menu.style.display = 'block';
+      positionSessionMenu(menu, menuBtn);
+      menuBtn.setAttribute('aria-expanded', 'true');
+      renameBtn.focus();
+    });
+    menu.addEventListener('click', event => event.stopPropagation());
+    menu.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeAllMenus({ preservePreviews: true });
+      menuBtn.focus();
+    });
+    summary.appendChild(menuWrapper);
 
     const sessionsEl = document.createElement('div');
     sessionsEl.className = 'session-folder-sessions';
@@ -3402,13 +3396,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const queryText = typeof query === 'string' ? query.trim() : '';
       searchEmptyState.style.display = matchingSessions.length === 0 && (queryText || sessionFolders.length === 0) ? 'block' : 'none';
       const folderMatches = new Map();
-      const unfiledMatches = [];
       matchingSessions.forEach((match) => {
         const folderId = getSessionFolderId(match.sessionData);
-        if (!folderId) {
-          unfiledMatches.push(match);
-          return;
-        }
+        if (!folderId) return;
         if (!folderMatches.has(folderId)) folderMatches.set(folderId, []);
         folderMatches.get(folderId).push(match);
       });
@@ -3422,19 +3412,6 @@ document.addEventListener('DOMContentLoaded', () => {
         folderTargets.set(folder.id, sessionsEl);
         container.appendChild(folderEl);
       });
-
-      let unfiledSessionsTarget = container;
-      const shouldRenderUnfiledBucket = visibleFolders.length > 0 || sessionFolders.length > 0;
-      if (shouldRenderUnfiledBucket && (unfiledMatches.length > 0 || !queryText)) {
-        const { folderEl, sessionsEl } = createSessionFolderElement(
-          { id: '', name: getTranslation('unfiled_sessions_title') },
-          unfiledMatches.length,
-          { unfiled: true }
-        );
-        unfiledSessionsTarget = sessionsEl;
-        if (unfiledMatches.length === 0) sessionsEl.appendChild(createFolderEmptyState());
-        container.appendChild(folderEl);
-      }
 
       matchingSessions.forEach(({ sessionData: normalized, originalIndex: index }) => {
         const entry = document.createElement('div');
@@ -3679,8 +3656,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         entry.appendChild(topRow);
         entry.appendChild(previewContainer);
-        const folderId = getSessionFolderId(normalized);
-        const target = folderId ? (folderTargets.get(folderId) || container) : unfiledSessionsTarget;
+        const target = folderTargets.get(getSessionFolderId(normalized)) || container;
         target.appendChild(entry);
       });
   }
@@ -3755,7 +3731,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   restoreSettings();
-  if (document.getElementById('sessions')) {
+  const sessionList = document.getElementById('sessions');
+  if (sessionList) {
+    bindFolderDropTarget(sessionList);
     loadSessions();
   }
 

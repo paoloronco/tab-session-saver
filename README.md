@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.18.0-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.18.1-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -156,6 +156,10 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 7.18.1
+- removed the automatic "Other sessions" folder: unfiled manual and automatic sessions remain directly in the list
+- preserved explicit drag into folders and drag back into the main list; updated extension version to `7.18.1`
 
 ### 7.18.0
 - added a three-dot menu to each saved folder with Rename and Delete folder actions
