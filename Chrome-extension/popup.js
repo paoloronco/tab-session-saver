@@ -21,6 +21,10 @@ const translations = {
     create_folder_prompt: "Folder name:",
     default_folder_name: "New folder",
     folder_empty: "Drop sessions here",
+    folder_menu_label: "Actions for folder {name}",
+    rename_folder_prompt: "Enter a new name for this folder:",
+    rename_folder_empty_error: "Enter a folder name.",
+    rename_folder_failed_error: "Could not rename the folder. Try again.",
     delete_folder_label: "Delete folder",
     delete_folder_empty_confirm: "Delete folder \"{name}\"?",
     delete_folder_with_sessions_confirm: "Folder \"{name}\" contains {count} sessions. Delete those sessions too?",
@@ -190,6 +194,10 @@ const translations = {
     create_folder_prompt: "Nombre de la carpeta:",
     default_folder_name: "Nueva carpeta",
     folder_empty: "Suelta sesiones aqu\u00ED",
+    folder_menu_label: "Acciones para la carpeta {name}",
+    rename_folder_prompt: "Introduce un nuevo nombre para esta carpeta:",
+    rename_folder_empty_error: "Introduce un nombre de carpeta.",
+    rename_folder_failed_error: "No se pudo renombrar la carpeta. Int\u00E9ntalo de nuevo.",
     delete_folder_label: "Eliminar carpeta",
     delete_folder_empty_confirm: "\u00BFEliminar la carpeta \"{name}\"?",
     delete_folder_with_sessions_confirm: "La carpeta \"{name}\" contiene {count} sesiones. \u00BFEliminar tambi\u00E9n esas sesiones?",
@@ -359,6 +367,10 @@ const translations = {
     create_folder_prompt: "Nome cartella:",
     default_folder_name: "Nuova cartella",
     folder_empty: "Trascina qui le sessioni",
+    folder_menu_label: "Azioni per la cartella {name}",
+    rename_folder_prompt: "Inserisci un nuovo nome per questa cartella:",
+    rename_folder_empty_error: "Inserisci un nome per la cartella.",
+    rename_folder_failed_error: "Impossibile rinominare la cartella. Riprova.",
     delete_folder_label: "Elimina cartella",
     delete_folder_empty_confirm: "Eliminare la cartella \"{name}\"?",
     delete_folder_with_sessions_confirm: "La cartella \"{name}\" contiene {count} sessioni. Eliminare anche queste sessioni?",
@@ -528,6 +540,10 @@ const translations = {
     create_folder_prompt: "Nom du dossier :",
     default_folder_name: "Nouveau dossier",
     folder_empty: "D\u00E9posez des sessions ici",
+    folder_menu_label: "Actions pour le dossier {name}",
+    rename_folder_prompt: "Entrez un nouveau nom pour ce dossier :",
+    rename_folder_empty_error: "Entrez un nom de dossier.",
+    rename_folder_failed_error: "Impossible de renommer le dossier. R\u00E9essayez.",
     delete_folder_label: "Supprimer le dossier",
     delete_folder_empty_confirm: "Supprimer le dossier \"{name}\" ?",
     delete_folder_with_sessions_confirm: "Le dossier \"{name}\" contient {count} sessions. Supprimer aussi ces sessions ?",
@@ -697,6 +713,10 @@ const translations = {
     create_folder_prompt: "Ordnername:",
     default_folder_name: "Neuer Ordner",
     folder_empty: "Sitzungen hier ablegen",
+    folder_menu_label: "Aktionen f\u00FCr Ordner {name}",
+    rename_folder_prompt: "Gib einen neuen Namen f\u00FCr diesen Ordner ein:",
+    rename_folder_empty_error: "Gib einen Ordnernamen ein.",
+    rename_folder_failed_error: "Der Ordner konnte nicht umbenannt werden. Versuche es erneut.",
     delete_folder_label: "Ordner l\u00F6schen",
     delete_folder_empty_confirm: "Ordner \"{name}\" l\u00F6schen?",
     delete_folder_with_sessions_confirm: "Ordner \"{name}\" enth\u00E4lt {count} Sitzungen. Diese Sitzungen ebenfalls l\u00F6schen?",
@@ -2303,14 +2323,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const renameDialog = document.getElementById('rename-dialog');
   const renameForm = document.getElementById('rename-form');
   const renameInput = document.getElementById('rename-input');
+  const renamePrompt = document.getElementById('rename-prompt');
   const renameError = document.getElementById('rename-error');
   const renameCancel = document.getElementById('rename-cancel');
   const renameSubmit = document.getElementById('rename-submit');
   let pendingRenameIndex = null;
+  let pendingRenameFolderId = '';
 
-  function openRenameDialog(index, name) {
+  function openRenameDialog(index, name, folderId = '') {
     if (!renameDialog) return;
     pendingRenameIndex = index;
+    pendingRenameFolderId = folderId;
+    renameInput.maxLength = folderId ? 80 : 160;
+    renamePrompt.setAttribute('data-translate', folderId ? 'rename_folder_prompt' : 'rename_prompt');
+    renamePrompt.textContent = getTranslation(folderId ? 'rename_folder_prompt' : 'rename_prompt');
     renameInput.value = name;
     renameError.textContent = '';
     renameInput.removeAttribute('aria-invalid');
@@ -2320,16 +2346,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   renameCancel?.addEventListener('click', () => renameDialog.close());
-  renameDialog?.addEventListener('close', () => { pendingRenameIndex = null; });
+  renameDialog?.addEventListener('close', () => {
+    pendingRenameIndex = null;
+    pendingRenameFolderId = '';
+  });
   renameDialog?.addEventListener('cancel', event => {
     if (renameSubmit.disabled) event.preventDefault();
   });
   renameForm?.addEventListener('submit', async event => {
     event.preventDefault();
-    if (!Number.isInteger(pendingRenameIndex) || renameSubmit.disabled) return;
-    const newName = renameInput.value.trim().slice(0, 160);
+    if ((!pendingRenameFolderId && !Number.isInteger(pendingRenameIndex)) || renameSubmit.disabled) return;
+    const folderId = pendingRenameFolderId;
+    const newName = renameInput.value.trim().slice(0, folderId ? 80 : 160);
     if (!newName) {
-      renameError.textContent = getTranslation('rename_empty_error');
+      renameError.textContent = getTranslation(folderId ? 'rename_folder_empty_error' : 'rename_empty_error');
       renameInput.setAttribute('aria-invalid', 'true');
       renameInput.focus();
       return;
@@ -2338,11 +2368,23 @@ document.addEventListener('DOMContentLoaded', () => {
     renameInput.removeAttribute('aria-invalid');
     renameSubmit.disabled = renameCancel.disabled = renameInput.disabled = true;
     try {
-      await sendRuntimeMessage({ action: 'rename_session', index: pendingRenameIndex, newName });
+      if (folderId) {
+        const folder = getFolderById(folderId);
+        if (!folder) throw new Error('Folder no longer exists');
+        const renamedFolder = { ...folder, name: newName };
+        const saved = await persistFolderAndSessionChanges(
+          sessionFolders.map(candidate => candidate.id === folderId ? renamedFolder : candidate),
+          latestSessions.map(session => getSessionFolderId(session) === folderId ? setSessionFolder(session, renamedFolder) : session),
+          'rename_session_folder'
+        );
+        if (!saved) throw new Error('Folder rename failed');
+      } else {
+        await sendRuntimeMessage({ action: 'rename_session', index: pendingRenameIndex, newName });
+      }
       renameDialog.close();
       loadSessions();
     } catch (_error) {
-      renameError.textContent = getTranslation('rename_failed_error');
+      renameError.textContent = getTranslation(folderId ? 'rename_folder_failed_error' : 'rename_failed_error');
     } finally {
       renameSubmit.disabled = renameCancel.disabled = renameInput.disabled = false;
     }
@@ -3063,11 +3105,13 @@ document.addEventListener('DOMContentLoaded', () => {
       sessionFolders = normalizeSessionFolders(folderResponse.folders, sessionResponse.sessions || nextSessions);
       latestSessions = Array.isArray(sessionResponse.sessions) ? sessionResponse.sessions : nextSessions;
       renderSessionList(latestSessions, searchInput?.value || '');
+      return true;
     } catch (error) {
       console.error('[popup] Folder/session update failed:', error);
       sessionFolders = previousFolders;
       latestSessions = previousSessions;
       loadSessions();
+      return false;
     }
   }
 
@@ -3113,23 +3157,6 @@ document.addEventListener('DOMContentLoaded', () => {
     path.setAttribute('stroke-linejoin', 'round');
     path.setAttribute('stroke-width', '2');
     path.setAttribute('d', 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z');
-    svg.appendChild(path);
-
-    return svg;
-  }
-
-  function createFolderDeleteIconElement() {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 24 24');
-    svg.setAttribute('aria-hidden', 'true');
-
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', 'currentColor');
-    path.setAttribute('stroke-linecap', 'round');
-    path.setAttribute('stroke-linejoin', 'round');
-    path.setAttribute('stroke-width', '2');
-    path.setAttribute('d', 'M3 6h18M8 6V4h8v2m-7 4v8m6-8v8M5 6l1 15h12l1-15');
     svg.appendChild(path);
 
     return svg;
@@ -3182,18 +3209,59 @@ document.addEventListener('DOMContentLoaded', () => {
     summary.appendChild(countBadge);
 
     if (!unfiled) {
+      const menuBtn = document.createElement('button');
+      menuBtn.className = 'menu-button folder-menu-button';
+      menuBtn.type = 'button';
+      menuBtn.setAttribute('aria-label', formatTranslation('folder_menu_label', { name: folder.name }));
+      menuBtn.setAttribute('aria-expanded', 'false');
+      menuBtn.appendChild(createMenuIcon());
+
+      const menu = document.createElement('div');
+      menu.className = 'menu-content folder-menu-content';
+      const renameBtn = document.createElement('button');
+      renameBtn.type = 'button';
+      renameBtn.textContent = getTranslation('rename_button');
+      renameBtn.addEventListener('click', () => {
+        closeAllMenus();
+        openRenameDialog(null, folder.name, folder.id);
+      });
       const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'session-folder-delete';
       deleteBtn.type = 'button';
-      deleteBtn.setAttribute('aria-label', getTranslation('delete_folder_label'));
-      deleteBtn.setAttribute('title', getTranslation('delete_folder_label'));
-      deleteBtn.appendChild(createFolderDeleteIconElement());
+      deleteBtn.textContent = getTranslation('delete_folder_label');
       deleteBtn.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
+        closeAllMenus();
         handleDeleteFolder(folder.id);
       });
-      summary.appendChild(deleteBtn);
+      menu.appendChild(renameBtn);
+      menu.appendChild(deleteBtn);
+      const menuWrapper = document.createElement('div');
+      menuWrapper.className = 'menu-wrapper';
+      menuWrapper.appendChild(menuBtn);
+      menuWrapper.appendChild(menu);
+      menu._originalParent = menuWrapper;
+      menuBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const wasOpen = menu.style.display === 'block';
+        closeAllMenus();
+        if (wasOpen) return;
+        document.body.appendChild(menu);
+        menu.style.display = 'block';
+        positionSessionMenu(menu, menuBtn);
+        menuBtn.setAttribute('aria-expanded', 'true');
+        renameBtn.focus();
+      });
+      menu.addEventListener('click', event => event.stopPropagation());
+      menu.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        event.preventDefault();
+        event.stopPropagation();
+        closeAllMenus({ preservePreviews: true });
+        menuBtn.focus();
+      });
+      summary.appendChild(menuWrapper);
     }
 
     const sessionsEl = document.createElement('div');
@@ -3306,7 +3374,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : [];
       const normalizedSessions = sessions.map((session) => normalizeSessionSnapshot(session));
-      if (sessions.length === 0) {
+      if (sessions.length === 0 && sessionFolders.length === 0) {
         emptyState.style.display = 'block';
         searchEmptyState.style.display = 'none';
         return;
@@ -3331,9 +3399,8 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionData,
         originalIndex: categorizedSessions[originalIndex].originalIndex
       }));
-      searchEmptyState.style.display = matchingSessions.length === 0 ? 'block' : 'none';
-
       const queryText = typeof query === 'string' ? query.trim() : '';
+      searchEmptyState.style.display = matchingSessions.length === 0 && (queryText || sessionFolders.length === 0) ? 'block' : 'none';
       const folderMatches = new Map();
       const unfiledMatches = [];
       matchingSessions.forEach((match) => {

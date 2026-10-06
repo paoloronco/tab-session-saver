@@ -583,35 +583,6 @@
       white-space: nowrap;
     }
 
-    .session-folder-delete {
-      align-items: center;
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: 8px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      display: inline-flex;
-      flex: 0 0 auto;
-      height: 30px;
-      justify-content: center;
-      margin-left: -0.2rem;
-      padding: 0;
-      width: 30px;
-    }
-
-    .session-folder-delete:hover,
-    .session-folder-delete:focus-visible {
-      background: color-mix(in srgb, #ef4444 10%, var(--surface));
-      border-color: color-mix(in srgb, #ef4444 28%, var(--border-color));
-      color: #b91c1c;
-      outline: none;
-    }
-
-    .session-folder-delete svg {
-      height: 15px;
-      width: 15px;
-    }
-
     .session-folder-sessions {
       border-left: 2px solid color-mix(in srgb, var(--accent-color) 30%, transparent);
       display: flex;
@@ -916,6 +887,15 @@
     .menu-button:focus-visible {
       outline: 2px solid var(--accent-color);
       outline-offset: 2px;
+    }
+
+    .folder-menu-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      padding: 0;
     }
 
     .menu-content {
@@ -2208,7 +2188,7 @@
   <dialog id="rename-dialog" class="add-item-dialog" aria-labelledby="rename-dialog-title">
     <form id="rename-form" class="add-item-form" novalidate>
       <h2 id="rename-dialog-title" data-translate="rename_button">Rename</h2>
-      <label for="rename-input" data-translate="rename_prompt">Enter a new name for this session:</label>
+      <label id="rename-prompt" for="rename-input" data-translate="rename_prompt">Enter a new name for this session:</label>
       <input id="rename-input" type="text" maxlength="160" required autocomplete="off" aria-describedby="rename-error">
       <p id="rename-error" class="add-item-error" role="alert" aria-live="polite"></p>
       <div class="add-item-actions">

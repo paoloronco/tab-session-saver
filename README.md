@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.17.3-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.18.0-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -46,7 +46,7 @@ Sessions are saved directly on your device using Chrome's built-in storage by de
 | Preview | Inspect saved tabs before restoring, restore individual windows, and remove saved windows from a session. |
 | Search | Filter saved sessions by session name, tab title, full URL, or domain. |
 | Auto Save | Capture sessions on a schedule or when Chrome closes, with grouping by smart topic, day, browser session, or no grouping. |
-| Session editing | Rename through a themed in-extension dialog, delete, reorder, organize sessions into folders, remove individual tabs/windows, and add custom URLs or search items to saved sessions. |
+| Session editing | Rename through a themed in-extension dialog, delete, reorder, organize sessions into folders with rename/delete menus, remove individual tabs/windows, and add custom URLs or search items to saved sessions. |
 | Tab groups | Preserve Chrome tab group names, colors, and membership during save and restore. |
 | Backup | Export all sessions or an individual session as JSON; drag JSON files onto the popup to import without replacing existing sessions. |
 | Appearance | Choose from six themes with palette previews and light/dark variants, customize the Classic theme accent color, and select popup size, full-tab mode, and UI language. |
@@ -156,6 +156,11 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 7.18.0
+- added a three-dot menu to each saved folder with Rename and Delete folder actions
+- folder renaming updates manual and automatic session metadata; deletion retains the choice to keep or delete contained sessions
+- kept empty folders accessible even when no sessions remain; updated extension version to `7.18.0`
 
 ### 7.17.3
 - replaced garbled folder disclosure symbols with simple arrows using encoding-safe CSS escapes
