@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.17.2-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.17.3-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -156,6 +156,10 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 7.17.3
+- replaced garbled folder disclosure symbols with simple arrows using encoding-safe CSS escapes
+- updated extension version to `7.17.3`
 
 ### 7.17.2
 - replaced the popup header illustration with the extension's own logo
