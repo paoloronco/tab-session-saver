@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-7.17.0-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-7.17.1-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -156,6 +156,11 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 7.17.1
+- removed the automatic-save notice and newsletter promotional copy and illustration from Settings
+- replaced the settings button artwork with a conventional gear icon
+- updated extension version to `7.17.1`
 
 ### 7.17.0
 - redesigned Settings as a dedicated browser tab with grouped sidebar navigation and one focused section at a time
