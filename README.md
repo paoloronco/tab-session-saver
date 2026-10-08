@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-8.0.1-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-8.0.2-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -50,7 +50,7 @@ Sessions are saved directly on your device using Chrome's built-in storage by de
 | Tab groups | Preserve Chrome tab group names, colors, and membership during save and restore. |
 | Backup | Export all sessions or an individual session as JSON; drag JSON files onto the popup to import without replacing existing sessions. |
 | Appearance | Choose from six themes with palette previews and light/dark variants, customize the Classic theme accent color, and select popup size, full-tab mode, and UI language. |
-| Cloud Sync | Sign in with Google to sync only the 10 most recent manually saved sessions. Auto Save and Save on Exit remain local. |
+| Cloud Sync | Sign in with Google to sync up to 10 recent manual sessions, newest first, within 300 URLs. Auto Save and Save on Exit remain local. |
 | Newsletter | Subscribe from Settings to receive product updates. |
 | Browser support | Shows Chrome support status and warns when running on unsupported Chromium-derived browsers. |
 | Diagnostics | Shows local storage usage and exports the latest 200 log events with session sizes and feature status; includes an anonymized export without URLs, session names, or account details. |
@@ -76,6 +76,8 @@ Current hosted Cloud Sync limits:
 | Conflict handling | Latest update wins |
 | Automatic push cadence | Local changes are pushed after about 10 minutes |
 | Manual Push throttle | Push is skipped when there are no pending changes and rate-limited when repeated too quickly |
+
+The extension selects whole manual sessions, newest first, and stops before the next session would exceed 300 URLs, with at most 10 sessions. It never splits a session or skips it to include older ones. For example, ten recent sessions of 42 URLs each result in seven synced sessions (294 URLs). If the newest session alone exceeds 300 URLs, no sessions are uploaded. All local sessions remain complete, including after a cloud pull.
 
 These limits apply only to Cloud Sync. Local sessions and JSON backups are separate.
 
@@ -122,7 +124,7 @@ Tabs Session Saver requests only what it needs to function. Here's exactly what 
 | `alarms` | Schedule periodic Auto Save at the interval you configure |
 | `identity` | Let users sign in with Google for optional Cloud Sync |
 
-By default, session data stays in `chrome.storage.local` on your machine only. If Cloud Sync is enabled, only the 10 most recent manually saved sessions are sent to the configured sync endpoint; Auto Save and Save on Exit remain local.
+By default, session data stays in `chrome.storage.local` on your machine only. If Cloud Sync is enabled, up to 10 recent whole manual sessions within 300 URLs are sent to the configured sync endpoint, newest first; Auto Save and Save on Exit remain local.
 
 ---
 
@@ -159,6 +161,11 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 8.0.2
+
+- enforced the 300-URL Cloud Sync limit before upload, selecting up to 10 whole manual sessions from newest to oldest and stopping before exceeding the URL budget
+- preserved all local sessions when enabling Cloud Sync and pulling the limited cloud snapshot; clarified the selection policy in all five settings languages
 
 ### 8.0.1
 

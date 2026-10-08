@@ -2,7 +2,7 @@
 
 Cloud Sync is the optional server-side sync backend for Tabs Session Saver.
 
-The browser extension remains local-first: saved sessions stay in `chrome.storage.local` unless the user explicitly signs in and enables Cloud Sync. When enabled, the extension authenticates with Google through `chrome.identity`, sends the Google access token to the Worker, and the Worker stores only the 10 most recent manually saved sessions in Cloudflare D1. Auto Save and Save on Exit sessions remain local.
+The browser extension remains local-first: saved sessions stay in `chrome.storage.local` unless the user explicitly signs in and enables Cloud Sync. When enabled, the extension authenticates with Google through `chrome.identity`, sends the Google access token to the Worker, and selects up to 10 whole manual sessions, newest first, stopping before the next session would exceed 300 total URLs. The Worker stores that snapshot in Cloudflare D1. No session is split; excluded manual sessions, Auto Save and Save on Exit sessions remain complete locally. If the newest manual session alone exceeds 300 URLs, no sessions are selected. The Worker still independently rejects snapshots exceeding the plan limits.
 
 ## Current Status
 
@@ -10,7 +10,7 @@ This is the current pre-production backend:
 
 - real Google OAuth authentication;
 - real Cloudflare D1 storage;
-- snapshot sync for the 10 most recent manually saved sessions;
+- snapshot sync for up to 10 recent whole manual sessions within 300 URLs;
 - pull-before-push reconciliation when a device signs in, so an empty device cannot overwrite an existing snapshot;
 - server-side usage limit enforcement;
 - conservative automatic push from the extension after local changes;

@@ -367,6 +367,101 @@ test('Cloud Sync selects only the 10 most recent manual sessions', () => {
   );
 });
 
+test('Cloud Sync selects whole sessions until the next newest would exceed 300 URLs', () => {
+  const { api } = createHarness();
+  const sessions = [5, 101, 200].map((count, index) => ({
+    name: `Manual ${index}`,
+    timestamp: `2026-09-0${index + 1}T10:00:00.000Z`,
+    windows: [{ tabs: Array.from({ length: count }, (_, tab) => ({ url: `https://example.invalid/${index}/${tab}` })) }],
+    saveType: 'manual'
+  }));
+  const original = JSON.stringify(sessions);
+  const selected = api.selectCloudSyncManualSessions(sessions);
+  assert.deepEqual(plain(selected.map((session) => session.name)), ['Manual 2']);
+  assert.equal(selected[0].windows[0].tabs.length, 200);
+  assert.equal(JSON.stringify(sessions), original);
+  sessions[2].windows[0].tabs.push(...Array.from({ length: 101 }, () => ({ url: 'https://example.invalid/extra' })));
+  assert.equal(api.selectCloudSyncManualSessions(sessions).length, 0);
+});
+
+for (const [label, counts, expectedSessions, expectedUrls, initialRevision = 0] of [
+  ['10 URLs per session', Array(50).fill(10), 10, 100],
+  ['exactly 300 recent URLs', [...Array(40).fill(5), ...Array(10).fill(30)], 10, 300],
+  ['more than 300 recent URLs', [...Array(40).fill(2), ...Array(10).fill(42)], 7, 294],
+  ['existing cloud snapshot and more than 300 recent URLs', [...Array(40).fill(2), ...Array(10).fill(42)], 7, 294, 1]
+]) {
+  test(`Enabling Cloud Sync with 50 manual sessions / 500 URLs: ${label}`, async () => {
+    const sessions = counts.map((count, index) => ({
+      name: `Manual ${index + 1}`,
+      timestamp: new Date(Date.UTC(2026, 8, 1, index)).toISOString(),
+      windows: [0, 1].map((window) => ({
+        tabs: Array.from({ length: Math.floor(count / 2) + (count % 2 && window === 0 ? 1 : 0) }, (_, tab) => ({
+          url: `https://example.invalid/${index}/${window}/${tab}`
+        }))
+      })),
+      metadata: { folderId: index >= 40 ? 'recent-folder' : 'older-folder' },
+      saveType: 'manual'
+    }));
+    sessions.push({
+      name: 'Automatic local history',
+      timestamp: '2026-10-01T10:00:00.000Z',
+      windows: [{ tabs: [{ url: 'https://example.invalid/automatic' }] }],
+      metadata: { saveType: 'auto', saveTrigger: 'scheduled', folderId: 'auto-folder' },
+      saveType: 'auto'
+    });
+    const summarize = (collection) => plain(collection.map((session) => ({
+      name: session.name,
+      timestamp: session.timestamp,
+      urls: session.windows.flatMap((window) => window.tabs.map((tab) => tab.url))
+    })));
+    const original = JSON.stringify(sessions);
+    const summary = summarize(sessions);
+    assert.equal(summary.slice(0, 50).reduce((sum, session) => sum + session.urls.length, 0), 500);
+    const workerContext = vm.createContext({ Blob });
+    vm.runInContext(`${workerSource.replace('export default {', 'globalThis.__workerDefault = {')}
+      ;globalThis.checkLimits = enforcePlanLimits;`, workerContext);
+    let cloudSnapshot = { sessions: initialRevision ? [plain(sessions[0])] : [], folders: [] };
+    let cloudRevision = initialRevision;
+    let uploaded = false;
+    const { storageData, api } = createHarness({
+      storageData: {
+        sessions,
+        cloudSyncSettings: { enabled: false },
+        sessionFolders: ['recent-folder', 'older-folder', 'auto-folder'].map((id) => ({ id, name: id }))
+      },
+      fetch: async (url, options = {}) => {
+        let response;
+        if (new URL(url).pathname === '/v1/auth/session') {
+          response = { success: true, revision: cloudRevision, profile: { userId: 'google:test-user' } };
+        } else if (options.method === 'PUT') {
+          cloudSnapshot = JSON.parse(options.body);
+          assert.equal(workerContext.checkLimits('free', cloudSnapshot.sessions, new Blob([options.body]).size), null);
+          uploaded = true;
+          response = { success: true, revision: ++cloudRevision };
+        } else {
+          response = { success: true, revision: cloudRevision, ...cloudSnapshot };
+        }
+        return new Response(JSON.stringify(response), { headers: { 'Content-Type': 'application/json' } });
+      }
+    });
+    assert.equal((await api.loginCloudSync()).success, true);
+    assert.equal(storageData.cloudSyncSettings.enabled, true);
+    assert.equal((await api.runCloudSyncPush({ manual: true })).success, true);
+    assert.equal(uploaded, true);
+    assert.equal(cloudSnapshot.sessions.length, expectedSessions);
+    assert.equal(summarize(cloudSnapshot.sessions).reduce((sum, session) => sum + session.urls.length, 0), expectedUrls);
+    assert.deepEqual(cloudSnapshot.sessions.map((session) => session.name),
+      Array.from({ length: expectedSessions }, (_, index) => `Manual ${50 - index}`));
+    assert.deepEqual(cloudSnapshot.folders.map((folder) => folder.id), ['recent-folder']);
+    assert.equal(JSON.stringify(sessions), original);
+    assert.deepEqual(summarize(storageData.sessions), summary);
+    cloudRevision += 1;
+    assert.equal((await api.runCloudSyncPull({ applyRemote: true })).success, true);
+    assert.deepEqual(summarize(storageData.sessions), summary);
+    assert.equal(storageData.sessions.length, 51);
+  });
+}
+
 test('Cloud Sync pull merges manual sessions without removing local automatic history', () => {
   const { api } = createHarness();
   const localSessions = [

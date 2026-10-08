@@ -22,6 +22,7 @@ const CLOUD_SYNC_AUTO_PUSH_DELAY_MINUTES = 10;
 const CLOUD_SYNC_MANUAL_PUSH_MIN_INTERVAL_MS = 2 * 60 * 1000;
 const CLOUD_SYNC_MAX_SESSIONS = 10000;
 const CLOUD_SYNC_MAX_MANUAL_SESSIONS = 10;
+const CLOUD_SYNC_MAX_URLS = 300;
 const CLOUD_SYNC_MAX_PAYLOAD_BYTES = 4 * 1024 * 1024;
 const AUTO_SAVE_MIN_INTERVAL_MINUTES = 10;
 const SAVE_TYPE_AUTO = 'auto';
@@ -934,7 +935,7 @@ function getCloudSyncSessionTimestamp(session) {
 }
 
 function selectCloudSyncManualSessions(rawSessions) {
-  return normalizeSessionCollectionForStorage(rawSessions)
+  const recent = normalizeSessionCollectionForStorage(rawSessions)
     .map((session, index) => ({ session, index }))
     .filter(({ session }) => getSessionSaveType(session) === SAVE_TYPE_MANUAL)
     .sort((left, right) =>
@@ -943,6 +944,17 @@ function selectCloudSyncManualSessions(rawSessions) {
     )
     .slice(0, CLOUD_SYNC_MAX_MANUAL_SESSIONS)
     .map(({ session }) => session);
+
+  const selected = [];
+  let urls = 0;
+  for (const session of recent) {
+    const sessionUrls = session.windows.reduce((total, window) =>
+      total + window.tabs.filter((tab) => typeof tab.url === 'string' && tab.url.trim()).length, 0);
+    if (urls + sessionUrls > CLOUD_SYNC_MAX_URLS) break;
+    selected.push(session);
+    urls += sessionUrls;
+  }
+  return selected;
 }
 
 function getCloudSyncSessionFolderId(session) {
