@@ -1,4 +1,7 @@
 
+/* global SessionDiagnostics, importScripts */
+importScripts('diagnostics.js');
+
 const DEFAULT_SESSION_NAME = 'Session';
 const TAB_GROUP_COLORS = new Set(['grey', 'blue', 'red', 'yellow', 'green', 'cyan', 'orange', 'pink', 'purple']);
 const RESTORE_IN_PROGRESS_ERROR = 'RESTORE_IN_PROGRESS';
@@ -47,9 +50,127 @@ let activeRestoreToken = null;
 let activeAutoSaveSettings = null;
 let exitSnapshotRefreshTimer = null;
 let cloudSyncPushTimer = null;
+let storageWriteQueue = Promise.resolve();
+let sessionMutationQueue = Promise.resolve();
+
+function mutateSessions(operation) {
+  const mutation = sessionMutationQueue.then(operation);
+  sessionMutationQueue = mutation.catch(() => {});
+  return mutation;
+}
+
+function logBackgroundError(label, ...details) {
+  console.warn(label, ...details);
+  const error = details.at(-1);
+  const operation = /capture/i.test(label) ? 'capture_failed' : /restore/i.test(label) ? 'restore_failed'
+    : /cloud/i.test(label) ? 'cloud_sync_failed' : /auto save|exit snapshot/i.test(label) ? 'auto_save_failed' : 'background_error';
+  void SessionDiagnostics.record(operation, { code: error?.code, message: `${label} ${error?.message || error || ''}` });
+}
+
+function storageItemBytes(key, value) {
+  return new Blob([key, JSON.stringify(value)]).size;
+}
+
+async function getStorageUsage() {
+  const quotaBytes = chrome.storage.local.QUOTA_BYTES || 10 * 1024 * 1024;
+  const usedBytes = chrome.storage.local.getBytesInUse
+    ? await chrome.storage.local.getBytesInUse(null)
+    : Object.entries(await chrome.storage.local.get(null)).reduce((total, [key, value]) => total + storageItemBytes(key, value), 0);
+  return { usedBytes, quotaBytes };
+}
+
+function planAutoSaveCleanup(sessions, projectedBytes, quotaBytes, protectedSession = null) {
+  if (projectedBytes < quotaBytes * 0.9) return { sessions, removed: 0, projectedBytes };
+  const autos = sessions.map((session, index) => ({ session, index }))
+    .filter(({ session }) => getSessionSaveType(session) === SAVE_TYPE_AUTO && session?.saveType !== SAVE_TYPE_MANUAL && session?.metadata?.saveType !== SAVE_TYPE_MANUAL)
+    .sort((left, right) => getCloudSyncSessionTimestamp(right.session) - getCloudSyncSessionTimestamp(left.session) || right.index - left.index);
+  const protectedIndexes = new Set();
+  const seenTriggers = new Set();
+  const seenSnapshots = new Set();
+  const duplicates = [];
+  const older = [];
+  for (const { session, index } of autos) {
+    const trigger = session?.metadata?.saveTrigger === AUTO_SAVE_TRIGGER_EXIT ? AUTO_SAVE_TRIGGER_EXIT : AUTO_SAVE_TRIGGER_SCHEDULED;
+    if (!seenTriggers.has(trigger) || session === protectedSession) protectedIndexes.add(index);
+    seenTriggers.add(trigger);
+    const signature = JSON.stringify(session.windows);
+    (seenSnapshots.has(signature) ? duplicates : older).push(index);
+    seenSnapshots.add(signature);
+  }
+  const removeIndexes = new Set();
+  for (const index of [...duplicates.reverse(), ...older.reverse()]) {
+    if (projectedBytes <= quotaBytes * 0.85) break;
+    if (protectedIndexes.has(index)) continue;
+    removeIndexes.add(index);
+    projectedBytes -= new Blob([JSON.stringify(sessions[index])]).size + 1;
+  }
+  return { sessions: sessions.filter((_, index) => !removeIndexes.has(index)), removed: removeIndexes.size, projectedBytes };
+}
+
+function writeLocalStorage(values, options = {}) {
+  const write = storageWriteQueue.then(async () => {
+    const stored = await chrome.storage.local.get(null);
+    if (Number.isInteger(options.expectedRevision) && options.expectedRevision !== (stored.sessionsRevision || 0)) {
+      throw Object.assign(new Error('The saved session list changed. Reopen the extension before editing it.'), { code: 'SESSION_CHANGED' });
+    }
+    const { usedBytes, quotaBytes } = await getStorageUsage();
+    let projectedBytes = usedBytes;
+    for (const [key, value] of Object.entries(values)) {
+      projectedBytes += storageItemBytes(key, value) - (Object.hasOwn(stored, key) ? storageItemBytes(key, stored[key]) : 0);
+    }
+    const sessions = values.sessions || stored.sessions || [];
+    const cleanup = planAutoSaveCleanup(sessions, projectedBytes, quotaBytes, options.protectedSession);
+    const nextValues = cleanup.removed ? { ...values, sessions: cleanup.sessions } : { ...values };
+    if (Object.hasOwn(nextValues, 'sessions')) nextValues.sessionsRevision = (stored.sessionsRevision || 0) + 1;
+    try {
+      await chrome.storage.local.set(nextValues);
+    } catch (error) {
+      if (SessionDiagnostics.errorCode(error) === 'STORAGE_FULL') error.code = 'STORAGE_FULL';
+      await SessionDiagnostics.record('storage_write', error, { usedBytes, quotaBytes, projectedBytes: cleanup.projectedBytes });
+      throw error;
+    }
+    // Update caller indexes only after Chrome has committed the cleaned collection.
+    if (cleanup.removed && values.sessions) values.sessions.splice(0, values.sessions.length, ...cleanup.sessions);
+    if (cleanup.removed) {
+      await SessionDiagnostics.record('auto_save_cleanup', null, { removed: cleanup.removed, usedBytes, projectedBytes: cleanup.projectedBytes, quotaBytes });
+    }
+  });
+  storageWriteQueue = write.catch(() => {});
+  return write;
+}
+
+async function exportDiagnostics(anonymized = true) {
+  const [stored, usage, logs] = await Promise.all([
+    chrome.storage.local.get(null), getStorageUsage(), SessionDiagnostics.readLogs()
+  ]);
+  const sessions = Array.isArray(stored.sessions) ? stored.sessions : [];
+  const details = sessions.map((session, index) => {
+    const windows = Array.isArray(session?.windows) ? session.windows : [];
+    return {
+      name: anonymized ? `[Session ${index + 1}]` : typeof session?.name === 'string' ? session.name : '[invalid name]',
+      timestamp: Number.isFinite(Date.parse(session?.timestamp)) ? new Date(session.timestamp).toISOString() : null,
+      saveType: getSessionSaveType(session), windows: windows.length,
+      tabs: windows.reduce((count, win) => count + (Array.isArray(win?.tabs) ? win.tabs.length : 0), 0),
+      bytes: new Blob([JSON.stringify(session)]).size
+    };
+  });
+  const cloud = normalizeCloudSyncSettings(stored[CLOUD_SYNC_SETTINGS_KEY]);
+  return {
+    exportedAt: new Date().toISOString(), anonymized,
+    extensionVersion: chrome.runtime.getManifest().version,
+    browser: globalThis.navigator?.userAgentData?.brands || [],
+    platform: globalThis.navigator?.userAgentData?.platform || 'unknown',
+    storage: { ...usage, percentUsed: Number((usage.usedBytes / usage.quotaBytes * 100).toFixed(2)) },
+    autoSave: normalizeAutoSaveSettings(stored[AUTO_SAVE_SETTINGS_KEY]),
+    cloudSync: { enabled: cloud.enabled, connected: Boolean(cloud.profile.userId), pending: stored[CLOUD_SYNC_STATE_KEY]?.pending === true },
+    sessions: { total: sessions.length, manual: sessions.filter(session => getSessionSaveType(session) === SAVE_TYPE_MANUAL).length, details },
+    logs: anonymized ? SessionDiagnostics.anonymizeLogs(logs) : logs,
+    logLimit: SessionDiagnostics.logLimit
+  };
+}
 
 initializeActionPopupForStoredSize().catch((error) => {
-  console.warn('[background] action popup initialization failed:', error);
+  logBackgroundError('[background] action popup initialization failed:', error);
 });
 
 chrome.runtime.onInstalled.addListener((details) => {
@@ -59,23 +180,23 @@ chrome.runtime.onInstalled.addListener((details) => {
     chrome.tabs.create({ url });
   }
   initializeAutoSaveSchedule().catch((error) => {
-    console.warn('[background] auto save schedule initialization failed:', error);
+    logBackgroundError('[background] auto save schedule initialization failed:', error);
   });
   initializeActionPopupForStoredSize().catch((error) => {
-    console.warn('[background] action popup install initialization failed:', error);
+    logBackgroundError('[background] action popup install initialization failed:', error);
   });
 });
 
 if (chrome.runtime.onStartup) {
   chrome.runtime.onStartup.addListener(() => {
     initializeActionPopupForStoredSize().catch((error) => {
-      console.warn('[background] action popup startup initialization failed:', error);
+      logBackgroundError('[background] action popup startup initialization failed:', error);
     });
     resetAutoSaveRunId().then(() => initializeAutoSaveSchedule()).catch((error) => {
-      console.warn('[background] auto save startup scheduling failed:', error);
+      logBackgroundError('[background] auto save startup scheduling failed:', error);
     });
     runCloudSyncPull({ applyRemote: true }).then(() => runCloudSyncPush()).catch((error) => {
-      console.warn('[background] cloud sync startup failed:', error);
+      logBackgroundError('[background] cloud sync startup failed:', error);
     });
   });
 }
@@ -84,13 +205,13 @@ if (chrome.alarms?.onAlarm) {
   chrome.alarms.onAlarm.addListener((alarm) => {
     if (alarm?.name === AUTO_SAVE_ALARM_NAME) {
       runAutoSaveNow().catch((error) => {
-        console.warn('[background] auto save failed:', error);
+        logBackgroundError('[background] auto save failed:', error);
       });
       return;
     }
     if (alarm?.name === CLOUD_SYNC_ALARM_NAME) {
       runCloudSyncPush().catch((error) => {
-        console.warn('[background] cloud sync push failed:', error);
+        logBackgroundError('[background] cloud sync push failed:', error);
       });
     }
   });
@@ -137,7 +258,7 @@ if (chrome.windows) {
   if (chrome.windows.onRemoved?.addListener) {
     chrome.windows.onRemoved.addListener(() => {
       handleWindowRemovedForBrowserClose().catch((error) => {
-        console.warn('[background] browser close sync failed:', error);
+        logBackgroundError('[background] browser close sync failed:', error);
       });
     });
   }
@@ -146,7 +267,7 @@ if (chrome.windows) {
 if (chrome.action?.onClicked) {
   chrome.action.onClicked.addListener(() => {
     openActionFullTabIfHuge().catch((error) => {
-      console.warn('[background] action click failed:', error);
+      logBackgroundError('[background] action click failed:', error);
     });
   });
 }
@@ -154,7 +275,7 @@ if (chrome.action?.onClicked) {
 if (chrome.runtime.onSuspend?.addListener) {
   chrome.runtime.onSuspend.addListener(() => {
     runCloudSyncPush({ reason: 'runtime_suspend' }).catch((error) => {
-      console.warn('[background] cloud sync suspend push failed:', error);
+      logBackgroundError('[background] cloud sync suspend push failed:', error);
     });
   });
 }
@@ -165,22 +286,32 @@ if (chrome.storage?.onChanged) {
 
     if (changes[AUTO_SAVE_SETTINGS_KEY]) {
       applyAutoSaveSchedule(changes[AUTO_SAVE_SETTINGS_KEY].newValue).catch((error) => {
-        console.warn('[background] auto save reschedule failed:', error);
+        logBackgroundError('[background] auto save reschedule failed:', error);
       });
     }
 
     if (changes[POPUP_SIZE_KEY]) {
       configureActionPopupForSize(changes[POPUP_SIZE_KEY].newValue).catch((error) => {
-        console.warn('[background] action popup size update failed:', error);
+        logBackgroundError('[background] action popup size update failed:', error);
       });
     }
   });
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  (async () => {
+  const dispatch = async () => {
     try {
       switch (request.action) {
+        case 'get_diagnostics': {
+          sendResponse({ success: true, report: await exportDiagnostics(request.anonymized !== false) });
+          break;
+        }
+        case 'record_diagnostic_error': {
+          if (sender.id && sender.id !== chrome.runtime.id) throw new Error('Permission denied');
+          await SessionDiagnostics.record('popup_error', { message: String(request.error || '').slice(0, 2048), code: request.code });
+          sendResponse({ success: true });
+          break;
+        }
         case 'capture_current_desktop': {
           const snapshot = await captureCurrentDesktopSnapshot({
             sourceWindowId: Number.isInteger(request?.sourceWindowId) ? request.sourceWindowId : null
@@ -193,6 +324,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           sendResponse(sessions);
           break;
         }
+        case 'get_session_collection': {
+          const sessions = await loadSessionsFromStorage();
+          const stored = await chrome.storage.local.get({ sessionsRevision: 0 });
+          sendResponse({ success: true, sessions, revision: stored.sessionsRevision });
+          break;
+        }
+        case 'save_session': {
+          const sessions = await loadSessionsFromStorage();
+          if (sessions.length >= CLOUD_SYNC_MAX_SESSIONS) throw Object.assign(new Error('The local collection exceeds 10,000 sessions'), { code: 'SESSION_LIMIT' });
+          const session = normalizeSessionForStorage({ ...request.session, name: `${clampString(request.session?.name || DEFAULT_SESSION_NAME, 120)} ${sessions.length + 1}`, saveType: SAVE_TYPE_MANUAL,
+            metadata: { ...request.session?.metadata, saveType: SAVE_TYPE_MANUAL, saveTrigger: null } });
+          if (!session.windows.length) throw Object.assign(new Error('No browser tabs were captured'), { code: 'WINDOW_UNAVAILABLE' });
+          sessions.push(session);
+          await persistSessions(sessions, { reason: 'manual_save' });
+          sendResponse({ success: true, sessions });
+          break;
+        }
         case 'get_auto_save_settings': {
           const settings = await loadAutoSaveSettings();
           sendResponse({ success: true, settings });
@@ -200,14 +348,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
         case 'update_auto_save_settings': {
           const settings = normalizeAutoSaveSettings(request.settings);
-          await chrome.storage.local.set({ [AUTO_SAVE_SETTINGS_KEY]: settings });
+          await writeLocalStorage({ [AUTO_SAVE_SETTINGS_KEY]: settings });
           await applyAutoSaveSchedule(settings);
           sendResponse({ success: true, settings });
           break;
         }
         case 'set_popup_size': {
           const size = normalizePopupSize(request.size);
-          await chrome.storage.local.set({ [POPUP_SIZE_KEY]: size });
+          await writeLocalStorage({ [POPUP_SIZE_KEY]: size });
           await configureActionPopupForSize(size);
           sendResponse({ success: true, size });
           break;
@@ -267,24 +415,29 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           break;
         }
         case 'delete_session': {
-          const success = await deleteSessionAtIndex(request.index);
+          await validateSessionRevision(request.revision);
+          const success = await deleteSessionAtIndex(request.index, { expectedRevision: request.revision });
           sendResponse({ success });
           break;
         }
         case 'rename_session': {
-          const success = await renameSessionAtIndex(request.index, request.newName);
+          await validateSessionRevision(request.revision);
+          const success = await renameSessionAtIndex(request.index, request.newName, { expectedRevision: request.revision });
           sendResponse({ success });
           break;
         }
         case 'update_session': {
+          await validateSessionRevision(request.revision);
           const { index, session } = request;
-          const success = await updateSessionAtIndex(index, session);
+          const success = await updateSessionAtIndex(index, session, { expectedRevision: request.revision });
           sendResponse({ success });
           break;
         }
         case 'replace_sessions': {
+          if (!Array.isArray(request.sessions)) throw Object.assign(new Error('Invalid session collection'), { code: 'INVALID_SESSION' });
+          if (request.sessions.length > CLOUD_SYNC_MAX_SESSIONS) throw Object.assign(new Error('The local collection exceeds 10,000 sessions'), { code: 'SESSION_LIMIT' });
           const sessions = normalizeSessionCollectionForStorage(request.sessions);
-          await persistSessions(sessions, { reason: request.reason || 'replace_sessions' });
+          await persistSessions(sessions, { reason: request.reason || 'replace_sessions', expectedRevision: request.revision });
           sendResponse({ success: true, sessions });
           break;
         }
@@ -299,15 +452,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
     } catch (error) {
       console.error('[background] action error:', request.action, error);
+      await SessionDiagnostics.record(request.action, error);
       sendResponse({
         success: false,
         error: error?.message || String(error),
-        ...(error?.code ? { code: error.code } : {})
+        code: SessionDiagnostics.errorCode(error)
       });
     }
-  })();
+  };
+  const sessionActions = ['get_sessions', 'get_session_collection', 'save_session', 'delete_session', 'rename_session', 'update_session', 'replace_sessions', 'replace_session_folders'];
+  if (sessionActions.includes(request.action)) void mutateSessions(dispatch);
+  else void dispatch();
   return true;
 });
+
+async function validateSessionRevision(revision) {
+  if (!Number.isInteger(revision)) return;
+  const stored = await chrome.storage.local.get({ sessionsRevision: 0 });
+  if (revision !== stored.sessionsRevision) throw Object.assign(new Error('The saved session list changed. Reopen the extension before editing it.'), { code: 'SESSION_CHANGED' });
+}
 
 function normalizeNewsletterEmail(value) {
   if (typeof value !== 'string') return null;
@@ -364,7 +527,7 @@ async function loadNewsletterSubscription() {
 
 async function saveNewsletterSubscription(state) {
   const normalized = normalizeNewsletterSubscription(state);
-  await chrome.storage.local.set({ [NEWSLETTER_SUBSCRIPTION_KEY]: normalized });
+  await writeLocalStorage({ [NEWSLETTER_SUBSCRIPTION_KEY]: normalized });
   return normalized;
 }
 
@@ -465,7 +628,7 @@ async function saveCloudSyncSettings(rawSettings = {}) {
     ...current,
     ...rawSettings
   });
-  await chrome.storage.local.set({ [CLOUD_SYNC_SETTINGS_KEY]: normalized });
+  await writeLocalStorage({ [CLOUD_SYNC_SETTINGS_KEY]: normalized });
   return normalized;
 }
 
@@ -493,7 +656,7 @@ async function loadCloudSyncState() {
 async function saveCloudSyncState(patch = {}) {
   const current = await loadCloudSyncState();
   const next = normalizeCloudSyncState({ ...current, ...patch });
-  await chrome.storage.local.set({ [CLOUD_SYNC_STATE_KEY]: next });
+  await writeLocalStorage({ [CLOUD_SYNC_STATE_KEY]: next });
   return next;
 }
 
@@ -644,7 +807,7 @@ async function loginCloudSync() {
 
 async function disconnectCloudSync() {
   const current = await loadCloudSyncSettings();
-  await chrome.storage.local.set({
+  await writeLocalStorage({
     [CLOUD_SYNC_SETTINGS_KEY]: normalizeCloudSyncSettings({
       ...current,
       enabled: false,
@@ -669,7 +832,7 @@ function scheduleCloudSyncPush() {
   cloudSyncPushTimer = setTimeout(() => {
     cloudSyncPushTimer = null;
     runCloudSyncPush().catch((error) => {
-      console.warn('[background] cloud sync push failed:', error);
+      logBackgroundError('[background] cloud sync push failed:', error);
     });
   }, CLOUD_SYNC_AUTO_PUSH_DELAY_MINUTES * 60 * 1000);
   cloudSyncPushTimer?.unref?.();
@@ -692,11 +855,16 @@ async function persistSessions(sessions, options = {}) {
   const previousCloudSessions = sync
     ? selectCloudSyncManualSessions(stored.sessions)
     : [];
-  await chrome.storage.local.set({ sessions });
+  await writeLocalStorage({ ...options.storageValues, sessions }, options);
+  await SessionDiagnostics.record('sessions_saved', null, { sessions: sessions.length });
   const nextCloudSessions = sync ? selectCloudSyncManualSessions(sessions) : [];
   if (sync && JSON.stringify(previousCloudSessions) !== JSON.stringify(nextCloudSessions)) {
-    await markCloudSyncPending(reason);
-    scheduleCloudSyncPush();
+    try {
+      await markCloudSyncPending(reason);
+      scheduleCloudSyncPush();
+    } catch (error) {
+      logBackgroundError('[background] sessions saved locally; cloud scheduling failed:', error);
+    }
   }
 }
 
@@ -737,13 +905,17 @@ async function persistSessionFolders(folders, options = {}) {
     ? selectCloudSyncManualSessionFolders(previousFolders, sessions)
     : [];
   const normalizedFolders = normalizeSessionFoldersForStorage(folders);
-  await chrome.storage.local.set({ [SESSION_FOLDERS_KEY]: normalizedFolders });
+  await writeLocalStorage({ [SESSION_FOLDERS_KEY]: normalizedFolders });
   const nextCloudFolders = sync
     ? selectCloudSyncManualSessionFolders(normalizedFolders, sessions)
     : [];
   if (sync && JSON.stringify(previousCloudFolders) !== JSON.stringify(nextCloudFolders)) {
-    await markCloudSyncPending(reason);
-    scheduleCloudSyncPush();
+    try {
+      await markCloudSyncPending(reason);
+      scheduleCloudSyncPush();
+    } catch (error) {
+      logBackgroundError('[background] folders saved locally; cloud scheduling failed:', error);
+    }
   }
   return normalizedFolders;
 }
@@ -891,6 +1063,7 @@ async function runCloudSyncPush(options = {}) {
     });
     return { success: true, state: nextState };
   } catch (error) {
+    await SessionDiagnostics.record('cloud_sync_push', error);
     const nextState = await saveCloudSyncState({
       pending: true,
       lastError: error?.message || String(error)
@@ -920,12 +1093,14 @@ async function runCloudSyncPull(options = {}) {
       remoteSessions
     );
     if (options.applyRemote && Number.isInteger(remote.revision) && remote.revision > state.revision) {
-      const localSessions = await loadSessionsFromStorage();
-      const localFolders = await loadSessionFoldersFromStorage();
-      const mergedSessions = mergeCloudSyncManualSessions(localSessions, remoteSessions);
-      const mergedFolders = mergeCloudSyncSessionFolders(localFolders, remoteFolders);
-      await persistSessions(mergedSessions, { reason: 'cloud_pull', sync: false });
-      await persistSessionFolders(mergedFolders, { reason: 'cloud_pull_folders', sync: false });
+      await mutateSessions(async () => {
+        const localSessions = await loadSessionsFromStorage();
+        const localFolders = await loadSessionFoldersFromStorage();
+        const mergedSessions = mergeCloudSyncManualSessions(localSessions, remoteSessions);
+        const mergedFolders = mergeCloudSyncSessionFolders(localFolders, remoteFolders);
+        await persistSessions(mergedSessions, { reason: 'cloud_pull', sync: false });
+        await persistSessionFolders(mergedFolders, { reason: 'cloud_pull_folders', sync: false });
+      });
     }
     const nextState = await saveCloudSyncState({
       revision: Number.isInteger(remote.revision) ? remote.revision : state.revision,
@@ -935,6 +1110,7 @@ async function runCloudSyncPull(options = {}) {
     });
     return { success: true, sessions: remoteSessions, folders: remoteFolders, state: nextState };
   } catch (error) {
+    await SessionDiagnostics.record('cloud_sync_pull', error);
     const nextState = await saveCloudSyncState({
       lastError: error?.message || String(error)
     });
@@ -1041,7 +1217,7 @@ async function captureCurrentDesktopSnapshot(options = {}) {
       platform
     };
   } catch (error) {
-    console.warn('[background] primary capture failed, using fallback', error);
+    logBackgroundError('[background] primary capture failed, using fallback', error);
     return captureFallbackSnapshot(error, options);
   }
 }
@@ -1058,7 +1234,7 @@ async function resolveCaptureWindow(allWindows, sourceWindowId = null) {
         return fetchedWindow;
       }
     } catch (error) {
-      console.warn('[background] Failed to resolve source window', sourceWindowId, error);
+      logBackgroundError('[background] Failed to resolve source window', sourceWindowId, error);
     }
   }
 
@@ -1068,7 +1244,7 @@ async function resolveCaptureWindow(allWindows, sourceWindowId = null) {
       return allWindows.find((win) => win.id === lastFocused.id) || lastFocused;
     }
   } catch (error) {
-    console.warn('[background] Failed to resolve last focused window', error);
+    logBackgroundError('[background] Failed to resolve last focused window', error);
   }
 
   return allWindows.find((win) => Array.isArray(win.tabs) && win.tabs.length > 0) || null;
@@ -1415,7 +1591,7 @@ function createAutoSaveRunId() {
 async function resetAutoSaveRunId() {
   if (!chrome.storage?.local) return null;
   const runId = createAutoSaveRunId();
-  await chrome.storage.local.set({ [AUTO_SAVE_RUN_ID_KEY]: runId });
+  await writeLocalStorage({ [AUTO_SAVE_RUN_ID_KEY]: runId });
   if (chrome.storage.session?.set) {
     await chrome.storage.session.set({ [AUTO_SAVE_RUN_ID_KEY]: runId });
   }
@@ -1501,9 +1677,9 @@ async function refreshAutoSaveExitSnapshot() {
     return { success: false, skipped: true, reason: 'empty' };
   }
 
-  await chrome.storage.local.set({ [AUTO_SAVE_EXIT_SNAPSHOT_KEY]: snapshot });
   return storeAutoSaveSessionFromSnapshot(snapshot, AUTO_SAVE_TRIGGER_EXIT, {
-    upsertExitSnapshot: true
+    upsertExitSnapshot: true,
+    storageValues: { [AUTO_SAVE_EXIT_SNAPSHOT_KEY]: snapshot }
   });
 }
 
@@ -1513,7 +1689,7 @@ function scheduleAutoSaveExitSnapshotRefresh() {
   exitSnapshotRefreshTimer = setTimeout(() => {
     exitSnapshotRefreshTimer = null;
     refreshAutoSaveExitSnapshot().catch((error) => {
-      console.warn('[background] exit snapshot refresh failed:', error);
+      logBackgroundError('[background] exit snapshot refresh failed:', error);
     });
   }, AUTO_SAVE_EXIT_DEBOUNCE_MS);
 }
@@ -1584,7 +1760,7 @@ async function runAutoSaveOnExit() {
     upsertExitSnapshot: true
   });
   if (result.success && chrome.storage?.local) {
-    await chrome.storage.local.set({ [AUTO_SAVE_EXIT_SNAPSHOT_KEY]: null });
+    await writeLocalStorage({ [AUTO_SAVE_EXIT_SNAPSHOT_KEY]: null });
   }
   return result;
 }
@@ -1595,7 +1771,11 @@ function snapshotHasTabs(snapshot) {
   );
 }
 
-async function storeAutoSaveSessionFromSnapshot(snapshot, trigger, options = {}) {
+function storeAutoSaveSessionFromSnapshot(snapshot, trigger, options = {}) {
+  return mutateSessions(() => storeAutoSaveSnapshot(snapshot, trigger, options));
+}
+
+async function storeAutoSaveSnapshot(snapshot, trigger, options = {}) {
   const hasTabs = snapshotHasTabs(snapshot);
   if (!hasTabs) {
     return { success: false, skipped: true, reason: 'empty' };
@@ -1656,7 +1836,7 @@ async function storeAutoSaveSessionFromSnapshot(snapshot, trigger, options = {})
   } else {
     sessions.push(autoSession);
   }
-  await persistSessions(sessions, { reason: `auto_save_${saveTrigger}` });
+  await persistSessions(sessions, { reason: `auto_save_${saveTrigger}`, protectedSession: autoSession, storageValues: options.storageValues });
   return { success: true, session: autoSession };
 }
 
@@ -1694,15 +1874,15 @@ async function loadSessionsFromStorage() {
   return migrated;
 }
 
-async function deleteSessionAtIndex(index) {
+async function deleteSessionAtIndex(index, options = {}) {
   const sessions = await loadSessionsFromStorage();
   if (index < 0 || index >= sessions.length) return false;
   sessions.splice(index, 1);
-  await persistSessions(sessions, { reason: 'delete_session' });
+  await persistSessions(sessions, { ...options, reason: 'delete_session' });
   return true;
 }
 
-async function renameSessionAtIndex(index, newName) {
+async function renameSessionAtIndex(index, newName, options = {}) {
   const sessions = await loadSessionsFromStorage();
   if (index < 0 || index >= sessions.length) return false;
   if (typeof newName !== 'string' || !newName.trim()) return false;
@@ -1716,17 +1896,17 @@ async function renameSessionAtIndex(index, newName) {
       autoGeneratedName: false
     };
   }
-  await persistSessions(sessions, { reason: 'rename_session' });
+  await persistSessions(sessions, { ...options, reason: 'rename_session', protectedSession: sessions[index] });
   return true;
 }
 
-async function updateSessionAtIndex(index, sessionObject) {
+async function updateSessionAtIndex(index, sessionObject, options = {}) {
   const sessions = await loadSessionsFromStorage();
   if (index < 0 || index >= sessions.length) return false;
   // Normalize/validate session object before storing
   const normalized = normalizeSessionForStorage(sessionObject, sessions[index]?.name || DEFAULT_SESSION_NAME);
   sessions[index] = normalized;
-  await persistSessions(sessions, { reason: 'update_session' });
+  await persistSessions(sessions, { ...options, reason: 'update_session', protectedSession: normalized });
   return true;
 }
 function normalizeSessionForStorage(rawSession, fallbackName = DEFAULT_SESSION_NAME, options = {}) {
@@ -1829,7 +2009,7 @@ async function restoreSessionFromSnapshot(rawSession, options = {}) {
       try {
         await restoreSingleWindow({ ...winSnapshot, focused: false });
       } catch (err) {
-        console.warn('[restore] window restore failed, continuing with remaining windows:', err);
+        logBackgroundError('[restore] window restore failed, continuing with remaining windows:', err);
       }
     }
 
@@ -1851,7 +2031,7 @@ async function restoreSessionFromSnapshot(rawSession, options = {}) {
       }
     } catch (err) {
       // One window failing should not abort the entire restore.
-      console.warn('[restore] window restore failed, continuing with remaining windows:', err);
+      logBackgroundError('[restore] window restore failed, continuing with remaining windows:', err);
     }
   }
   console.log(
@@ -1902,7 +2082,7 @@ async function restoreSingleWindow(windowSnapshot) {
   try {
     createdWindow = await createWindowWithBatchedTabs(createData, urls);
   } catch (err) {
-    console.warn('[background] windows.create failed, retrying without state/bounds', err);
+    logBackgroundError('[background] windows.create failed, retrying without state/bounds', err);
     createdWindow = await createWindowWithBatchedTabs({ url: urls[0], focused: shouldFocusWindow }, urls);
     desiredState = 'normal';
   }
@@ -1915,7 +2095,7 @@ async function restoreSingleWindow(windowSnapshot) {
     try {
       await chrome.windows.update(createdWindow.id, { state });
     } catch (err) {
-      console.warn('[background] windows.update state failed', state, err);
+      logBackgroundError('[background] windows.update state failed', state, err);
     }
   };
 
@@ -1928,7 +2108,7 @@ async function restoreSingleWindow(windowSnapshot) {
         height: windowSnapshot.height
       });
     } catch (err) {
-      console.warn('[background] windows.update bounds failed', err);
+      logBackgroundError('[background] windows.update bounds failed', err);
     }
   }
 
@@ -1959,7 +2139,7 @@ async function restoreWindowIntoExistingWindow(windowSnapshot, targetWindowId) {
         index: i
       }));
     } catch (err) {
-      console.warn('[restore] tab URL failed, opening new tab placeholder instead:', err);
+      logBackgroundError('[restore] tab URL failed, opening new tab placeholder instead:', err);
       createdTabs.push(await chrome.tabs.create({
         windowId: targetWindowId,
         url: 'chrome://newtab/',
@@ -2030,12 +2210,12 @@ async function restoreTabDetails(tabs, groups, createdTabs, targetWindowId) {
               await chrome.tabGroups.update(groupId, updatePayload);
             }
           } catch (e) {
-            console.warn('[background] Failed to create tab group', e);
+            logBackgroundError('[background] Failed to create tab group', e);
           }
         }
       }
     } catch (e) {
-      console.warn('[background] Tab groups restoration failed', e);
+      logBackgroundError('[background] Tab groups restoration failed', e);
     }
   }
 
@@ -2051,7 +2231,7 @@ async function createWindowWithBatchedTabs(createData, urls) {
     createdWindow = await chrome.windows.create(createData);
   } catch (err) {
     if (createData.url === 'chrome://newtab/') throw err;
-    console.warn('[restore] first tab URL failed, opening new tab placeholder instead:', err);
+    logBackgroundError('[restore] first tab URL failed, opening new tab placeholder instead:', err);
     createdWindow = await chrome.windows.create({ ...createData, url: 'chrome://newtab/' });
   }
   if (urls.length > 1) {
@@ -2070,7 +2250,7 @@ async function appendTabsInBatches(windowId, urls, startIndex) {
         index: i
       });
     } catch (err) {
-      console.warn('[restore] tab URL failed, opening new tab placeholder instead:', err);
+      logBackgroundError('[restore] tab URL failed, opening new tab placeholder instead:', err);
       try {
         await chrome.tabs.create({
           windowId,
@@ -2079,7 +2259,7 @@ async function appendTabsInBatches(windowId, urls, startIndex) {
           index: i
         });
       } catch (fallbackErr) {
-        console.warn('[restore] fallback tab creation failed:', fallbackErr);
+        logBackgroundError('[restore] fallback tab creation failed:', fallbackErr);
       }
     }
     if ((i - startIndex + 1) % RESTORE_TAB_BATCH_SIZE === 0) {

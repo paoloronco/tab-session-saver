@@ -85,6 +85,70 @@ const settingsTranslations = {
 };
 Object.entries(settingsTranslations).forEach(([language, copy]) => Object.assign(translations[language], copy));
 
+const diagnosticsTranslations = {
+  en: {
+    diagnostics_title: 'Diagnostics', diagnostics_description: 'Check local storage and download a report to help troubleshoot problems.',
+    diagnostics_storage: 'Local storage', diagnostics_usage: '{used} / {limit} MB ({percent}%)',
+    diagnostics_summary: '{manual} manual sessions · {auto} automatic sessions · {logs} log events',
+    diagnostics_cleanup: 'At 90% of the storage limit, older or identical automatic saves are removed until usage is below 85%, where possible. Manual sessions and the latest scheduled and exit saves are kept.',
+    diagnostics_refresh: 'Refresh usage', diagnostics_export_title: 'Logs and diagnostic report',
+    diagnostics_logs_note: 'Includes the latest 200 events, session counts and sizes, extension and browser versions, storage usage, and Auto Save and Cloud Sync status. Logs start with this update and stay on this device.',
+    diagnostics_anonymous_note: 'The anonymized report excludes URLs, account details and tokens. Session names and free-text error messages are replaced with placeholders.',
+    diagnostics_export_anonymous: 'Export anonymized logs (JSON)', diagnostics_export_full: 'Export full logs (JSON)',
+    diagnostics_full_note: 'Full logs can contain session names and URLs from technical errors. Review the file before sharing it. This report is not a session backup.',
+    diagnostics_exported: 'Diagnostic report downloaded.'
+  },
+  it: {
+    diagnostics_title: 'Diagnostica', diagnostics_description: 'Controlla lo spazio locale e scarica un report per individuare i problemi.',
+    diagnostics_storage: 'Spazio locale', diagnostics_usage: '{used} / {limit} MB ({percent}%)',
+    diagnostics_summary: '{manual} sessioni manuali · {auto} sessioni automatiche · {logs} eventi nei log',
+    diagnostics_cleanup: 'Al 90% del limite, le copie automatiche identiche o più vecchie vengono eliminate per scendere sotto l’85%, quando possibile. Le sessioni manuali e gli ultimi salvataggi periodici e alla chiusura vengono conservati.',
+    diagnostics_refresh: 'Aggiorna utilizzo', diagnostics_export_title: 'Log e report diagnostico',
+    diagnostics_logs_note: 'Include gli ultimi 200 eventi, numero e dimensioni delle sessioni, versioni di estensione e browser, spazio occupato e stato di Auto Save e Cloud Sync. I log iniziano con questo aggiornamento e restano sul dispositivo.',
+    diagnostics_anonymous_note: 'Il report anonimizzato esclude URL, dati dell’account e token. Nomi delle sessioni e messaggi tecnici liberi vengono sostituiti con placeholder.',
+    diagnostics_export_anonymous: 'Esporta log anonimizzati (JSON)', diagnostics_export_full: 'Esporta log completi (JSON)',
+    diagnostics_full_note: 'I log completi possono contenere nomi delle sessioni e URL presenti negli errori tecnici. Controlla il file prima di condividerlo. Questo report non è un backup delle sessioni.',
+    diagnostics_exported: 'Report diagnostico scaricato.'
+  },
+  es: {
+    diagnostics_title: 'Diagnóstico', diagnostics_description: 'Comprueba el espacio local y descarga un informe para investigar problemas.',
+    diagnostics_storage: 'Almacenamiento local', diagnostics_usage: '{used} / {limit} MB ({percent}%)',
+    diagnostics_summary: '{manual} sesiones manuales · {auto} sesiones automáticas · {logs} eventos',
+    diagnostics_cleanup: 'Al 90% del límite se eliminan copias automáticas idénticas o antiguas para bajar del 85%, cuando sea posible. Se conservan las sesiones manuales y las últimas copias programadas y al cerrar.',
+    diagnostics_refresh: 'Actualizar uso', diagnostics_export_title: 'Registros e informe de diagnóstico',
+    diagnostics_logs_note: 'Incluye los últimos 200 eventos, número y tamaño de sesiones, versiones de extensión y navegador, uso del espacio y estado de Auto Save y Cloud Sync. Los registros comienzan con esta actualización y permanecen en el dispositivo.',
+    diagnostics_anonymous_note: 'El informe anónimo excluye URL, datos de cuenta y tokens. Los nombres y mensajes de error libres se sustituyen por marcadores.',
+    diagnostics_export_anonymous: 'Exportar registros anónimos (JSON)', diagnostics_export_full: 'Exportar registros completos (JSON)',
+    diagnostics_full_note: 'Los registros completos pueden contener nombres y URL de errores técnicos. Revisa el archivo antes de compartirlo. Este informe no es una copia de seguridad de las sesiones.',
+    diagnostics_exported: 'Informe de diagnóstico descargado.'
+  },
+  fr: {
+    diagnostics_title: 'Diagnostic', diagnostics_description: 'Vérifiez l’espace local et téléchargez un rapport pour identifier les problèmes.',
+    diagnostics_storage: 'Stockage local', diagnostics_usage: '{used} / {limit} Mo ({percent}%)',
+    diagnostics_summary: '{manual} sessions manuelles · {auto} sessions automatiques · {logs} événements',
+    diagnostics_cleanup: 'À 90% de la limite, les copies automatiques identiques ou anciennes sont supprimées pour revenir sous 85%, si possible. Les sessions manuelles et les dernières copies programmées et de fermeture sont conservées.',
+    diagnostics_refresh: 'Actualiser l’utilisation', diagnostics_export_title: 'Journaux et rapport de diagnostic',
+    diagnostics_logs_note: 'Inclut les 200 derniers événements, le nombre et la taille des sessions, les versions, l’espace utilisé et l’état d’Auto Save et de Cloud Sync. Les journaux commencent avec cette mise à jour et restent sur cet appareil.',
+    diagnostics_anonymous_note: 'Le rapport anonymisé exclut les URL, les données du compte et les jetons. Les noms et messages libres sont remplacés par des espaces réservés.',
+    diagnostics_export_anonymous: 'Exporter les journaux anonymisés (JSON)', diagnostics_export_full: 'Exporter les journaux complets (JSON)',
+    diagnostics_full_note: 'Les journaux complets peuvent contenir des noms et URL provenant d’erreurs techniques. Vérifiez le fichier avant de le partager. Ce rapport ne sauvegarde pas les sessions.',
+    diagnostics_exported: 'Rapport de diagnostic téléchargé.'
+  },
+  de: {
+    diagnostics_title: 'Diagnose', diagnostics_description: 'Prüfe den lokalen Speicher und lade einen Bericht zur Fehlersuche herunter.',
+    diagnostics_storage: 'Lokaler Speicher', diagnostics_usage: '{used} / {limit} MB ({percent}%)',
+    diagnostics_summary: '{manual} manuelle Sitzungen · {auto} automatische Sitzungen · {logs} Ereignisse',
+    diagnostics_cleanup: 'Bei 90% der Grenze werden identische oder alte automatische Sicherungen entfernt, bis die Nutzung möglichst unter 85% liegt. Manuelle Sitzungen und die letzten geplanten und Schließ-Sicherungen bleiben erhalten.',
+    diagnostics_refresh: 'Nutzung aktualisieren', diagnostics_export_title: 'Protokolle und Diagnosebericht',
+    diagnostics_logs_note: 'Enthält die letzten 200 Ereignisse, Anzahl und Größe der Sitzungen, Versionsinformationen, Speichernutzung und Status von Auto Save und Cloud Sync. Protokolle beginnen mit diesem Update und bleiben auf dem Gerät.',
+    diagnostics_anonymous_note: 'Der anonymisierte Bericht enthält keine URLs, Kontodaten oder Tokens. Namen und freie Fehlermeldungen werden durch Platzhalter ersetzt.',
+    diagnostics_export_anonymous: 'Anonymisierte Protokolle exportieren (JSON)', diagnostics_export_full: 'Vollständige Protokolle exportieren (JSON)',
+    diagnostics_full_note: 'Vollständige Protokolle können Namen und URLs aus technischen Fehlern enthalten. Prüfe die Datei vor dem Teilen. Dieser Bericht ist kein Sitzungs-Backup.',
+    diagnostics_exported: 'Diagnosebericht heruntergeladen.'
+  }
+};
+Object.entries(diagnosticsTranslations).forEach(([language, copy]) => Object.assign(translations[language], copy));
+
 document.addEventListener('DOMContentLoaded', () => {
   const panels = Array.from(document.querySelectorAll('.settings-panel'));
   const links = document.querySelectorAll('.settings-nav a');

@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-8.0.0-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-8.0.1-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -53,6 +53,7 @@ Sessions are saved directly on your device using Chrome's built-in storage by de
 | Cloud Sync | Sign in with Google to sync only the 10 most recent manually saved sessions. Auto Save and Save on Exit remain local. |
 | Newsletter | Subscribe from Settings to receive product updates. |
 | Browser support | Shows Chrome support status and warns when running on unsupported Chromium-derived browsers. |
+| Diagnostics | Shows local storage usage and exports the latest 200 log events with session sizes and feature status; includes an anonymized export without URLs, session names, or account details. |
 
 ## Local Storage, Backup, and Cloud Sync
 
@@ -60,6 +61,8 @@ The core extension is local-first:
 
 - No account is needed to save, preview, search, restore, import, or export sessions.
 - Local sessions are stored in `chrome.storage.local`.
+- Local storage has Chrome's 10 MB quota. Before a write reaches 90%, the extension removes identical automatic copies first, then older automatic saves, aiming for 85% usage. It preserves manual sessions, the latest scheduled and exit saves, and the automatic session currently being edited. Cleanup and the requested write are committed together; a failed write does not delete the previous history.
+- Settings > Diagnostics shows storage usage and exports a JSON support report. The latest 200 events are kept locally in IndexedDB, separately from the session quota. Reports include session counts and sizes, browser/extension versions, Auto Save settings, and Cloud Sync status. Anonymous reports replace names and free-text errors with placeholders and omit URLs and account identifiers. Full reports can contain names and URLs from technical errors; credentials are masked. Neither report is a session backup.
 - JSON export/import is the full manual backup path.
 - Cloud Sync is optional and must be enabled by the user with Google Sign-In.
 
@@ -156,6 +159,13 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 8.0.1
+
+- added actionable save, load, capture, restore, and storage error messages in all five supported languages
+- added Settings > Diagnostics with storage usage and full/anonymized JSON report downloads; bounded local logs persist across browser restarts
+- added quota-triggered automatic history cleanup, preserving manually saved sessions and the latest scheduled and exit saves
+- kept cloud scheduling errors from reporting a successful local save as failed; replaced silent truncation of replacement/import collections above 10,000 sessions with an explicit error
 
 ### 8.0.0
 - redesigned Settings as a dedicated browser tab with grouped sidebar navigation and one focused section at a time

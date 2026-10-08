@@ -26,6 +26,7 @@ function renameUI() {
       return {success:true,folders:message.folders,sessions:message.sessions};
     }
   });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../Chrome-extension/diagnostics.js'), 'utf8'), context);
   vm.runInContext(source,context);
   context.getTranslation = key => key;
   context.getFolderById = id => context.sessionFolders.find(folder => folder.id === id);
@@ -79,7 +80,7 @@ test('folder rename validates, cancels, retries failures and preserves folder id
   h.context.fail=true;
   await h.submit();
   assert.ok(h.dialog.open);
-  assert.equal(h.elements['rename-error'].textContent,'rename_folder_failed_error');
+  assert.equal(h.elements['rename-error'].textContent,'error_update');
   assert.equal(h.elements['rename-input'].disabled,false);
   assert.equal(h.context.sessionFolders[0].name,'Work');
   assert.deepEqual(JSON.parse(JSON.stringify(h.context.latestSessions)),original);
@@ -116,7 +117,7 @@ test('failed rename stays editable; cancel discards the edit and does not save',
   h.context.fail=true;
   await h.submit();
   assert.ok(h.dialog.open);
-  assert.equal(h.elements['rename-error'].textContent,'rename_failed_error');
+  assert.equal(h.elements['rename-error'].textContent,'error_update');
   assert.equal(h.elements['rename-input'].disabled,false);
   h.elements['rename-cancel'].click();
   await h.submit();

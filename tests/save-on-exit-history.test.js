@@ -133,6 +133,7 @@ function createHarness(options = {}) {
   };
   const context = vm.createContext({
     chrome,
+    importScripts(file) { vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'Chrome-extension', file), 'utf8'), context); },
     console,
     setTimeout,
     clearTimeout,

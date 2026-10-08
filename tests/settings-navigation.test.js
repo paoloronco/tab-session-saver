@@ -8,7 +8,7 @@ test('settings navigation handles direct links, history, fallback and translated
   const events = {};
   const language = { value: 'it', addEventListener(name, handler) { events[name] = handler; } };
   const breadcrumb = { dataset: {} };
-  const panels = ['appearance', 'general', 'restore', 'automation', 'data', 'cloud', 'newsletter', 'resources'].map(id => {
+  const panels = ['appearance', 'general', 'restore', 'automation', 'data', 'cloud', 'newsletter', 'diagnostics', 'resources'].map(id => {
     const heading = { dataset: { translate: `${id}_title` }, textContent: id, focus() { this.focused = true; } };
     return { id, heading, querySelector() { return heading; } };
   });
@@ -29,7 +29,7 @@ test('settings navigation handles direct links, history, fallback and translated
   });
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../Chrome-extension/settings.js'), 'utf8'), context);
   events.DOMContentLoaded();
-  for (const hash of ['#cloud', '#restore', '#data', '#general', '#automation', '#newsletter', '#resources', '#appearance', '#missing', '#browser-support-group', '']) {
+  for (const hash of ['#cloud', '#restore', '#data', '#general', '#automation', '#newsletter', '#diagnostics', '#resources', '#appearance', '#missing', '#browser-support-group', '']) {
     context.window.location.hash = hash;
     events.hashchange();
     const expected = hash === '#browser-support-group' ? 'resources' : panels.some(panel => `#${panel.id}` === hash) ? hash.slice(1) : 'appearance';

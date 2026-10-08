@@ -8,8 +8,10 @@
   <link rel="stylesheet" href="themes.css">
   <link rel="stylesheet" href="settings.css">
   <script src="browser-support.js" defer></script>
+  <script src="diagnostics.js" defer></script>
   <script src="popup.js" defer></script>
   <script src="settings.js" defer></script>
+  <script src="settings-diagnostics.js" defer></script>
 </head>
 <body class="light-mode">
   <a class="skip-link" href="#settings-main" data-translate="settings_skip">Skip to settings</a>
@@ -29,10 +31,11 @@
         <a href="#data"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4"/></svg><span data-translate="backup_title">Backup</span></a>
         <a href="#cloud"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .6-8 6 6 0 0 0-11.2-2A5 5 0 0 0 7 18z"/></svg><span data-translate="cloud_sync_title">Cloud Sync</span></a>
         <p class="nav-caption" data-translate="settings_more">More</p>
+        <a href="#diagnostics"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM7 12h3l2-5 2 10 2-5h2"/></svg><span data-translate="diagnostics_title">Diagnostics</span></a>
         <a href="#newsletter"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg><span data-translate="newsletter_title">Newsletter</span></a>
         <a href="#resources"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/></svg><span data-translate="settings_about">About &amp; support</span></a>
       </nav>
-      <div class="sidebar-footer"><span>Tabs Session Saver</span><span class="settings-version">v8.0.0</span></div>
+      <div class="sidebar-footer"><span>Tabs Session Saver</span><span class="settings-version">v8.0.1</span></div>
     </aside>
 
     <main id="settings-main" class="settings-main" tabindex="-1">
@@ -141,9 +144,29 @@
           </form>
         </section>
 
+        <section id="diagnostics" class="settings-panel" aria-labelledby="diagnostics-title">
+          <div class="panel-heading"><h1 id="diagnostics-title" tabindex="-1" data-translate="diagnostics_title">Diagnostics</h1><p data-translate="diagnostics_description">Check local storage and download a report to help troubleshoot problems.</p></div>
+          <div class="settings-card">
+            <h2 id="diagnostics-storage-label" data-translate="diagnostics_storage">Local storage</h2>
+            <p id="diagnostics-usage" class="settings-description" role="status" aria-live="polite"></p>
+            <progress id="diagnostics-meter" max="100" value="0" aria-labelledby="diagnostics-storage-label" aria-describedby="diagnostics-usage"></progress>
+            <p id="diagnostics-summary" class="settings-description"></p>
+            <p class="settings-description" data-translate="diagnostics_cleanup">At 90% of the storage limit, older or identical automatic saves are removed until usage is below 85%, where possible. Manual sessions and the latest scheduled and exit saves are kept.</p>
+            <button id="diagnostics-refresh" type="button" class="button-secondary" data-translate="diagnostics_refresh">Refresh usage</button>
+          </div>
+          <div class="settings-card">
+            <h2 data-translate="diagnostics_export_title">Logs and diagnostic report</h2>
+            <p class="settings-description" data-translate="diagnostics_logs_note">Includes the latest 200 events, session counts and sizes, extension and browser versions, storage usage, and Auto Save and Cloud Sync status. Logs start with this update and stay on this device.</p>
+            <p class="settings-description" data-translate="diagnostics_anonymous_note">The anonymized report excludes URLs, account details and tokens. Session names and free-text error messages are replaced with placeholders.</p>
+            <div class="diagnostics-actions"><button id="diagnostics-export-anonymous" type="button" data-translate="diagnostics_export_anonymous">Export anonymized logs (JSON)</button><button id="diagnostics-export-full" type="button" class="button-secondary" data-translate="diagnostics_export_full">Export full logs (JSON)</button></div>
+            <p class="settings-description" data-translate="diagnostics_full_note">Full logs can contain session names and URLs from technical errors. Review the file before sharing it. This report is not a session backup.</p>
+            <p id="diagnostics-status" class="status-message" role="status" aria-live="polite"></p>
+          </div>
+        </section>
+
         <section id="resources" class="settings-panel" aria-labelledby="resources-title">
           <div class="panel-heading"><h1 id="resources-title" tabindex="-1" data-translate="settings_about">About &amp; support</h1><p data-translate="settings_about_description">Everything you need to find us, get help, and learn more.</p></div>
-          <div class="settings-card about-card"><div class="about-brand"><img src="img-4848.png" width="48" height="48" alt=""><div><h2>Tabs Session Saver</h2><span class="settings-version">v8.0.0</span></div></div><h3 data-translate="resources_title">Get the extension</h3><div class="extension-primary-links"><a class="button-secondary" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=it" target="_blank" rel="noopener">Chrome Web Store<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7m0-7L10 14M10 3H3v18h18v-7"/></svg></a><a class="button-secondary" href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener"><span data-translate="github_link">Source code on GitHub</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7m0-7L10 14M10 3H3v18h18v-7"/></svg></a></div><div class="footer-contact-line"><span data-translate="settings_contact">Need a hand?</span><a href="mailto:info@paoloronco.it">info@paoloronco.it</a></div></div>
+          <div class="settings-card about-card"><div class="about-brand"><img src="img-4848.png" width="48" height="48" alt=""><div><h2>Tabs Session Saver</h2><span class="settings-version">v8.0.1</span></div></div><h3 data-translate="resources_title">Get the extension</h3><div class="extension-primary-links"><a class="button-secondary" href="https://chromewebstore.google.com/detail/tabs-session-saver/njbmclamamhckchdanoobkhadhmbdobp?authuser=0&hl=it" target="_blank" rel="noopener">Chrome Web Store<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7m0-7L10 14M10 3H3v18h18v-7"/></svg></a><a class="button-secondary" href="https://github.com/paoloronco/tab-session-saver" target="_blank" rel="noopener"><span data-translate="github_link">Source code on GitHub</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7m0-7L10 14M10 3H3v18h18v-7"/></svg></a></div><div class="footer-contact-line"><span data-translate="settings_contact">Need a hand?</span><a href="mailto:info@paoloronco.it">info@paoloronco.it</a></div></div>
           <div id="browser-support-group" class="settings-card settings-browser-support" style="display: none;"><h2 data-translate="browser_support_label">Browser Support</h2><div id="browser-support-info" class="browser-support-info"><span data-translate="browser_support_loading">Detecting browser…</span></div></div>
           <footer class="settings-footer"><div class="footer-secondary-links"><a href="https://tabsessionsaver.paoloronco.it/" target="_blank" rel="noopener" data-translate="settings_website">Website</a><a href="https://tabsessionsaver.paoloronco.it/legal" target="_blank" rel="noopener" data-translate="settings_legal">Legal</a><a href="https://tabsessionsaver.paoloronco.it/privacy" target="_blank" rel="noopener" data-translate="privacy_policy_link">Privacy Policy</a><a href="https://tabsessionsaver.paoloronco.it/terms" target="_blank" rel="noopener" data-translate="settings_terms">Terms</a><a href="https://tabsessionsaver.paoloronco.it/oauth-disclosure" target="_blank" rel="noopener">OAuth</a><a href="https://tabsessionsaver.paoloronco.it/data-deletion" target="_blank" rel="noopener" data-translate="settings_delete_data">Data deletion</a></div><p>© 2025 Paolo Ronco · <span data-translate="rights_reserved">All rights reserved</span></p></footer>
         </section>

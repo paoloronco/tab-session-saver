@@ -31,6 +31,7 @@ function harness(existing = []) {
     window: {},
     chrome: { runtime: { sendMessage(message, callback) {
       if (message.action === 'get_sessions') callback(stored);
+      else if (message.action === 'get_session_collection') callback({ success: true, sessions: stored, revision: 0 });
       else {
         writes.push(message);
         stored = message.sessions;
@@ -38,6 +39,7 @@ function harness(existing = []) {
       }
     } } }
   });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../Chrome-extension/diagnostics.js'), 'utf8'), context);
   vm.runInContext(source, context);
   // Execute the actual backup/drop wiring without initializing unrelated popup controls.
   const block = source.slice(source.indexOf('  // Backups and individual sessions'), source.indexOf('  // SETTINGS PAGE'));

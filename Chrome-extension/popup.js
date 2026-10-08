@@ -1,3 +1,4 @@
+/* global SessionDiagnostics */
 // popup.js
 
 // Translation object
@@ -864,6 +865,91 @@ const translations = {
   }
 };
 
+const errorTranslations = {
+  en: {
+    error_storage_full: 'There is not enough local storage for this change, even after cleaning older automatic saves. Export a backup in Settings > Backup, then remove unneeded sessions. Manual sessions are never removed automatically.',
+    error_extension_unavailable: 'Chrome could not contact the extension. Close this panel and reopen it. If it still fails, reload Tabs Session Saver at chrome://extensions.',
+    error_window_unavailable: 'The browser window or tab is no longer available. Open a normal browser window and try again.',
+    error_permission: 'Chrome denied access. Check the extension permissions at chrome://extensions, then reopen the extension.',
+    error_network: 'The online service could not be reached. Check your internet connection and try again. Local session saving works without an internet connection.',
+    error_invalid_session: 'These session data could not be read. Keep your backup and export an anonymized report in Settings > Diagnostics.',
+    error_session_limit: 'This operation would exceed 10,000 local sessions. Export a backup and remove unneeded sessions first. Nothing was replaced.',
+    error_save: 'Your session could not be saved. Open Settings > Diagnostics and export an anonymized report so support can identify the cause.',
+    error_capture: 'Chrome could not read the open tabs. Reopen the extension in a normal browser window. If it happens again, export an anonymized report in Settings > Diagnostics.',
+    error_load: 'Saved sessions could not be loaded. Reopen the extension. If it happens again, export an anonymized report in Settings > Diagnostics; do not delete your saved data.',
+    error_update: 'This change could not be saved. Reopen the extension and try again. If it still fails, export an anonymized report in Settings > Diagnostics.',
+    error_restore: 'The session could not be restored. Reopen the extension in a normal browser window. If it still fails, export an anonymized report in Settings > Diagnostics.',
+    error_cloud: 'Cloud Sync failed. Your local sessions are still available. Check your connection or sign in again; if it still fails, export an anonymized report in Settings > Diagnostics.'
+  },
+  it: {
+    error_storage_full: 'Lo spazio locale non basta per questa modifica, anche dopo la pulizia dei vecchi salvataggi automatici. Esporta un backup da Impostazioni > Backup, poi elimina le sessioni non necessarie. Le sessioni manuali non vengono mai eliminate automaticamente.',
+    error_extension_unavailable: 'Chrome non riesce a contattare l’estensione. Chiudi e riapri questo pannello. Se il problema continua, ricarica Tabs Session Saver da chrome://extensions.',
+    error_window_unavailable: 'La finestra o la scheda non è più disponibile. Apri una normale finestra del browser e riprova.',
+    error_permission: 'Chrome ha negato l’accesso. Controlla i permessi dell’estensione da chrome://extensions, poi riaprila.',
+    error_network: 'Il servizio online non è raggiungibile. Controlla la connessione e riprova. Il salvataggio locale funziona anche senza Internet.',
+    error_invalid_session: 'Non è stato possibile leggere questi dati. Conserva il backup ed esporta un report anonimizzato da Impostazioni > Diagnostica.',
+    error_session_limit: 'Questa operazione supererebbe 10.000 sessioni locali. Esporta un backup ed elimina prima le sessioni non necessarie. Nessun dato è stato sostituito.',
+    error_save: 'Non è stato possibile salvare la sessione. Esporta un report anonimizzato da Impostazioni > Diagnostica per permettere al supporto di identificare la causa.',
+    error_capture: 'Chrome non riesce a leggere le schede aperte. Riapri l’estensione in una normale finestra del browser. Se ricapita, esporta un report anonimizzato da Impostazioni > Diagnostica.',
+    error_load: 'Non è stato possibile caricare le sessioni salvate. Riapri l’estensione. Se ricapita, esporta un report anonimizzato da Impostazioni > Diagnostica; non eliminare i dati salvati.',
+    error_update: 'Non è stato possibile salvare questa modifica. Riapri l’estensione e riprova. Se il problema continua, esporta un report anonimizzato da Impostazioni > Diagnostica.',
+    error_restore: 'Non è stato possibile ripristinare la sessione. Riapri l’estensione in una normale finestra del browser. Se il problema continua, esporta un report anonimizzato da Impostazioni > Diagnostica.',
+    error_cloud: 'Cloud Sync non è riuscito. Le sessioni locali sono ancora disponibili. Controlla la connessione o accedi di nuovo; se il problema continua, esporta un report anonimizzato da Impostazioni > Diagnostica.'
+  },
+  es: {
+    error_storage_full: 'No queda espacio local suficiente, incluso tras limpiar guardados automáticos antiguos. Exporta una copia en Ajustes > Copia de seguridad y elimina sesiones innecesarias. Las sesiones manuales nunca se eliminan automáticamente.',
+    error_extension_unavailable: 'Chrome no pudo contactar con la extensión. Cierra y vuelve a abrir este panel. Si continúa, recarga Tabs Session Saver en chrome://extensions.',
+    error_window_unavailable: 'La ventana o pestaña ya no está disponible. Abre una ventana normal del navegador e inténtalo de nuevo.',
+    error_permission: 'Chrome denegó el acceso. Revisa los permisos en chrome://extensions y vuelve a abrir la extensión.',
+    error_network: 'El servicio no está disponible. Revisa tu conexión e inténtalo de nuevo. Las sesiones locales se guardan sin Internet.',
+    error_invalid_session: 'No se pudieron leer estos datos. Conserva la copia y exporta un informe anónimo en Ajustes > Diagnóstico.',
+    error_session_limit: 'Esta operación superaría 10.000 sesiones locales. Exporta una copia y elimina sesiones innecesarias primero. No se reemplazó ningún dato.',
+    error_save: 'No se pudo guardar la sesión. Exporta un informe anónimo en Ajustes > Diagnóstico para que soporte identifique la causa.',
+    error_capture: 'Chrome no pudo leer las pestañas. Reabre la extensión en una ventana normal. Si continúa, exporta un informe anónimo en Ajustes > Diagnóstico.',
+    error_load: 'No se pudieron cargar las sesiones. Reabre la extensión. Si continúa, exporta un informe anónimo en Ajustes > Diagnóstico; no elimines los datos guardados.',
+    error_update: 'No se pudo guardar el cambio. Reabre la extensión y reintenta. Si continúa, exporta un informe anónimo en Ajustes > Diagnóstico.',
+    error_restore: 'No se pudo restaurar la sesión. Reabre la extensión en una ventana normal. Si continúa, exporta un informe anónimo en Ajustes > Diagnóstico.',
+    error_cloud: 'Cloud Sync falló. Las sesiones locales siguen disponibles. Revisa tu conexión o inicia sesión de nuevo. Si continúa, exporta un informe anónimo en Ajustes > Diagnóstico.'
+  },
+  fr: {
+    error_storage_full: 'L’espace local est insuffisant, même après nettoyage des sauvegardes automatiques anciennes. Exportez une copie dans Paramètres > Sauvegarde, puis supprimez les sessions inutiles. Les sessions manuelles ne sont jamais supprimées automatiquement.',
+    error_extension_unavailable: 'Chrome ne peut pas contacter l’extension. Fermez puis rouvrez ce panneau. Si le problème persiste, rechargez Tabs Session Saver dans chrome://extensions.',
+    error_window_unavailable: 'La fenêtre ou l’onglet n’est plus disponible. Ouvrez une fenêtre normale et réessayez.',
+    error_permission: 'Chrome a refusé l’accès. Vérifiez les autorisations dans chrome://extensions, puis rouvrez l’extension.',
+    error_network: 'Le service est inaccessible. Vérifiez votre connexion et réessayez. Les sessions locales se sauvegardent sans Internet.',
+    error_invalid_session: 'Ces données n’ont pas pu être lues. Conservez votre copie et exportez un rapport anonymisé dans Paramètres > Diagnostic.',
+    error_session_limit: 'Cette opération dépasserait 10 000 sessions locales. Exportez une copie et supprimez les sessions inutiles. Aucune donnée n’a été remplacée.',
+    error_save: 'La session n’a pas pu être sauvegardée. Exportez un rapport anonymisé dans Paramètres > Diagnostic pour identifier la cause.',
+    error_capture: 'Chrome ne peut pas lire les onglets. Rouvrez l’extension dans une fenêtre normale. Si le problème persiste, exportez un rapport anonymisé dans Paramètres > Diagnostic.',
+    error_load: 'Les sessions n’ont pas pu être chargées. Rouvrez l’extension. Si le problème persiste, exportez un rapport anonymisé dans Paramètres > Diagnostic ; ne supprimez pas les données.',
+    error_update: 'La modification n’a pas pu être sauvegardée. Rouvrez l’extension et réessayez. Si le problème persiste, exportez un rapport anonymisé dans Paramètres > Diagnostic.',
+    error_restore: 'La session n’a pas pu être restaurée. Rouvrez l’extension dans une fenêtre normale. Si le problème persiste, exportez un rapport anonymisé dans Paramètres > Diagnostic.',
+    error_cloud: 'Cloud Sync a échoué. Les sessions locales restent disponibles. Vérifiez la connexion ou reconnectez-vous. Si le problème persiste, exportez un rapport anonymisé dans Paramètres > Diagnostic.'
+  },
+  de: {
+    error_storage_full: 'Der lokale Speicher reicht trotz Bereinigung alter automatischer Sicherungen nicht aus. Exportiere ein Backup unter Einstellungen > Backup und lösche unnötige Sitzungen. Manuelle Sitzungen werden nie automatisch gelöscht.',
+    error_extension_unavailable: 'Chrome erreicht die Erweiterung nicht. Schließe und öffne dieses Fenster. Falls es weiter fehlschlägt, lade Tabs Session Saver unter chrome://extensions neu.',
+    error_window_unavailable: 'Das Fenster oder der Tab ist nicht mehr verfügbar. Öffne ein normales Browserfenster und versuche es erneut.',
+    error_permission: 'Chrome hat den Zugriff verweigert. Prüfe die Berechtigungen unter chrome://extensions und öffne die Erweiterung erneut.',
+    error_network: 'Der Dienst ist nicht erreichbar. Prüfe die Verbindung und versuche es erneut. Lokale Sitzungen werden auch ohne Internet gespeichert.',
+    error_invalid_session: 'Diese Daten konnten nicht gelesen werden. Behalte dein Backup und exportiere einen anonymisierten Bericht unter Einstellungen > Diagnose.',
+    error_session_limit: 'Diese Aktion würde 10.000 lokale Sitzungen überschreiten. Exportiere ein Backup und lösche unnötige Sitzungen. Es wurden keine Daten ersetzt.',
+    error_save: 'Die Sitzung konnte nicht gespeichert werden. Exportiere einen anonymisierten Bericht unter Einstellungen > Diagnose, damit der Support die Ursache findet.',
+    error_capture: 'Chrome konnte die Tabs nicht lesen. Öffne die Erweiterung in einem normalen Fenster erneut. Falls es weiter fehlschlägt, exportiere einen anonymisierten Bericht unter Einstellungen > Diagnose.',
+    error_load: 'Gespeicherte Sitzungen konnten nicht geladen werden. Öffne die Erweiterung erneut. Falls es weiter fehlschlägt, exportiere einen anonymisierten Bericht unter Einstellungen > Diagnose; lösche keine gespeicherten Daten.',
+    error_update: 'Die Änderung konnte nicht gespeichert werden. Öffne die Erweiterung erneut und versuche es noch einmal. Falls es weiter fehlschlägt, exportiere einen anonymisierten Bericht unter Einstellungen > Diagnose.',
+    error_restore: 'Die Sitzung konnte nicht wiederhergestellt werden. Öffne die Erweiterung in einem normalen Fenster erneut. Falls es weiter fehlschlägt, exportiere einen anonymisierten Bericht unter Einstellungen > Diagnose.',
+    error_cloud: 'Cloud Sync ist fehlgeschlagen. Lokale Sitzungen sind weiterhin verfügbar. Prüfe die Verbindung oder melde dich erneut an. Falls es weiter fehlschlägt, exportiere einen anonymisierten Bericht unter Einstellungen > Diagnose.'
+  }
+};
+Object.entries(errorTranslations).forEach(([language, copy]) => Object.assign(translations[language], copy));
+Object.entries({ en: 'The saved session list changed while this panel was open. Close and reopen the extension, then repeat the change. Nothing was overwritten.',
+  it: 'La lista delle sessioni è cambiata mentre il pannello era aperto. Chiudi e riapri l’estensione, poi ripeti la modifica. Nessun dato è stato sovrascritto.',
+  es: 'La lista cambió mientras este panel estaba abierto. Cierra y reabre la extensión y repite el cambio. No se sobrescribió ningún dato.',
+  fr: 'La liste a changé pendant que ce panneau était ouvert. Fermez et rouvrez l’extension, puis recommencez. Aucune donnée n’a été écrasée.',
+  de: 'Die Liste hat sich während der Anzeige geändert. Schließe und öffne die Erweiterung und wiederhole die Änderung. Es wurden keine Daten überschrieben.'
+}).forEach(([language, copy]) => { translations[language].error_session_changed = copy; });
+
 const TAB_GROUP_COLORS = new Set(['grey', 'blue', 'red', 'yellow', 'green', 'cyan', 'orange', 'pink', 'purple']);
 const MAX_IMPORT_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_CLIENT_STRING_LENGTH = 4096;
@@ -902,6 +988,7 @@ const SESSION_FOLDERS_KEY = 'sessionFolders';
 
 let currentLanguage = 'en';
 let reloadSessions = () => {};
+let latestSessionsRevision;
 let restoreRequestInFlight = false;
 
 const APPEARANCE_THEMES = ['classic', 'ocean', 'forest', 'lavender', 'rose', 'sand'];
@@ -979,6 +1066,23 @@ function getTranslation(key) {
   return translations[currentLanguage] && translations[currentLanguage][key] 
     ? translations[currentLanguage][key] 
     : translations['en'][key] || key;
+}
+
+function reportOperationError(error, operation = 'save') {
+  const code = SessionDiagnostics.errorCode(error);
+  const message = String(error?.message || error?.error || error || 'Unknown error');
+  if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+    try {
+      chrome.runtime.sendMessage({ action: 'record_diagnostic_error', code, error: `${operation}: ${message}` }, () => { void chrome.runtime.lastError; });
+    } catch (_) { /* The extension context may already have been invalidated. */ }
+  }
+  const key = {
+    STORAGE_FULL: 'error_storage_full', STORAGE_UNAVAILABLE: 'error_load',
+    EXTENSION_UNAVAILABLE: 'error_extension_unavailable', WINDOW_UNAVAILABLE: 'error_window_unavailable',
+    PERMISSION_DENIED: 'error_permission', NETWORK_ERROR: 'error_network',
+    INVALID_SESSION: 'error_invalid_session', SESSION_LIMIT: 'error_session_limit', SESSION_CHANGED: 'error_session_changed'
+  }[code];
+  return getTranslation(key || `error_${operation}`);
 }
 
 function formatTranslation(key, replacements = {}) {
@@ -1469,13 +1573,13 @@ function triggerConfiguredRestore(message, options = {}) {
   chrome.tabs.query({ active: true, currentWindow: true }, (activeTabs) => {
     if (chrome.runtime.lastError) {
       console.error('Unable to determine the current window', chrome.runtime.lastError);
-      alert('Unable to determine the current browser window.');
+      alert(reportOperationError(chrome.runtime.lastError, 'capture'));
       return;
     }
 
     const targetWindowId = activeTabs?.[0]?.windowId;
     if (restoreMode === 'current_window' && !Number.isInteger(targetWindowId)) {
-      alert('Unable to determine the current browser window.');
+      alert(reportOperationError({ code: 'WINDOW_UNAVAILABLE' }, 'capture'));
       return;
     }
 
@@ -1510,7 +1614,7 @@ function triggerRestoreMessage(message, options = {}) {
       if (chrome.runtime.lastError) {
         resetRestoreRequest();
         console.error('Restore error', chrome.runtime.lastError);
-        alert('Unable to restore this session: ' + String(chrome.runtime.lastError.message));
+        alert(reportOperationError(chrome.runtime.lastError, 'restore'));
         return;
       }
       if (!res || !res.success) {
@@ -1520,7 +1624,7 @@ function triggerRestoreMessage(message, options = {}) {
           alert(getTranslation('restore_in_progress_message'));
           return;
         }
-        alert('Unable to restore this session: ' + (res && res.error ? String(res.error) : 'Unknown error'));
+        alert(reportOperationError(res, 'restore'));
         if (closeOnFailure) {
           window.close();
         }
@@ -1766,16 +1870,20 @@ function createPreviewItem(tab, displayIndex, winSnapshot, sessionPayload, index
 
       // Persist changes: if no tabs left, delete session; else update session
       if (countInfo.tabsCount === 0) {
-        chrome.runtime.sendMessage({ action: 'delete_session', index }, (res) => {
+        chrome.runtime.sendMessage({ action: 'delete_session', index, revision: latestSessionsRevision }, (res) => {
           if (res && res.success) reloadSessions();
+          else { alert(reportOperationError(chrome.runtime.lastError || res, 'update')); reloadSessions(); }
         });
       } else {
-        chrome.runtime.sendMessage({ action: 'update_session', index, session: sessionPayload }, (res) => {
-          if (!res || !res.success) {
+        chrome.runtime.sendMessage({ action: 'update_session', index, session: sessionPayload, revision: latestSessionsRevision }, (res) => {
+          if (chrome.runtime.lastError || !res || !res.success) {
             console.error('Failed to update session after tab removal', res && res.error);
+            alert(reportOperationError(chrome.runtime.lastError || res, 'update'));
+            reloadSessions();
             return;
           }
           renderPreview(sessionPayload, previewContainer, index, label);
+          reloadSessions();
         });
       }
     } catch (e) {
@@ -1803,18 +1911,22 @@ function removeWindowFromSavedSession(sessionPayload, windowIndex, index, label,
   const countInfo = updateSessionLabelMeta(sessionPayload, label);
 
   if (countInfo.tabsCount === 0) {
-    chrome.runtime.sendMessage({ action: 'delete_session', index }, (res) => {
+    chrome.runtime.sendMessage({ action: 'delete_session', index, revision: latestSessionsRevision }, (res) => {
       if (res && res.success) reloadSessions();
+      else { alert(reportOperationError(chrome.runtime.lastError || res, 'update')); reloadSessions(); }
     });
     return;
   }
 
-  chrome.runtime.sendMessage({ action: 'update_session', index, session: sessionPayload }, (res) => {
-    if (!res || !res.success) {
+  chrome.runtime.sendMessage({ action: 'update_session', index, session: sessionPayload, revision: latestSessionsRevision }, (res) => {
+    if (chrome.runtime.lastError || !res || !res.success) {
       console.error('Failed to update session after window removal', res && res.error);
+      alert(reportOperationError(chrome.runtime.lastError || res, 'update'));
+      reloadSessions();
       return;
     }
     renderPreview(sessionPayload, previewContainer, index, label);
+    reloadSessions();
   });
 }
 
@@ -2301,16 +2413,17 @@ document.addEventListener('DOMContentLoaded', () => {
     addItemInput?.removeAttribute('aria-invalid');
     addItemSubmit.disabled = true;
     chrome.runtime.sendMessage(
-      { action: 'update_session', index: request.index, session: updatedSession },
+      { action: 'update_session', index: request.index, session: updatedSession, revision: latestSessionsRevision },
       (response) => {
         if (chrome.runtime.lastError || !response?.success) {
           console.error('Failed to add item to session', chrome.runtime.lastError || response?.error);
-          addItemError.textContent = getTranslation('add_url_failed');
+          addItemError.textContent = reportOperationError(chrome.runtime.lastError || response, 'update');
           addItemSubmit.disabled = false;
           return;
         }
         request.onSaved(updatedSession);
         addItemDialog.close();
+        loadSessions();
       }
     );
   });
@@ -2378,8 +2491,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       renameDialog.close();
       loadSessions();
-    } catch (_error) {
-      renameError.textContent = getTranslation(folderId ? 'rename_folder_failed_error' : 'rename_failed_error');
+    } catch (error) {
+      renameError.textContent = reportOperationError(error, 'update');
     } finally {
       renameSubmit.disabled = renameCancel.disabled = renameInput.disabled = false;
     }
@@ -2508,6 +2621,7 @@ document.addEventListener('DOMContentLoaded', () => {
       (response) => {
         if (chrome.runtime.lastError || !response?.success) {
           console.error('Unable to update Auto Save settings', chrome.runtime.lastError || response?.error);
+          alert(reportOperationError(chrome.runtime.lastError || response, 'update'));
         }
       }
     );
@@ -2645,7 +2759,9 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     }
 
-    return { key: 'cloud_sync_request_error', replacements: {} };
+    const code = SessionDiagnostics.errorCode(response);
+    const keys = { NETWORK_ERROR: 'error_network', EXTENSION_UNAVAILABLE: 'error_extension_unavailable', STORAGE_FULL: 'error_storage_full' };
+    return { key: keys[code] || 'error_cloud', replacements: {} };
   }
 
   function setCloudSyncErrorStatus(response) {
@@ -2837,7 +2953,7 @@ document.addEventListener('DOMContentLoaded', () => {
   exportBtn?.addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'get_sessions' }, (sessions) => {
       if (chrome.runtime.lastError || !Array.isArray(sessions)) {
-        alert(getTranslation('import_error') + (chrome.runtime.lastError?.message || 'Unable to load sessions'));
+        alert(reportOperationError(chrome.runtime.lastError || sessions, 'load'));
         return;
       }
       downloadSessions(sessions, `tabs-sessions-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
@@ -2852,20 +2968,21 @@ document.addEventListener('DOMContentLoaded', () => {
       // Validate before offering to replace existing data.
       parseImportedSessions(text);
       const replace = askToReplace && confirm('Replace existing sessions with imported ones? Click OK to replace, Cancel to merge.');
-      const existing = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ action: 'get_sessions' }, (sessions) => {
-          if (chrome.runtime.lastError || !Array.isArray(sessions)) {
-            reject(new Error(chrome.runtime.lastError?.message || 'Unable to load existing sessions'));
+      const collection = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ action: 'get_session_collection' }, (response) => {
+          if (chrome.runtime.lastError || !response?.success || !Array.isArray(response.sessions)) {
+            reject(chrome.runtime.lastError || response || new Error('Unable to load existing sessions'));
           } else {
-            resolve(sessions);
+            resolve(response);
           }
         });
       });
+      const existing = collection.sessions;
       const imported = parseImportedSessions(text, replace ? 0 : existing.length);
       await sendRuntimeMessage({
         action: 'replace_sessions',
         sessions: replace ? imported : combineSessionCollections(existing, imported),
-        reason: 'import_sessions'
+        reason: 'import_sessions', revision: collection.revision
       });
       setActiveSessionCategory(getSessionSaveType(imported[0]));
       setAutoSaveTriggerFilter(AUTO_SAVE_TRIGGER_ALL);
@@ -2873,7 +2990,9 @@ document.addEventListener('DOMContentLoaded', () => {
       loadSessions();
       alert(getTranslation('import_success'));
     } catch (error) {
-      alert(getTranslation('import_error') + (error.message || error.error || String(error)));
+      alert(error.code || SessionDiagnostics.errorCode(error) !== 'UNKNOWN_ERROR'
+        ? reportOperationError(error, 'update')
+        : getTranslation('import_error') + (error.message || error.error || String(error)));
     }
   }
 
@@ -2916,109 +3035,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // SALVATAGGIO TABS
+  // Append in the background so an automatic save cannot be overwritten by an older popup list.
   const saveButtonEl = document.getElementById('save');
   if (saveButtonEl) {
-    saveButtonEl.addEventListener('click', () => {
+    saveButtonEl.addEventListener('click', async () => {
+      if (saveButtonEl.disabled) return;
+      saveButtonEl.disabled = true;
+      let operation = 'capture';
       try {
-        if (saveButtonEl.disabled) return;
-        saveButtonEl.disabled = true;
-
-        chrome.runtime.sendMessage({ action: 'get_sessions' }, (existingRaw) => {
-          try {
-            if (chrome.runtime.lastError) {
-              console.error('Load sessions error', chrome.runtime.lastError);
-              alert('Unable to load existing sessions. Please try again.');
-              saveButtonEl.disabled = false;
-              return;
-            }
-            const existing = Array.isArray(existingRaw) ? existingRaw : [];
-
-            chrome.tabs.query({ active: true, currentWindow: true }, (activeTabs) => {
-              try {
-                if (chrome.runtime.lastError) {
-                  console.error('Active tab lookup error', chrome.runtime.lastError);
-                  alert('Unable to identify the active browser window. Please try again.');
-                  saveButtonEl.disabled = false;
-                  return;
-                }
-
-                const sourceWindowId = Array.isArray(activeTabs) && activeTabs[0] && Number.isInteger(activeTabs[0].windowId)
-                  ? activeTabs[0].windowId
-                  : null;
-
-                chrome.runtime.sendMessage({ action: 'capture_current_desktop', sourceWindowId }, (snapshot) => {
-                  try {
-                    if (chrome.runtime.lastError) {
-                      console.error('Capture message error', chrome.runtime.lastError);
-                      alert('Unable to capture the current session. Please try again.');
-                      saveButtonEl.disabled = false;
-                      return;
-                    }
-                    if (!snapshot || !snapshot.success) {
-                      console.error('Capture error', snapshot?.error);
-                      alert('Unable to capture the current session. Please try again.');
-                      saveButtonEl.disabled = false;
-                      return;
-                    }
-
-                    const timestamp = new Date().toISOString();
-                    const defaultName = `${getTranslation('session_default_name')} ${existing.length + 1}`;
-
-                    const metadata = {
-                      desktopKey: snapshot.desktopKey ?? null,
-                      saveType: SAVE_TYPE_MANUAL,
-                      ...(snapshot.desktopStrategy ? { desktopStrategy: snapshot.desktopStrategy } : {}),
-                      ...(snapshot.heuristics ? { heuristics: snapshot.heuristics } : {})
-                    };
-                    const sessionObject = normalizeSessionSnapshot({
-                      name: defaultName,
-                      timestamp,
-                      windows: snapshot.windows,
-                      metadata,
-                      platform: snapshot.platform ?? null,
-                      saveType: SAVE_TYPE_MANUAL
-                    });
-
-                    if (!sessionObject.windows.length) {
-                      alert('No browser windows were detected to save on this desktop.');
-                      saveButtonEl.disabled = false;
-                      return;
-                    }
-
-                    const sessionsToStore = combineSessionCollections(existing, [sessionObject]);
-
-                    chrome.runtime.sendMessage({ action: 'replace_sessions', sessions: sessionsToStore, reason: 'manual_save' }, (response) => {
-                      try {
-                        saveButtonEl.disabled = false;
-                        if (chrome.runtime.lastError || !response?.success) {
-                          console.error('Session save error', chrome.runtime.lastError || response);
-                          alert('Unable to save this session. Please try again.');
-                          return;
-                        }
-                        loadSessions();
-                      } catch (e) {
-                        console.error('Error in save set callback', e);
-                        saveButtonEl.disabled = false;
-                      }
-                    });
-                  } catch (e) {
-                    console.error('Error in capture callback', e);
-                    saveButtonEl.disabled = false;
-                  }
-                });
-              } catch (e) {
-                console.error('Error while resolving active tab window', e);
-                saveButtonEl.disabled = false;
-              }
-            });
-          } catch (e) {
-            console.error('Error in get_sessions callback', e);
-            saveButtonEl.disabled = false;
-          }
+        const activeTabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const snapshot = await sendRuntimeMessage({ action: 'capture_current_desktop', sourceWindowId: activeTabs[0]?.windowId });
+        const session = normalizeSessionSnapshot({
+          name: getTranslation('session_default_name'), timestamp: new Date().toISOString(),
+          windows: snapshot.windows, platform: snapshot.platform ?? null, saveType: SAVE_TYPE_MANUAL,
+          metadata: { desktopKey: snapshot.desktopKey ?? null, saveType: SAVE_TYPE_MANUAL,
+            ...(snapshot.desktopStrategy ? { desktopStrategy: snapshot.desktopStrategy } : {}),
+            ...(snapshot.heuristics ? { heuristics: snapshot.heuristics } : {}) }
         });
-      } catch (e) {
-        console.error('Error in save click', e);
+        if (!session.windows.length) throw { code: 'WINDOW_UNAVAILABLE' };
+        operation = 'save';
+        await sendRuntimeMessage({ action: 'save_session', session });
+        loadSessions();
+      } catch (error) {
+        alert(reportOperationError(error, operation));
+      } finally {
         saveButtonEl.disabled = false;
       }
     });
@@ -3046,17 +3086,21 @@ document.addEventListener('DOMContentLoaded', () => {
     latestSessions = nextSessions;
     renderSessionList(latestSessions, searchInput?.value || '');
     chrome.runtime.sendMessage(
-      { action: 'replace_sessions', sessions: nextSessions, reason },
+      { action: 'replace_sessions', sessions: nextSessions, reason, revision: latestSessionsRevision },
       (response) => {
         if (chrome.runtime.lastError || !response?.success) {
           console.error('[popup] Session update failed:', chrome.runtime.lastError || response);
-          loadSessions();
+          alert(reportOperationError(chrome.runtime.lastError || response, 'update'));
         }
+        loadSessions();
       }
     );
   }
 
   function sendRuntimeMessage(message) {
+    if (['replace_sessions', 'rename_session', 'update_session', 'delete_session'].includes(message.action) && Number.isInteger(latestSessionsRevision) && !Number.isInteger(message.revision)) {
+      message = { ...message, revision: latestSessionsRevision };
+    }
     return new Promise((resolve, reject) => {
       chrome.runtime.sendMessage(message, (response) => {
         if (chrome.runtime.lastError || !response?.success) {
@@ -3076,6 +3120,7 @@ document.addEventListener('DOMContentLoaded', () => {
       (response) => {
         if (chrome.runtime.lastError || !response?.success) {
           console.error('[popup] Folder update failed:', chrome.runtime.lastError || response);
+          alert(reportOperationError(chrome.runtime.lastError || response, 'update'));
           loadSessions();
           return;
         }
@@ -3100,6 +3145,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sessionFolders = normalizeSessionFolders(folderResponse.folders, sessionResponse.sessions || nextSessions);
       latestSessions = Array.isArray(sessionResponse.sessions) ? sessionResponse.sessions : nextSessions;
       renderSessionList(latestSessions, searchInput?.value || '');
+      loadSessions();
       return true;
     } catch (error) {
       console.error('[popup] Folder/session update failed:', error);
@@ -3333,11 +3379,11 @@ document.addEventListener('DOMContentLoaded', () => {
     for (let i = 0; i <= retries; i++) {
       try {
         return await new Promise((resolve, reject) => {
-          chrome.storage.local.get('sessions', (result) => {
+          chrome.storage.local.get({ sessions: [], sessionsRevision: 0 }, (result) => {
             if (chrome.runtime.lastError) {
               reject(chrome.runtime.lastError);
             } else {
-              resolve(result.sessions || []);
+              resolve({ sessions: result.sessions || [], revision: result.sessionsRevision || 0 });
             }
           });
         });
@@ -3346,8 +3392,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (i < retries) {
           await new Promise(r => setTimeout(r, 50 * Math.pow(2, i))); // exponential backoff
         } else {
-          console.error('[popup] All storage read attempts failed, returning empty array');
-          return [];
+          console.error('[popup] All storage read attempts failed:', err);
+          throw err;
         }
       }
     }
@@ -3497,8 +3543,9 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteBtn.textContent = getTranslation('delete_button');
         deleteBtn.addEventListener('click', () => {
           closeAllMenus();
-          chrome.runtime.sendMessage({ action: 'delete_session', index }, (res) => {
+          chrome.runtime.sendMessage({ action: 'delete_session', index, revision: latestSessionsRevision }, (res) => {
             if (res && res.success) loadSessions();
+            else alert(reportOperationError(chrome.runtime.lastError || res, 'update'));
           });
         });
 
@@ -3662,12 +3709,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function loadSessions() {
-    loadSessionsFromStorageWithRetry().then(async (sessionsRaw) => {
-      latestSessions = Array.isArray(sessionsRaw) ? sessionsRaw : [];
-      sessionFolders = await loadSessionFoldersFromStorage(latestSessions);
+    loadSessionsFromStorageWithRetry().then(async (collection) => {
+      const sessions = Array.isArray(collection.sessions) ? collection.sessions : [];
+      const folders = await loadSessionFoldersFromStorage(sessions);
+      latestSessions = sessions;
+      sessionFolders = folders;
+      latestSessionsRevision = collection.revision;
       renderSessionList(latestSessions, searchInput?.value || '');
     }).catch((err) => {
       console.error('[popup] Failed to load sessions:', err);
+      alert(reportOperationError(err, 'load'));
       const container = document.getElementById('sessions');
       const emptyState = document.getElementById('empty-state');
       const searchEmptyState = document.getElementById('search-empty-state');
