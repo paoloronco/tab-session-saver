@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-8.0.2-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-8.0.3-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -161,6 +161,10 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 8.0.3
+
+- updated the manifest and displayed version numbers for a new release containing the diagnostics, automatic storage cleanup, and Cloud Sync limit fixes from 8.0.1–8.0.2
 
 ### 8.0.2
 
