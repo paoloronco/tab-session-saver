@@ -13,7 +13,7 @@ Save, restore, and manage your Chrome tab sessions — stored locally, no accoun
 </p>
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-8.0.3-111827?style=flat-square" />
+  <img alt="Version" src="https://img.shields.io/badge/version-8.1.0-111827?style=flat-square" />
   <img alt="Manifest V3" src="https://img.shields.io/badge/Chrome-Manifest%20V3-34A853?style=flat-square&logo=googlechrome&logoColor=white" />
   <img alt="License AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-F97316?style=flat-square" />
 </p>
@@ -161,6 +161,11 @@ tabs-session-saver/
 
 <details>
 <summary>View full changelog</summary>
+
+### 8.1.0
+
+- fixed duplicate popup scrollbars, concurrent Cloud Sync writes, incomplete restore reporting, automatic session grouping, and settings keyboard navigation
+- translated import confirmation in all five languages and added regression tests to the release pipeline
 
 ### 8.0.3
 
