@@ -22,12 +22,13 @@ function loadBackgroundCloudSyncBindings(harness) {
     chrome: harness.chrome,
     clearTimeout: harness.clearTimeout,
     console,
+    importScripts(file) { vm.runInContext(readExtensionFile(file), context); },
     fetch: harness.fetch,
     setTimeout: harness.setTimeout
   });
 
   vm.runInContext(
-    `${source}\n;globalThis.__cloudSyncTest = { persistSessionFolders, persistSessions, runCloudSyncPull, runCloudSyncPush, handleWindowRemovedForBrowserClose, loadCloudSyncState, CLOUD_SYNC_AUTO_PUSH_DELAY_MINUTES };`,
+    `${source}\n;globalThis.__cloudSyncTest = { mutateSessions, persistSessionFolders, persistSessions, runCloudSyncPull, runCloudSyncPush, handleWindowRemovedForBrowserClose, loadCloudSyncState, CLOUD_SYNC_AUTO_PUSH_DELAY_MINUTES };`,
     context
   );
   return context.__cloudSyncTest;
@@ -213,7 +214,7 @@ test('manual Cloud Sync push is rate-limited before hitting the network', async 
 test('browser close flushes pending Cloud Sync immediately', async () => {
   const harness = createCloudSyncHarness({
     sessions: [
-      { name: 'Docs', windows: [{ tabs: [{ url: 'https://example.com' }] }] }
+      { name: 'Docs', timestamp: '2026-07-15T08:00:00.000Z', windows: [{ tabs: [{ url: 'https://example.com' }] }] }
     ],
     cloudSyncState: {
       revision: 1,
@@ -240,7 +241,7 @@ test('browser close flushes pending Cloud Sync immediately', async () => {
 test('Cloud Sync push includes session folder metadata', async () => {
   const harness = createCloudSyncHarness({
     sessions: [
-      { name: 'Docs', windows: [{ tabs: [{ url: 'https://example.com' }] }] }
+      { name: 'Docs', timestamp: '2026-07-15T08:00:00.000Z', metadata: { folderId: 'project-docs' }, windows: [{ tabs: [{ url: 'https://example.com' }] }] }
     ],
     sessionFolders: [
       { id: 'project-docs', name: 'Project Docs', createdAt: '2026-07-15T08:00:00.000Z' }
@@ -273,7 +274,7 @@ test('Cloud Sync pull stores remote session folders locally', async () => {
     revision: 2,
     updatedAt: '2026-07-15T10:00:00.000Z',
     sessions: [
-      { name: 'Docs', windows: [{ tabs: [{ url: 'https://example.com' }] }] }
+      { name: 'Docs', timestamp: '2026-07-15T08:00:00.000Z', metadata: { folderId: 'project-docs' }, windows: [{ tabs: [{ url: 'https://example.com' }] }] }
     ],
     folders: [
       { id: 'project-docs', name: 'Project Docs', createdAt: '2026-07-15T08:00:00.000Z' }
@@ -288,6 +289,46 @@ test('Cloud Sync pull stores remote session folders locally', async () => {
     { id: 'project-docs', name: 'Project Docs', createdAt: '2026-07-15T08:00:00.000Z' }
   ]);
 });
+
+for (const change of ['session', 'folder', 'auto-session']) {
+  test(`Cloud Sync push tracks pending ${change} changes made during upload`, async () => {
+    let releaseUpload;
+    let startedUpload;
+    const uploadStarted = new Promise(resolve => { startedUpload = resolve; });
+    const uploadResponse = new Promise(resolve => { releaseUpload = resolve; });
+    const session = { name: 'Docs', timestamp: '2026-07-15T08:00:00.000Z', metadata: { folderId: 'work' }, windows: [{ tabs: [{ url: 'https://example.com' }] }] };
+    const folder = { id: 'work', name: 'Work', createdAt: '2026-07-15T08:00:00.000Z' };
+    const harness = createCloudSyncHarness({ sessions: [session], sessionFolders: [folder] }, () => {
+      startedUpload();
+      return uploadResponse;
+    });
+    harness.storageData.cloudSyncState.pending = true;
+    const api = loadBackgroundCloudSyncBindings(harness);
+    const upload = api.runCloudSyncPush();
+    await uploadStarted;
+    await api.mutateSessions(async () => {
+      if (change === 'folder') {
+        await api.persistSessionFolders([{ ...folder, name: 'Renamed folder' }]);
+      } else if (change === 'session') {
+        await api.persistSessions([{ ...session, name: 'Renamed session' }]);
+      } else {
+        await api.persistSessions([session, { ...session, name: 'Automatic', saveType: 'auto' }]);
+      }
+    });
+    releaseUpload({ success: true, revision: 2, updatedAt: new Date().toISOString() });
+    assert.equal((await upload).success, true);
+    assert.equal(harness.storageData.cloudSyncState.pending, change !== 'auto-session');
+    assert.equal(JSON.parse(harness.fetchCalls[0].options.body).sessions[0].name, 'Docs');
+    if (change !== 'auto-session') {
+      assert.equal((await api.runCloudSyncPush()).success, true);
+      const secondBody = JSON.parse(harness.fetchCalls[1].options.body);
+      assert.equal(secondBody.baseRevision, 2);
+      assert.equal(change === 'folder' ? secondBody.folders[0].name : secondBody.sessions[0].name,
+        change === 'folder' ? 'Renamed folder' : 'Renamed session');
+      assert.equal(harness.storageData.cloudSyncState.pending, false);
+    }
+  });
+}
 
 test('Cloudflare Worker keeps folder sync backward-compatible with legacy snapshots', () => {
   const worker = fs.readFileSync(

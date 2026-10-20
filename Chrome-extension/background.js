@@ -1039,11 +1039,11 @@ async function runCloudSyncPush(options = {}) {
     };
   }
 
-  const sessions = selectCloudSyncManualSessions(await loadSessionsFromStorage());
-  const folders = selectCloudSyncManualSessionFolders(
-    await loadSessionFoldersFromStorage(),
-    sessions
-  );
+  const { sessions, folders } = await mutateSessions(async () => {
+    const sessions = selectCloudSyncManualSessions(await loadSessionsFromStorage());
+    const folders = selectCloudSyncManualSessionFolders(await loadSessionFoldersFromStorage(), sessions);
+    return { sessions, folders };
+  });
   const payload = {
     deviceId: await getCloudSyncDeviceId(),
     baseRevision: state.revision,
@@ -1066,13 +1066,18 @@ async function runCloudSyncPush(options = {}) {
       method: 'PUT',
       body: JSON.stringify(payload)
     });
-    const nextState = await saveCloudSyncState({
-      revision: Number.isInteger(remote.revision) ? remote.revision : state.revision,
-      pending: false,
-      lastSyncedAt: remote.updatedAt || new Date().toISOString(),
-      lastPushedAt: new Date().toISOString(),
-      lastError: ''
+    const nextState = await mutateSessions(async () => {
+      const latestSessions = selectCloudSyncManualSessions(await loadSessionsFromStorage());
+      const latestFolders = selectCloudSyncManualSessionFolders(await loadSessionFoldersFromStorage(), latestSessions);
+      return saveCloudSyncState({
+        revision: Number.isInteger(remote.revision) ? remote.revision : state.revision,
+        pending: JSON.stringify({ sessions: latestSessions, folders: latestFolders }) !== JSON.stringify({ sessions, folders }),
+        lastSyncedAt: remote.updatedAt || new Date().toISOString(),
+        lastPushedAt: new Date().toISOString(),
+        lastError: ''
+      });
     });
+    if (nextState.pending) scheduleCloudSyncPush();
     return { success: true, state: nextState };
   } catch (error) {
     await SessionDiagnostics.record('cloud_sync_push', error);
@@ -1191,8 +1196,7 @@ async function runRestoreWithLock(restoreOperation) {
   activeRestoreToken = restoreToken;
 
   try {
-    await restoreOperation();
-    return { success: true };
+    return (await restoreOperation()) ?? { success: true };
   } finally {
     if (activeRestoreToken === restoreToken) {
       activeRestoreToken = null;
@@ -2013,30 +2017,21 @@ async function restoreSessionFromSnapshot(rawSession, options = {}) {
     return;
   }
 
-  if (restoreOptions.restoreMode === RESTORE_MODE_CURRENT_WINDOW) {
+  const mergeIntoCurrent = restoreOptions.restoreMode === RESTORE_MODE_CURRENT_WINDOW;
+  if (mergeIntoCurrent) {
     await validateRestoreTargetWindow(restoreOptions.targetWindowId);
-
-    const windowsForNewWindows = windows.slice(0, -1);
-    for (const winSnapshot of windowsForNewWindows) {
-      try {
-        await restoreSingleWindow({ ...winSnapshot, focused: false });
-      } catch (err) {
-        logBackgroundError('[restore] window restore failed, continuing with remaining windows:', err);
-      }
-    }
-
-    await restoreWindowIntoExistingWindow(windows.at(-1), restoreOptions.targetWindowId);
-    return;
   }
 
   // Unfocused windows first so the focused window ends up on top.
-  const orderedWindows = [...windows].sort((a, b) => Number(a.focused) - Number(b.focused));
+  const orderedWindows = mergeIntoCurrent ? windows : [...windows].sort((a, b) => Number(a.focused) - Number(b.focused));
 
   let windowsRestored = 0;
   const restoredWindowIds = [];
-  for (const winSnapshot of orderedWindows) {
+  for (const [index, winSnapshot] of orderedWindows.entries()) {
     try {
-      const restoreResult = await restoreSingleWindow(winSnapshot);
+      const restoreResult = mergeIntoCurrent && index === orderedWindows.length - 1
+        ? await restoreWindowIntoExistingWindow(winSnapshot, restoreOptions.targetWindowId)
+        : await restoreSingleWindow(mergeIntoCurrent ? { ...winSnapshot, focused: false } : winSnapshot);
       windowsRestored++;
       if (Number.isInteger(restoreResult?.windowId)) {
         restoredWindowIds.push(restoreResult.windowId);
@@ -2054,6 +2049,14 @@ async function restoreSessionFromSnapshot(rawSession, options = {}) {
     'windows restored | actual restored window IDs:',
     restoredWindowIds.join(',') || 'none'
   );
+  if (windowsRestored < orderedWindows.length) {
+    return {
+      success: false,
+      code: windowsRestored ? 'RESTORE_PARTIAL' : 'RESTORE_FAILED',
+      windowsRestored,
+      totalWindows: orderedWindows.length
+    };
+  }
 }
 
 async function restoreSingleWindow(windowSnapshot) {

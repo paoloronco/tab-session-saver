@@ -8,6 +8,8 @@ test('settings navigation handles direct links, history, fallback and translated
   const events = {};
   const language = { value: 'it', addEventListener(name, handler) { events[name] = handler; } };
   const breadcrumb = { dataset: {} };
+  const skipLink = { addEventListener(name, handler) { this[name] = handler; } };
+  const main = { focus() { this.focused = true; } };
   const panels = ['appearance', 'general', 'restore', 'automation', 'data', 'cloud', 'newsletter', 'diagnostics', 'resources'].map(id => {
     const heading = { dataset: { translate: `${id}_title` }, textContent: id, focus() { this.focused = true; } };
     return { id, heading, querySelector() { return heading; } };
@@ -22,8 +24,8 @@ test('settings navigation handles direct links, history, fallback and translated
     document: {
       documentElement: {}, addEventListener(name, handler) { events[name] = handler; },
       querySelectorAll(selector) { return selector === '.settings-panel' ? panels : links; },
-      querySelector() { return links.find(link => link['aria-current']); },
-      getElementById(id) { return id === 'language' ? language : breadcrumb; }
+      querySelector(selector) { return selector === '.skip-link' ? skipLink : links.find(link => link['aria-current']); },
+      getElementById(id) { return id === 'language' ? language : id === 'settings-main' ? main : breadcrumb; }
     },
     window: { location: { hash: '#cloud' }, addEventListener(name, handler) { events[name] = handler; }, scrollTo() {} }
   });
@@ -39,9 +41,16 @@ test('settings navigation handles direct links, history, fallback and translated
     assert.ok(panels.find(panel => panel.id === expected).heading.focused);
   }
   panels[0].heading.textContent = 'Aspetto';
+  context.window.location.hash = '#diagnostics';
+  events.hashchange();
+  skipLink.click({ preventDefault() {} });
+  assert.ok(main.focused);
+  assert.equal(context.window.location.hash, '#diagnostics');
+  assert.equal(panels.find(panel => !panel.hidden).id, 'diagnostics');
   language.value = 'it';
   events.change();
   context.window.location.hash = '#appearance';
+  events.hashchange();
   let prevented = false;
   links[0].click({ preventDefault() { prevented = true; } });
   assert.ok(prevented);

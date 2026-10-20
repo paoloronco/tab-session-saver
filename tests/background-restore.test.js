@@ -9,9 +9,11 @@ function loadBackground(chrome) {
     path.join(__dirname, '..', 'Chrome-extension', 'background.js'),
     'utf8'
   );
-  const context = vm.createContext({ chrome, console, setTimeout, URL });
+  const context = vm.createContext({ chrome, console, setTimeout, clearTimeout, Blob, URL,
+    importScripts(file) { vm.runInContext(fs.readFileSync(path.join(__dirname, '../Chrome-extension', file), 'utf8'), context); }
+  });
   vm.runInContext(
-    `${source}\n;globalThis.__backgroundTest = { restoreSessionFromSnapshot, restoreWindowWithLock };`,
+    `${source}\n;globalThis.__backgroundTest = { restoreSessionFromSnapshot, restoreSessionWithLock, restoreWindowWithLock };`,
     context
   );
   return context.__backgroundTest;
@@ -173,6 +175,39 @@ function createTwoWindowSession() {
       }
     ]
   };
+}
+
+test('failed restores report failure and release the restore lock for a retry', async () => {
+  const { chrome } = createChromeHarness();
+  const createWindow = chrome.windows.create;
+  chrome.windows.create = async () => { throw new Error('Window creation failed'); };
+  const { restoreSessionWithLock } = loadBackground(chrome);
+  const result = await restoreSessionWithLock(createTwoWindowSession());
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
+    success: false, code: 'RESTORE_FAILED', windowsRestored: 0, totalWindows: 2
+  });
+  chrome.windows.create = createWindow;
+  assert.equal((await restoreSessionWithLock(createTwoWindowSession())).success, true);
+});
+
+for (const restoreMode of ['new_windows', 'current_window']) {
+  test(`${restoreMode} reports partial restores while continuing with remaining windows`, async () => {
+    const { chrome, windows } = createChromeHarness();
+    const createWindow = chrome.windows.create;
+    chrome.windows.create = async (options) => {
+      if (options.url === 'https://example.com/a' || options.url === 'chrome://newtab/') {
+        throw new Error('First window unavailable');
+      }
+      return createWindow(options);
+    };
+    const { restoreSessionWithLock } = loadBackground(chrome);
+    const result = await restoreSessionWithLock(createTwoWindowSession(), { restoreMode, targetWindowId: 42 });
+    assert.equal(result.success, false);
+    assert.equal(result.code, 'RESTORE_PARTIAL');
+    assert.equal(result.windowsRestored, 1);
+    assert.equal(result.totalWindows, 2);
+    assert.ok([...windows.values()].some(win => win.tabs.some(tab => tab.url === 'https://example.com/b-two')));
+  });
 }
 
 test('new-window mode creates every saved window without changing the current window', async () => {

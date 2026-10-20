@@ -867,6 +867,9 @@ const translations = {
 
 const errorTranslations = {
   en: {
+    import_replace_confirm: 'Replace existing sessions with imported ones? Click OK to replace, Cancel to merge.',
+    error_restore_partial: 'Restored {restored} of {total} windows. Retrying the whole session will also reopen the windows already restored.',
+    cloud_sync_conflict: 'The cloud snapshot changed on another device. Pull the latest snapshot before pushing again. Local sessions are still available.',
     error_storage_full: 'There is not enough local storage for this change, even after cleaning older automatic saves. Export a backup in Settings > Backup, then remove unneeded sessions. Manual sessions are never removed automatically.',
     error_extension_unavailable: 'Chrome could not contact the extension. Close this panel and reopen it. If it still fails, reload Tabs Session Saver at chrome://extensions.',
     error_window_unavailable: 'The browser window or tab is no longer available. Open a normal browser window and try again.',
@@ -882,6 +885,9 @@ const errorTranslations = {
     error_cloud: 'Cloud Sync failed. Your local sessions are still available. Check your connection or sign in again; if it still fails, export an anonymized report in Settings > Diagnostics.'
   },
   it: {
+    import_replace_confirm: 'Sostituire le sessioni esistenti con quelle importate? Premi OK per sostituire, Annulla per unire.',
+    error_restore_partial: 'Ripristinate {restored} finestre su {total}. Riprovando l’intera sessione riaprirai anche le finestre già ripristinate.',
+    cloud_sync_conflict: 'La copia cloud è cambiata su un altro dispositivo. Premi Pull prima di inviare di nuovo. Le sessioni locali sono ancora disponibili.',
     error_storage_full: 'Lo spazio locale non basta per questa modifica, anche dopo la pulizia dei vecchi salvataggi automatici. Esporta un backup da Impostazioni > Backup, poi elimina le sessioni non necessarie. Le sessioni manuali non vengono mai eliminate automaticamente.',
     error_extension_unavailable: 'Chrome non riesce a contattare l’estensione. Chiudi e riapri questo pannello. Se il problema continua, ricarica Tabs Session Saver da chrome://extensions.',
     error_window_unavailable: 'La finestra o la scheda non è più disponibile. Apri una normale finestra del browser e riprova.',
@@ -897,6 +903,9 @@ const errorTranslations = {
     error_cloud: 'Cloud Sync non è riuscito. Le sessioni locali sono ancora disponibili. Controlla la connessione o accedi di nuovo; se il problema continua, esporta un report anonimizzato da Impostazioni > Diagnostica.'
   },
   es: {
+    import_replace_confirm: '¿Reemplazar las sesiones existentes por las importadas? Pulsa Aceptar para reemplazar o Cancelar para combinar.',
+    error_restore_partial: 'Se restauraron {restored} de {total} ventanas. Reintentar toda la sesión también abrirá las ventanas ya restauradas.',
+    cloud_sync_conflict: 'La copia en la nube cambió en otro dispositivo. Pulsa Pull antes de volver a enviar. Las sesiones locales siguen disponibles.',
     error_storage_full: 'No queda espacio local suficiente, incluso tras limpiar guardados automáticos antiguos. Exporta una copia en Ajustes > Copia de seguridad y elimina sesiones innecesarias. Las sesiones manuales nunca se eliminan automáticamente.',
     error_extension_unavailable: 'Chrome no pudo contactar con la extensión. Cierra y vuelve a abrir este panel. Si continúa, recarga Tabs Session Saver en chrome://extensions.',
     error_window_unavailable: 'La ventana o pestaña ya no está disponible. Abre una ventana normal del navegador e inténtalo de nuevo.',
@@ -912,6 +921,9 @@ const errorTranslations = {
     error_cloud: 'Cloud Sync falló. Las sesiones locales siguen disponibles. Revisa tu conexión o inicia sesión de nuevo. Si continúa, exporta un informe anónimo en Ajustes > Diagnóstico.'
   },
   fr: {
+    import_replace_confirm: 'Remplacer les sessions existantes par les sessions importées ? Cliquez sur OK pour remplacer ou Annuler pour fusionner.',
+    error_restore_partial: '{restored} fenêtres sur {total} ont été restaurées. Réessayer toute la session rouvrira aussi les fenêtres déjà restaurées.',
+    cloud_sync_conflict: 'La copie cloud a changé sur un autre appareil. Cliquez sur Pull avant de renvoyer. Les sessions locales restent disponibles.',
     error_storage_full: 'L’espace local est insuffisant, même après nettoyage des sauvegardes automatiques anciennes. Exportez une copie dans Paramètres > Sauvegarde, puis supprimez les sessions inutiles. Les sessions manuelles ne sont jamais supprimées automatiquement.',
     error_extension_unavailable: 'Chrome ne peut pas contacter l’extension. Fermez puis rouvrez ce panneau. Si le problème persiste, rechargez Tabs Session Saver dans chrome://extensions.',
     error_window_unavailable: 'La fenêtre ou l’onglet n’est plus disponible. Ouvrez une fenêtre normale et réessayez.',
@@ -927,6 +939,9 @@ const errorTranslations = {
     error_cloud: 'Cloud Sync a échoué. Les sessions locales restent disponibles. Vérifiez la connexion ou reconnectez-vous. Si le problème persiste, exportez un rapport anonymisé dans Paramètres > Diagnostic.'
   },
   de: {
+    import_replace_confirm: 'Vorhandene Sitzungen durch importierte ersetzen? OK ersetzt sie, Abbrechen führt sie zusammen.',
+    error_restore_partial: '{restored} von {total} Fenstern wurden wiederhergestellt. Ein erneuter Versuch öffnet auch die bereits wiederhergestellten Fenster erneut.',
+    cloud_sync_conflict: 'Die Cloud-Kopie wurde auf einem anderen Gerät geändert. Klicke vor dem erneuten Senden auf Pull. Lokale Sitzungen bleiben verfügbar.',
     error_storage_full: 'Der lokale Speicher reicht trotz Bereinigung alter automatischer Sicherungen nicht aus. Exportiere ein Backup unter Einstellungen > Backup und lösche unnötige Sitzungen. Manuelle Sitzungen werden nie automatisch gelöscht.',
     error_extension_unavailable: 'Chrome erreicht die Erweiterung nicht. Schließe und öffne dieses Fenster. Falls es weiter fehlschlägt, lade Tabs Session Saver unter chrome://extensions neu.',
     error_window_unavailable: 'Das Fenster oder der Tab ist nicht mehr verfügbar. Öffne ein normales Browserfenster und versuche es erneut.',
@@ -1075,6 +1090,9 @@ function reportOperationError(error, operation = 'save') {
     try {
       chrome.runtime.sendMessage({ action: 'record_diagnostic_error', code, error: `${operation}: ${message}` }, () => { void chrome.runtime.lastError; });
     } catch (_) { /* The extension context may already have been invalidated. */ }
+  }
+  if (code === 'RESTORE_PARTIAL') {
+    return formatTranslation('error_restore_partial', { restored: error.windowsRestored, total: error.totalWindows });
   }
   const key = {
     STORAGE_FULL: 'error_storage_full', STORAGE_UNAVAILABLE: 'error_load',
@@ -1426,6 +1444,32 @@ function groupAutoSavedSessionsForDisplay(matches, requestedMode = null) {
   );
 }
 
+function createAutoSaveFolderElement(group) {
+  const folderEl = document.createElement('details');
+  folderEl.className = 'auto-save-folder';
+  folderEl.open = true;
+  const summary = document.createElement('summary');
+  summary.className = 'auto-save-folder-summary';
+  const title = document.createElement('span');
+  title.className = 'auto-save-folder-title';
+  const session = group.sessions[0].sessionData;
+  const { date, time } = formatTimestamp(session.timestamp);
+  title.textContent = group.reason === 'day'
+    ? `${getTranslation('auto_save_group_day_title')} ${date}`
+    : group.reason === 'browser'
+    ? `${getTranslation('auto_save_group_browser_title')} ${date} ${time}`
+    : `${getTranslation('auto_save_group_topic_title')} · ${getAutoSaveTopicSignature(session)}`;
+  const count = document.createElement('span');
+  count.className = 'auto-save-folder-count';
+  count.textContent = formatTranslation('auto_save_group_count', { count: group.sessions.length });
+  summary.append(title, count);
+  const sessionsEl = document.createElement('div');
+  sessionsEl.className = 'auto-save-folder-sessions';
+  sessionsEl.setAttribute('role', 'list');
+  folderEl.append(summary, sessionsEl);
+  return { folderEl, sessionsEl };
+}
+
 function getCustomUrlTabFromInput(value) {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -1591,7 +1635,7 @@ function triggerConfiguredRestore(message, options = {}) {
 function triggerRestoreMessage(message, options = {}) {
   const {
     emptyMessage = 'This session has no windows to restore.',
-    closeOnFailure = true
+    closeOnFailure = false
   } = options;
 
   closeAllMenus();
@@ -2733,6 +2777,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getCloudSyncErrorStatus(response) {
+    if (response?.code === 'conflict') return { key: 'cloud_sync_conflict', replacements: {} };
     if (response?.code === 'quota_exceeded') {
       const limits = response.details?.limits || {};
       return {
@@ -2967,7 +3012,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const text = await file.text();
       // Validate before offering to replace existing data.
       parseImportedSessions(text);
-      const replace = askToReplace && confirm('Replace existing sessions with imported ones? Click OK to replace, Cancel to merge.');
+      const replace = askToReplace && confirm(getTranslation('import_replace_confirm'));
       const collection = await new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({ action: 'get_session_collection' }, (response) => {
           if (chrome.runtime.lastError || !response?.success || !Array.isArray(response.sessions)) {
@@ -3440,6 +3485,7 @@ document.addEventListener('DOMContentLoaded', () => {
         originalIndex: categorizedSessions[originalIndex].originalIndex
       }));
       const queryText = typeof query === 'string' ? query.trim() : '';
+      if (activeSessionCategory === SAVE_TYPE_AUTO) matchingSessions.sort((left, right) => getSessionSortTime(right) - getSessionSortTime(left));
       searchEmptyState.style.display = matchingSessions.length === 0 && (queryText || sessionFolders.length === 0) ? 'block' : 'none';
       const folderMatches = new Map();
       matchingSessions.forEach((match) => {
@@ -3458,6 +3504,20 @@ document.addEventListener('DOMContentLoaded', () => {
         folderTargets.set(folder.id, sessionsEl);
         container.appendChild(folderEl);
       });
+
+      const autoSaveTargets = new Map();
+      if (activeSessionCategory === SAVE_TYPE_AUTO && getAutoSaveGroupMode() !== AUTO_SAVE_GROUP_MODE_NONE) {
+        const lists = new Map([['', container], ...folderTargets]);
+        lists.forEach((target, folderId) => {
+          const matches = folderId ? folderMatches.get(folderId) || [] : matchingSessions.filter(match => !getSessionFolderId(match.sessionData));
+          groupAutoSavedSessionsForDisplay(matches).forEach(group => {
+            if (group.reason === 'single') return;
+            const { folderEl, sessionsEl } = createAutoSaveFolderElement(group);
+            target.appendChild(folderEl);
+            group.sessions.forEach(match => autoSaveTargets.set(match.originalIndex, sessionsEl));
+          });
+        });
+      }
 
       matchingSessions.forEach(({ sessionData: normalized, originalIndex: index }) => {
         const entry = document.createElement('div');
@@ -3703,7 +3763,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         entry.appendChild(topRow);
         entry.appendChild(previewContainer);
-        const target = folderTargets.get(getSessionFolderId(normalized)) || container;
+        const target = autoSaveTargets.get(index) || folderTargets.get(getSessionFolderId(normalized)) || container;
         target.appendChild(entry);
       });
   }

@@ -36,16 +36,21 @@ function loadTranslations() {
 test('settings controls are grouped in a clear feature order', () => {
   const markup = readExtensionFile('settings.html');
 
-  assert.match(markup, /class="settings-group-card settings-language"[\s\S]*?id="language"[\s\S]*?<\/section>/);
-  assert.match(markup, /class="settings-group-card settings-appearance"[\s\S]*?id="darkMode"[\s\S]*?id="accentColor"[\s\S]*?<\/section>/);
-  assert.match(markup, /class="settings-group-card settings-autosave"[\s\S]*?id="autoSaveEnabled"[\s\S]*?id="autoSaveOnExitEnabled"[\s\S]*?id="autoSaveInterval"[\s\S]*?<\/section>/);
-  assert.match(markup, /class="settings-group-card settings-backup"[\s\S]*?id="exportSessions"[\s\S]*?id="importSessions"[\s\S]*?<\/section>/);
-  assert.match(markup, /class="settings-group-card settings-cloud-sync"[\s\S]*?data-translate="cloud_sync_limits_note"[\s\S]*?id="cloudSyncLogin"[\s\S]*?id="cloudSyncPush"[\s\S]*?id="cloudSyncPull"[\s\S]*?id="cloudSyncDisconnect"[\s\S]*?<\/section>/);
-  assert.match(markup, /class="settings-group-card settings-newsletter"[\s\S]*?id="newsletterEmail"[\s\S]*?id="newsletterSubmit"[\s\S]*?<\/section>/);
+  const controls = {
+    appearance: ['darkMode', 'accentColor', 'popupSize'], general: ['language'],
+    automation: ['autoSaveEnabled', 'autoSaveOnExitEnabled', 'autoSaveInterval'],
+    data: ['exportSessions', 'importSessions'],
+    cloud: ['cloudSyncLogin', 'cloudSyncPush', 'cloudSyncPull', 'cloudSyncDisconnect'],
+    newsletter: ['newsletterEmail', 'newsletterSubmit']
+  };
+  for (const [sectionId, ids] of Object.entries(controls)) {
+    const section = markup.match(new RegExp(`<section id="${sectionId}"[\\s\\S]*?<\\/section>`))?.[0] || '';
+    for (const id of ids) assert.ok(section.includes(`id="${id}"`), `${sectionId}.${id}`);
+  }
   assert.doesNotMatch(markup, /id="newsletterUnsubscribe"/);
-  assert.match(markup, /id="browser-support-group" class="settings-group-card settings-browser-support"/);
-  assert.ok(markup.indexOf('settings-backup') < markup.indexOf('settings-cloud-sync'));
-  assert.ok(markup.indexOf('settings-cloud-sync') < markup.indexOf('settings-newsletter'));
+  assert.match(markup, /id="browser-support-group" class="settings-card settings-browser-support"/);
+  assert.ok(markup.indexOf('<section id="data"') < markup.indexOf('<section id="cloud"'));
+  assert.ok(markup.indexOf('<section id="cloud"') < markup.indexOf('<section id="newsletter"'));
 });
 
 test('popup opens settings in a dedicated browser tab', () => {
@@ -64,17 +69,18 @@ test('settings page uses a sidebar navigation for feature sections', () => {
 
   assert.match(markup, /class="settings-shell"/);
   assert.match(markup, /class="settings-sidebar"/);
-  assert.match(markup, /class="settings-nav"[\s\S]*href="#general"[\s\S]*href="#appearance"[\s\S]*href="#restore"[\s\S]*href="#automation"[\s\S]*href="#data"[\s\S]*href="#cloud"[\s\S]*href="#newsletter"[\s\S]*href="#resources"/);
+  for (const id of ['appearance', 'general', 'restore', 'automation', 'data', 'cloud', 'newsletter', 'diagnostics', 'resources']) {
+    assert.match(markup, new RegExp(`href="#${id}"`));
+  }
 });
 
 test('settings page keeps controls readable and separates informational sections', () => {
-  const markup = readExtensionFile('settings.html');
-
-  assert.match(markup, /\.settings-appearance,\s*[\s\S]*?\.settings-restore,/);
-  assert.match(markup, /\.setting-group\s*\{[\s\S]*?max-width:\s*520px;/);
-  assert.match(markup, /\.settings-actions button,\s*[\s\S]*?\.newsletter-actions button\s*\{[\s\S]*?flex:\s*0 0 auto;/);
-  assert.match(markup, /class="settings-info-break"/);
-  assert.match(markup, /\.settings-browser-support,\s*[\s\S]*?\.footer-section\s*\{[\s\S]*?border:\s*1px dashed/);
+  const css = readExtensionFile('settings.css');
+  assert.match(css, /\.settings-main\s*\{[^}]*min-width:\s*0/);
+  assert.match(css, /\.settings-content\s*\{[^}]*max-width:/);
+  assert.match(css, /\.setting-row\s*\{[^}]*flex-wrap:\s*wrap/);
+  assert.match(css, /\.newsletter-actions[^}]*flex-wrap:\s*wrap/);
+  assert.match(css, /\.settings-footer\s*\{/);
 });
 
 test('huge popup size routes the extension action to a full browser tab', () => {
@@ -112,7 +118,7 @@ test('auto saved sessions expose scheduled and on-exit filters', () => {
 test('auto save on exit toggle uses the same simple layout as the main auto save toggle', () => {
   const markup = readExtensionFile('settings.html');
   const exitToggle = markup.match(
-    /<div class="toggle-container">\s*<span data-translate="auto_save_on_exit_toggle_label">[\s\S]*?<input type="checkbox" id="autoSaveOnExitEnabled">[\s\S]*?<\/div>/
+    /<div class="setting-row">(?:(?!<div class="setting-row">)[\s\S])*?<input type="checkbox" id="autoSaveOnExitEnabled"[\s\S]*?<\/div>/
   )?.[0] || '';
 
   assert.ok(exitToggle, 'expected a simple label-plus-switch auto save on exit toggle');
@@ -122,7 +128,7 @@ test('auto save on exit toggle uses the same simple layout as the main auto save
 
 test('settings footer separates extension links from secondary links without resource cards', () => {
   const markup = readExtensionFile('settings.html');
-  const footer = markup.match(/<section id="resources" class="footer-section">([\s\S]*?)<\/section>/)?.[1] || '';
+  const footer = markup.match(/<section id="resources"[\s\S]*?<\/section>/)?.[0] || '';
 
   assert.match(footer, /class="extension-primary-links"/);
   assert.match(footer, /class="footer-secondary-links"/);
@@ -136,10 +142,10 @@ test('settings footer separates extension links from secondary links without res
   assert.match(footer, /tabsessionsaver\.paoloronco\.it\/terms/);
   assert.match(footer, /tabsessionsaver\.paoloronco\.it\/oauth-disclosure/);
   assert.match(footer, /tabsessionsaver\.paoloronco\.it\/data-deletion/);
-  assert.match(footer, /class="footer-version-line"/);
-  assert.match(footer, /class="footer-copyright-line"/);
+  assert.match(footer, /class="settings-version"/);
+  assert.match(footer, /data-translate="rights_reserved"/);
   assert.ok(
-    footer.indexOf('class="footer-version-line"') < footer.indexOf('class="footer-secondary-links"'),
+    footer.indexOf('class="settings-version"') < footer.indexOf('class="footer-secondary-links"'),
     'expected website and legal links to appear below the version line'
   );
 });
@@ -147,6 +153,9 @@ test('settings footer separates extension links from secondary links without res
 test('every language translates the new settings group headings', () => {
   const translations = loadTranslations();
   const keys = [
+    'import_replace_confirm',
+    'error_restore_partial',
+    'cloud_sync_conflict',
     'appearance_title',
     'popup_size_label',
     'popup_size_small',

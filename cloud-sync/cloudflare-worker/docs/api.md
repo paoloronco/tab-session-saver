@@ -117,6 +117,8 @@ Response:
 
 Stores the 10 most recent manually saved sessions for the signed-in user. Auto Save and Save on Exit entries are discarded.
 
+`baseRevision` must be a non-negative integer matching the current snapshot revision. Missing or invalid values return HTTP 400. Stale or concurrent writes return HTTP 409 with `code: "conflict"` without replacing the snapshot; pull the latest revision before retrying.
+
 Request:
 
 ```json

@@ -49,7 +49,7 @@ test('newsletter settings expose email, subscribe, and status controls', () => {
   const markup = readExtensionFile('settings.html');
   const manifest = JSON.parse(readExtensionFile('manifest.json'));
 
-  assert.match(markup, /class="settings-group-card settings-newsletter"/);
+  assert.match(markup, /id="newsletter" class="settings-panel"/);
   assert.match(markup, /<form id="newsletter-form"[\s\S]*?novalidate/);
   assert.match(markup, /id="newsletterEmail"[^>]*type="email"/);
   assert.match(markup, /id="newsletterSubmit"[^>]*type="submit"/);

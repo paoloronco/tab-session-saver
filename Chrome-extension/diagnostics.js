@@ -1,7 +1,7 @@
 /* exported SessionDiagnostics */
 const SessionDiagnostics = (() => {
   const LOG_LIMIT = 200;
-  const ERROR_CODES = new Set(['STORAGE_FULL', 'STORAGE_UNAVAILABLE', 'EXTENSION_UNAVAILABLE', 'WINDOW_UNAVAILABLE', 'PERMISSION_DENIED', 'NETWORK_ERROR', 'INVALID_SESSION', 'SESSION_LIMIT', 'SESSION_CHANGED', 'RESTORE_IN_PROGRESS', 'UNKNOWN_ERROR', 'quota_exceeded', 'rate_limited', 'payload_too_large', 'unauthorized', 'conflict']);
+  const ERROR_CODES = new Set(['STORAGE_FULL', 'STORAGE_UNAVAILABLE', 'EXTENSION_UNAVAILABLE', 'WINDOW_UNAVAILABLE', 'PERMISSION_DENIED', 'NETWORK_ERROR', 'INVALID_SESSION', 'SESSION_LIMIT', 'SESSION_CHANGED', 'RESTORE_IN_PROGRESS', 'RESTORE_PARTIAL', 'RESTORE_FAILED', 'UNKNOWN_ERROR', 'quota_exceeded', 'rate_limited', 'payload_too_large', 'unauthorized', 'conflict']);
   const OPERATIONS = new Set(['background_error', 'popup_error', 'request_failed', 'storage_write', 'auto_save_cleanup', 'sessions_saved', 'cloud_sync_push', 'cloud_sync_pull', 'cloud_sync_failed', 'auto_save_failed', 'capture_failed', 'restore_failed', 'capture_current_desktop', 'get_sessions', 'get_session_collection', 'save_session', 'replace_sessions', 'update_session', 'delete_session', 'rename_session', 'replace_session_folders', 'update_auto_save_settings', 'cloud_sync_login', 'get_diagnostics', 'open_session', 'restore_window']);
   let database;
   let logQueue = Promise.resolve();

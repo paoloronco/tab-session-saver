@@ -73,7 +73,7 @@ Current hosted Cloud Sync limits:
 | Synced sessions | 10 sessions |
 | Synced URLs | 300 total URLs across synced sessions |
 | Snapshot size | 512 KB |
-| Conflict handling | Latest update wins |
+| Conflict handling | Stale uploads are rejected; pull the latest cloud snapshot before retrying |
 | Automatic push cadence | Local changes are pushed after about 10 minutes |
 | Manual Push throttle | Push is skipped when there are no pending changes and rate-limited when repeated too quickly |
 

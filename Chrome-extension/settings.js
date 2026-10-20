@@ -177,6 +177,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.addEventListener('hashchange', () => showSection(true));
+  document.querySelector('.skip-link').addEventListener('click', event => {
+    event.preventDefault();
+    document.getElementById('settings-main').focus();
+  });
   window.addEventListener('resize', revealActiveLink);
   links.forEach(link => link.addEventListener('click', event => {
     if (link.getAttribute('href') !== window.location.hash) return;

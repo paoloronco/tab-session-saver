@@ -340,6 +340,9 @@ async function loadSnapshot(env, userId) {
 }
 
 async function saveSnapshot(env, account, payload) {
+  if (!Number.isInteger(payload?.baseRevision) || payload.baseRevision < 0) {
+    return { error: 'A valid baseRevision is required.', status: 400 };
+  }
   const profile = account.profile;
   const plan = account.plan || DEFAULT_PLAN;
   const sessions = normalizeSessions(payload?.sessions);
@@ -358,6 +361,9 @@ async function saveSnapshot(env, account, payload) {
     'SELECT revision, updated_at FROM sync_snapshots WHERE user_id = ?'
   ).bind(profile.userId).first();
 
+  const conflict = { error: 'The cloud snapshot changed. Pull the latest snapshot before pushing again.', status: 409, code: 'conflict' };
+  if (payload.baseRevision !== (current?.revision || 0)) return conflict;
+
   const now = new Date().toISOString();
   const rateLimitError = getWriteRateLimitError(current, now);
   if (rateLimitError) return rateLimitError;
@@ -367,15 +373,17 @@ async function saveSnapshot(env, account, payload) {
     ? payload.deviceId.slice(0, 128)
     : '';
 
-  await env.DB.prepare(
+  const written = await env.DB.prepare(
     `INSERT INTO sync_snapshots (user_id, revision, updated_at, updated_by_device, sessions_json)
      VALUES (?, ?, ?, ?, ?)
      ON CONFLICT(user_id) DO UPDATE SET
        revision = excluded.revision,
        updated_at = excluded.updated_at,
        updated_by_device = excluded.updated_by_device,
-       sessions_json = excluded.sessions_json`
-  ).bind(profile.userId, revision, now, deviceId, sessionsJson).run();
+       sessions_json = excluded.sessions_json
+     WHERE sync_snapshots.revision = ?`
+  ).bind(profile.userId, revision, now, deviceId, sessionsJson, payload.baseRevision).run();
+  if (written.meta.changes !== 1) return conflict;
 
   await env.DB.prepare(
     'UPDATE sync_accounts SET revision_seed = ?, updated_at = ? WHERE user_id = ?'

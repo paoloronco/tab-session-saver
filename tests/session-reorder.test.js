@@ -148,14 +148,14 @@ test('popup exposes safe folder deletion controls and persistence paths', () => 
   const popupScript = readExtensionFile('popup.js');
   const popupMarkup = readExtensionFile('popup.html');
 
-  assert.match(popupScript, /className = 'session-folder-delete'/);
+  assert.match(popupScript, /className = 'menu-content folder-menu-content'/);
   assert.match(popupScript, /handleDeleteFolder\(folder\.id\)/);
   assert.match(popupScript, /delete_folder_with_sessions_confirm/);
   assert.match(popupScript, /delete_session_folder_with_sessions/);
   assert.match(popupScript, /delete_session_folder_keep_sessions/);
   assert.match(popupScript, /action: 'replace_session_folders'/);
   assert.match(popupScript, /action: 'replace_sessions'/);
-  assert.match(popupMarkup, /\.session-folder-delete/);
+  assert.match(popupMarkup, /\.menu-content/);
 });
 
 test('every language includes the reorder handle label', () => {

@@ -42,7 +42,9 @@ function loadPopupAutoSaveBindings(storageValues = {}) {
 
 function loadBackgroundAutoSaveBindings(chrome) {
   const source = readExtensionFile('background.js');
-  const context = vm.createContext({ chrome, console, setTimeout, clearTimeout, URL });
+  const context = vm.createContext({ chrome, console, setTimeout, clearTimeout, URL, Blob,
+    importScripts(file) { vm.runInContext(readExtensionFile(file), context); }
+  });
   vm.runInContext(
     `${source}\n;globalThis.__autoSaveBackgroundTest = { applyAutoSaveSchedule, runAutoSaveNow, runAutoSaveOnExit, refreshAutoSaveExitSnapshot };`,
     context
@@ -327,7 +329,7 @@ test('auto save UI exposes settings controls, session tabs, translations, and al
   const manifest = JSON.parse(readExtensionFile('manifest.json'));
   const { translations } = loadPopupAutoSaveBindings();
 
-  assert.match(settingsMarkup, /class="settings-group-card settings-autosave"/);
+  assert.match(settingsMarkup, /id="automation" class="settings-panel"/);
   assert.match(settingsMarkup, /type="checkbox" id="autoSaveEnabled"/);
   assert.match(settingsMarkup, /type="checkbox" id="autoSaveOnExitEnabled"/);
   assert.match(settingsMarkup, /id="autoSaveInterval"[^>]*type="number"[^>]*min="10"/);
@@ -369,6 +371,7 @@ test('background schedules auto save immediately and stores auto sessions distin
   const { chrome, alarmCalls, storageData } = createAutoSaveChromeHarness();
   const { applyAutoSaveSchedule, runAutoSaveNow } = loadBackgroundAutoSaveBindings(chrome);
 
+  storageData.autoSaveSettings = { enabled: true, intervalMinutes: 10 };
   await applyAutoSaveSchedule({ enabled: true, intervalMinutes: 5 });
 
   assert.deepEqual(plain(alarmCalls), [

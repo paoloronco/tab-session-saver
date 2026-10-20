@@ -116,12 +116,12 @@ test('custom item input can be added as a new saved window', () => {
   assert.equal(updated.windows[1].tabs[0].url, 'https://www.google.com/search?q=project%20roadmap');
 });
 
-test('session menu exposes item and window add actions', () => {
+test('session menu exposes the unified item dialog with an optional new window', () => {
   const popupScript = readExtensionFile('popup.js');
 
   assert.match(popupScript, /addItemBtn\.textContent = getTranslation\('add_session_item_button'\)/);
-  assert.match(popupScript, /addWindowBtn\.textContent = getTranslation\('add_session_window_button'\)/);
-  assert.match(popupScript, /addCustomUrlToSession\(sessionPayload, itemInput, \{ newWindow: true \}\)/);
+  assert.match(popupScript, /openAddItemDialog\(sessionPayload/);
+  assert.match(popupScript, /newWindow: addAsNewWindow/);
 });
 
 test('every language includes custom URL session copy', () => {
@@ -129,7 +129,7 @@ test('every language includes custom URL session copy', () => {
   const keys = [
     'add_url_button',
     'add_session_item_button',
-    'add_session_window_button',
+    'add_item_new_window',
     'add_url_prompt',
     'add_url_invalid',
     'add_url_failed',

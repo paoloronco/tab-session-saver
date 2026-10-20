@@ -20,7 +20,7 @@ test('active version references match the manifest version', () => {
 
   assert.match(version, /^\d+\.\d+\.\d+$/);
   assert.match(readRepoFile('README.md'), new RegExp(`version-${escapedVersion}`));
-  assert.match(readRepoFile('Chrome-extension/settings.html'), new RegExp(`Version:</span> ${escapedVersion}`));
+  assert.match(readRepoFile('Chrome-extension/settings.html'), new RegExp(`class="settings-version">v${escapedVersion}<`));
   assert.match(readRepoFile('Chrome-extension/welcome.html'), new RegExp(`Version ${escapedVersion}`));
 });
 
@@ -36,4 +36,6 @@ test('release workflow tags the manifest version and uploads the extension zip',
   assert.match(workflow, /skipping release creation/);
   assert.match(workflow, /tab-session-saver-chrome-extension\.zip/);
   assert.match(workflow, /gh release create "\$TAG"/);
+  assert.match(workflow, /node --test tests\/\*\.test\.js/);
+  assert.ok(workflow.indexOf('node --test tests/*.test.js') < workflow.indexOf('- name: Package Chrome extension'));
 });

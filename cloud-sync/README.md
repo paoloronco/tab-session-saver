@@ -15,7 +15,7 @@ This is the current pre-production backend:
 - server-side usage limit enforcement;
 - conservative automatic push from the extension after local changes;
 - server-side write rate limiting for snapshot updates;
-- last-write-wins conflict behavior across devices.
+- revision checks reject stale or concurrent writes; pull the latest snapshot before retrying.
 
 ## Current Usage Limits
 

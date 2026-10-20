@@ -44,7 +44,7 @@ test('restore mode defaults safely and accepts only supported values', () => {
 test('settings explain both restore behaviors with native radio inputs', () => {
   const markup = readExtensionFile('settings.html');
 
-  assert.match(markup, /class="settings-group-card settings-restore"/);
+  assert.match(markup, /id="restore" class="settings-panel"/);
   assert.match(markup, /type="radio" name="restoreMode" value="new_windows"/);
   assert.match(markup, /type="radio" name="restoreMode" value="current_window"/);
 });
